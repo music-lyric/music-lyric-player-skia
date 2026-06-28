@@ -1,0 +1,101 @@
+BasedOnStyle: Google
+Language: Cpp
+Standard: Latest
+
+# Tab for indent, spaces for alignment so columns stay tab-width independent.
+UseTab: AlignWithSpaces
+TabWidth: 8
+IndentWidth: 8
+ContinuationIndentWidth: 8
+# Indent each namespace body one level.
+NamespaceIndentation: All
+IndentExternBlock: Indent
+# Pull public:/private: back to class alignment.
+AccessModifierOffset: -8
+
+BreakBeforeBraces: Attach
+BraceWrapping:
+  AfterFunction: false
+  AfterClass: false
+  AfterStruct: false
+  AfterEnum: false
+  AfterUnion: false
+  AfterNamespace: false
+  AfterControlStatement: Never
+  BeforeElse: false
+  BeforeCatch: false
+  BeforeLambdaBody: false
+# Always brace if/for/while.
+InsertBraces: true
+
+# Space after if/for keywords, none for calls.
+SpaceBeforeParens: ControlStatements
+SpacesInParens: Never
+SpacesInSquareBrackets: false
+SpaceBeforeCpp11BracedList: false
+Cpp11BracedListStyle: true
+SpacesBeforeTrailingComments: 1
+
+# Must stay off, otherwise Google base infers and overrides the two below.
+DerivePointerAlignment: false
+PointerAlignment: Left
+ReferenceAlignment: Left
+
+ColumnLimit: 0
+AlignAfterOpenBracket: DontAlign
+BinPackArguments: false
+BinPackParameters: false
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+BreakBeforeBinaryOperators: None
+AlignOperands: DontAlign
+
+AlignConsecutiveAssignments:
+  Enabled: true
+  # Blank lines/comments break the alignment group.
+  AcrossEmptyLines: false
+  AcrossComments: false
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+AlignConsecutiveMacros:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 0
+AlignArrayOfStructures: Left
+
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortBlocksOnASingleLine: Empty
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+
+IndentCaseLabels: false
+IndentCaseBlocks: false
+
+MaxEmptyLinesToKeep: 1
+KeepEmptyLines:
+  AtEndOfFile: false
+  AtStartOfBlock: false
+  AtStartOfFile: false
+# Don't force blank lines between definitions.
+SeparateDefinitionBlocks: Leave
+
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^<[^./]+>'
+    Priority: 1
+  - Regex: '^<.*/.*>'
+    Priority: 2
+  - Regex: '^".*"'
+    Priority: 3
+  - Regex: '.*'
+    Priority: 4
+
+IndentPPDirectives: None

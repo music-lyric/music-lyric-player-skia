@@ -1,0 +1,78 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Editor
+.vs
+
+# Prerequisites
+*.d
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Linker Files
+*.ilk
+
+# Debugger Files
+*.pdb
+
+# Fortran Module
+*.mod
+*.smod
+
+# Compiled Libraries
+*.lai
+*.la
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.so.*
+*.slo
+*.lo
+*.o
+*.obj
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Build Directories
+build/
+Build/
+build-*/
+out/
+
+# CMake Generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+
+# Temporary Files
+*.tmp
+*.log
+*.bak
+*.swp
+
+# Package Manager
+vcpkg_installed/
+
+# Debug Files
+*.dwo
+
+# Test
+Testing/
+
+# Cache
+.cache/

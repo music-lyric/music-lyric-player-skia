@@ -1,0 +1,4 @@
+[submodule "third-party/lyric-model"]
+	path = third-party/lyric-model
+	url = git@github.com:music-lyric/music-lyric-model-cpp.git
+	shallow = true

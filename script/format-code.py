@@ -5,7 +5,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SOURCES = (os.path.join(ROOT, "src"), os.path.join(ROOT, "platform"))
+SOURCES = (os.path.join(ROOT, "src"),)
 
 EXCLUDES = {}
 
@@ -35,7 +35,7 @@ def main():
         sys.exit("clang-format not found on PATH")
 
     for src in SOURCES:
-        handle(src)
+        handle(src, formater)
 
 
 if __name__ == "__main__":

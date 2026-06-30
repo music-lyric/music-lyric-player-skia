@@ -1,35 +1,21 @@
 #!/usr/bin/env python3
 """Generate C++ config code from JSON schema(s).
 
-For each config (`items[]`) this emits, in the schema's `namespace`:
-  - the resolved struct (fields with defaults),
-  - its deeply-optional `Patch` mirror,
-  - `applyConfigPatch` (deep-merge a patch into a config),
-  - `diffConfig` (dot-path diff into a key set, recording parent paths too),
-  - `<Name>Keys` (a namespace of `string_view` constants holding full dot-paths,
-    for IDE completion and compile-time-checked keys).
-
-The output path comes from the schema's `file` field, resolved next to the schema.
-Generated files open with `// clang-format off`, so the formatter leaves them alone.
+Per config in `items[]`, emits (in the schema's `namespace`): the resolved `struct`
+with defaults, its deeply-optional `Patch` mirror, `applyConfigPatch` (deep-merge),
+`diffConfig` (dot-path diff incl. parent paths), and `<Name>Keys` (full-dot-path
+`string_view` constants for IDE completion). Output goes to the schema's `file`,
+next to the schema, opened with `// clang-format off`.
 
 Schema shape:
-    {
-      "namespace": "a::b",
-      "file": "config.gen.h",
-      "items": [
-        { "name": "Sub",  "desc"?: "...", "fields": [
-            { "name": "x", "type": "double", "default"?: "0.0", "desc"?: "..." } ] },
-        { "name": "Root", "fields": [
-            { "name": "sub", "nested": "Sub", "desc"?: "..." } ] }
-      ]
-    }
-A leaf field has `type` (and optional `default`, else value-initialised); a nested
-field has `nested` naming an earlier config. `desc` is optional everywhere.
+    { "namespace": "a::b", "file": "config.gen.h", "items": [
+        { "name": "Sub",  "fields": [ { "name": "x", "type": "double", "default"?: "0.0", "desc"?: "..." } ] },
+        { "name": "Root", "fields": [ { "name": "sub", "nested": "Sub" } ] } ] }
+A leaf field has `type` (+ optional `default`); a nested field has `nested` naming an
+earlier config. `desc` is optional.
 
-Usage:
-    python script/generate-config.py [<schema.json> ...]
-With no arguments, every *.schema.json under the project (excluding build / vendored
-dirs) is scanned and generated.
+Usage: `python script/generate-config.py [<schema.json> ...]`. With no args, every
+*.schema.json under the project (excluding build / vendored dirs) is generated.
 """
 
 import json

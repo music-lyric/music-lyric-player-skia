@@ -9,7 +9,7 @@
 #include <string>
 #include <string_view>
 
-#include "utils/config_manager.h"
+#include "utils/manager/config.h"
 
 namespace music_lyric_player::base {
 	/**

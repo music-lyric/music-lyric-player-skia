@@ -6,7 +6,7 @@
 #include <utility>
 
 #include "line/content.h"
-#include "utils/steady_clock.h"
+#include "utils/clock/steady.h"
 #include "version.h"
 
 namespace music_lyric_player::base {
@@ -169,7 +169,7 @@ namespace music_lyric_player::base {
 		return playing_;
 	}
 
-	std::vector<int> Player::currentIndexes() const {
+	std::vector<int> Player::currentIndex() const {
 		return bridgeActive(activeIndex_);
 	}
 

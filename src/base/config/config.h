@@ -1,8 +1,8 @@
-#ifndef MUSIC_LYRIC_PLAYER_BASE_CONFIG_H_
-#define MUSIC_LYRIC_PLAYER_BASE_CONFIG_H_
+#ifndef MUSIC_LYRIC_PLAYER_BASE_CONFIG_CONFIG_H_
+#define MUSIC_LYRIC_PLAYER_BASE_CONFIG_CONFIG_H_
 
-#include "base/config.gen.h"
-#include "utils/config_manager.h"
+#include "base/config/config.gen.h"
+#include "utils/manager/config.h"
 
 namespace music_lyric_player::base {
 	/**

@@ -1,7 +1,7 @@
-#ifndef MUSIC_LYRIC_PLAYER_UTILS_STEADY_CLOCK_H_
-#define MUSIC_LYRIC_PLAYER_UTILS_STEADY_CLOCK_H_
+#ifndef MUSIC_LYRIC_PLAYER_UTILS_CLOCK_STEADY_H_
+#define MUSIC_LYRIC_PLAYER_UTILS_CLOCK_STEADY_H_
 
-#include "utils/clock.h"
+#include "utils/clock/clock.h"
 
 namespace music_lyric_player {
 	/**

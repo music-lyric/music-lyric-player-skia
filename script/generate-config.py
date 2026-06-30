@@ -236,7 +236,7 @@ def render(schema, schema_name):
         "#include <string>",
         "#include <string_view>",
         "",
-        '#include "utils/config_manager.h"',
+        '#include "utils/manager/config.h"',
         "",
         f"namespace {namespace} {{",
     ]

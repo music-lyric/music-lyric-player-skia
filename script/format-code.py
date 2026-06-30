@@ -9,6 +9,9 @@ SOURCES = (os.path.join(ROOT, "src"),)
 
 EXCLUDES = {}
 
+# Generated files carry their own `// clang-format off`; skip them here too.
+EXCLUDE_SUFFIXES = (".gen.h",)
+
 EXTENSIONS = (".cpp", ".h")
 
 
@@ -16,7 +19,7 @@ def handle(path: str, formater: str):
     files = []
     for dirpath, _, filenames in os.walk(path):
         for name in filenames:
-            if name in EXCLUDES or not name.endswith(EXTENSIONS):
+            if name in EXCLUDES or name.endswith(EXCLUDE_SUFFIXES) or not name.endswith(EXTENSIONS):
                 continue
             files.append(os.path.join(dirpath, name))
     files.sort()

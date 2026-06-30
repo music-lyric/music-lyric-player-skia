@@ -298,16 +298,16 @@ namespace music_lyric_player::base {
 
 	void Player::onConfigUpdate(const ChangeKeys& keys) {
 		// Toggling meta usage re-derives the lyric offset from the current info.
-		const bool metaToggled = keys.count("offset.useMeta") > 0;
+		const bool metaToggled = keyHas(keys, ConfigKeys::offset::useMeta);
 		if (metaToggled) {
 			offset_.refreshFromMeta(info_, config.current().offset.useMeta);
 		}
 		// An offset change shifts effective time, so re-match active lines.
-		if (metaToggled || keys.count("offset.global") > 0) {
+		if (metaToggled || keyHas(keys, ConfigKeys::offset::global)) {
 			syncTime();
 		}
 		// Merge settings changed: rebuild merged ends and re-match.
-		if (keys.count("mergeWindow") > 0 || keys.count("mergeLimit") > 0) {
+		if (keyHas(keys, ConfigKeys::mergeWindow) || keyHas(keys, ConfigKeys::mergeLimit)) {
 			buildMergedLineEnd();
 			syncTime();
 		}

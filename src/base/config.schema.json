@@ -1,0 +1,25 @@
+{
+  "namespace": "music_lyric_player::base",
+  "file": "config.gen.h",
+  "items": [
+    {
+      "name": "OffsetConfig",
+      "desc": "The global layer of the three-layer offset (global + meta + temp).",
+      "fields": [
+        { "name": "global", "type": "double", "default": "0.0", "desc": "ms applied to every song" },
+        { "name": "useMeta", "type": "bool", "default": "true", "desc": "apply the lyric's own meta offset" },
+        { "name": "resetTempOnLyricChange", "type": "bool", "default": "true", "desc": "clear the temp offset when a new lyric loads" }
+      ]
+    },
+    {
+      "name": "Config",
+      "desc": "Timing-engine configuration.",
+      "fields": [
+        { "name": "bridgeActive", "type": "bool", "default": "true", "desc": "fill active-index gaps" },
+        { "name": "mergeWindow", "type": "double", "default": "300.0", "desc": "ms cluster for joint deactivation" },
+        { "name": "mergeLimit", "type": "int", "default": "3", "desc": "max lines per merge batch" },
+        { "name": "offset", "nested": "OffsetConfig", "desc": "the three-layer offset's global settings" }
+      ]
+    }
+  ]
+}

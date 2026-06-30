@@ -5,7 +5,7 @@
 #include <string>
 #include <utility>
 
-#include "lyric/access.h"
+#include "line/content.h"
 #include "utils/steady_clock.h"
 #include "version.h"
 
@@ -149,8 +149,9 @@ namespace music_lyric_player::base {
 		const double     effective = time + currentOffset();
 		std::vector<int> index;
 		for (int i = 0; i < info_.lines_size(); ++i) {
+			const ::lyric::Time* lineTime = music_lyric_model::getLineTime(info_.lines(i));
 			// Lines are sorted by start ascending, so the first line starting after `time` ends the scan.
-			if (lineStartMs(info_.lines(i)) > effective) {
+			if ((lineTime ? static_cast<double>(lineTime->start()) : 0.0) > effective) {
 				break;
 			}
 			if (merger_.getMergedTime(i) > effective) {
@@ -247,7 +248,8 @@ namespace music_lyric_player::base {
 		std::vector<int> index;
 		int              firstIndex = info_.lines_size();
 		for (int i = 0; i < info_.lines_size(); ++i) {
-			if (lineStartMs(info_.lines(i)) > effective) {
+			const ::lyric::Time* lineTime = music_lyric_model::getLineTime(info_.lines(i));
+			if ((lineTime ? static_cast<double>(lineTime->start()) : 0.0) > effective) {
 				firstIndex = i;
 				break;
 			}
@@ -274,7 +276,8 @@ namespace music_lyric_player::base {
 		}
 
 		while (scanIndex_ < info_.lines_size()) {
-			if (now >= lineStartMs(info_.lines(scanIndex_))) {
+			const ::lyric::Time* lineTime = music_lyric_model::getLineTime(info_.lines(scanIndex_));
+			if (now >= (lineTime ? static_cast<double>(lineTime->start()) : 0.0)) {
 				if (now < merger_.getMergedTime(scanIndex_)) {
 					newActive.push_back(scanIndex_);
 					hasChanged = true;

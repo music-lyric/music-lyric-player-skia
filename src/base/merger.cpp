@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <limits>
 
-#include "lyric/access.h"
+#include "line/content.h"
 
 namespace music_lyric_player::base {
 	void Merger::build(const ::lyric::Info& info, double mergeWindow, int mergeLimit) {
@@ -52,6 +52,8 @@ namespace music_lyric_player::base {
 		if (index == info_->lines_size() - 1) {
 			return std::numeric_limits<double>::infinity();
 		}
-		return std::max(lineEndMs(info_->lines(index)), lineStartMs(info_->lines(index + 1)));
+		const ::lyric::Time* end   = music_lyric_model::getLineTime(info_->lines(index));
+		const ::lyric::Time* start = music_lyric_model::getLineTime(info_->lines(index + 1));
+		return std::max(end ? static_cast<double>(end->end()) : 0.0, start ? static_cast<double>(start->start()) : 0.0);
 	}
 } // namespace music_lyric_player::base

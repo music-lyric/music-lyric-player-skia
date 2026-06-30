@@ -1,6 +1,5 @@
 add_library(music_lyric_player_base
 	utils/steady_clock.cpp
-	lyric/access.cpp
 	base/config.cpp
 	base/merger.cpp
 	base/offset.cpp

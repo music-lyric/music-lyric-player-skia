@@ -1,9 +1,8 @@
 #include "base/offset.h"
 
 #include <cmath>
-#include <optional>
 
-#include "lyric/access.h"
+#include "meta/meta.h"
 
 namespace music_lyric_player::base {
 	void Offset::setTemp(double value) {
@@ -19,8 +18,8 @@ namespace music_lyric_player::base {
 			meta_ = 0.0;
 			return;
 		}
-		const std::optional<double> value = metaOffsetMs(info);
-		meta_                             = value && std::isfinite(*value) ? *value : 0.0;
+		const ::lyric::MetaItem* meta = music_lyric_model::getFirstMeta(info.metas(), ::lyric::MetaItem::kOffset);
+		meta_                         = meta && std::isfinite(meta->offset()) ? meta->offset() : 0.0;
 	}
 
 	double Offset::resolve(double global) const {

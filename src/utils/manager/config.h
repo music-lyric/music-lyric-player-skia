@@ -1,5 +1,5 @@
-#ifndef MUSIC_LYRIC_PLAYER_UTILS_CONFIG_MANAGER_H_
-#define MUSIC_LYRIC_PLAYER_UTILS_CONFIG_MANAGER_H_
+#ifndef MUSIC_LYRIC_PLAYER_UTILS_MANAGER_CONFIG_H_
+#define MUSIC_LYRIC_PLAYER_UTILS_MANAGER_CONFIG_H_
 
 #include <functional>
 #include <initializer_list>
@@ -7,7 +7,7 @@
 #include <string>
 #include <string_view>
 
-#include "utils/signal.h"
+#include "utils/event/signal.h"
 
 namespace music_lyric_player {
 	/**
@@ -50,7 +50,7 @@ namespace music_lyric_player {
 	/**
 	 * Generic config store mirroring the web ConfigManager: clone, apply, diff, emit only on change.
 	 * `Config` is the fully-resolved struct; `Patch` is its deeply-optional mirror.
-	 * `applyConfigPatch` / `diffConfig` are generated per config (see scripts/generate_config.py) and found by ADL.
+	 * `applyConfigPatch` / `diffConfig` are generated per config (see script/generate-config.py) and found by ADL.
 	 */
 	template <typename Config, typename Patch>
 	class ConfigManager {

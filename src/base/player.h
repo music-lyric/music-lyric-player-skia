@@ -5,12 +5,12 @@
 #include <optional>
 #include <vector>
 
-#include "base/config.h"
+#include "base/config/config.h"
 #include "base/merger.h"
 #include "base/offset.h"
 #include "info.pb.h"
-#include "utils/clock.h"
-#include "utils/signal.h"
+#include "utils/clock/clock.h"
+#include "utils/event/signal.h"
 
 namespace music_lyric_player::base {
 	/**
@@ -77,7 +77,7 @@ namespace music_lyric_player::base {
 		/**
 		 * The bridged indices of the currently active lines.
 		 */
-		std::vector<int> currentIndexes() const;
+		std::vector<int> currentIndex() const;
 
 		/**
 		 * The index of the primary active line, or -1 when none.

@@ -2,3 +2,8 @@
 	path = third-party/lyric-model
 	url = git@github.com:music-lyric/music-lyric-model-cpp.git
 	shallow = true
+[submodule "third-party/skia"]
+	path = third-party/skia
+	url = https://github.com/google/skia.git
+	branch = chrome/m150
+	shallow = true

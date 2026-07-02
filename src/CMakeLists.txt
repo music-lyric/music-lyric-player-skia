@@ -10,4 +10,6 @@ target_compile_features(music_lyric_player_base PUBLIC cxx_std_20)
 
 target_include_directories(music_lyric_player_base PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
-target_link_libraries(music_lyric_player_base PUBLIC music_lyric_model::music_lyric_model)
+target_link_libraries(music_lyric_player_base PUBLIC
+	music_lyric_model::music_lyric_model
+	skia::skia)

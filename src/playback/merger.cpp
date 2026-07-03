@@ -1,4 +1,4 @@
-#include "base/merger.h"
+#include "playback/merger.h"
 
 #include <algorithm>
 #include <cmath>
@@ -7,7 +7,7 @@
 
 #include "line/content.h"
 
-namespace music_lyric_player::base {
+namespace music_lyric_player::playback {
 	void Merger::build(const ::lyric::Info& info, double mergeWindow, int mergeLimit) {
 		info_ = &info;
 
@@ -56,4 +56,4 @@ namespace music_lyric_player::base {
 		const ::lyric::Time* start = music_lyric_model::getLineTime(info_->lines(index + 1));
 		return std::max(end ? static_cast<double>(end->end()) : 0.0, start ? static_cast<double>(start->start()) : 0.0);
 	}
-} // namespace music_lyric_player::base
+} // namespace music_lyric_player::playback

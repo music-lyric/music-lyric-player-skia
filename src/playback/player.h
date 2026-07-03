@@ -1,18 +1,18 @@
-#ifndef MUSIC_LYRIC_PLAYER_BASE_PLAYER_H_
-#define MUSIC_LYRIC_PLAYER_BASE_PLAYER_H_
+#ifndef MUSIC_LYRIC_PLAYER_PLAYBACK_PLAYER_H_
+#define MUSIC_LYRIC_PLAYER_PLAYBACK_PLAYER_H_
 
 #include <cstddef>
 #include <optional>
 #include <vector>
 
-#include "base/config/config.h"
-#include "base/merger.h"
-#include "base/offset.h"
+#include "playback/config/config.h"
+#include "playback/merger.h"
+#include "playback/offset.h"
 #include "info.pb.h"
 #include "utils/clock/clock.h"
 #include "utils/event/signal.h"
 
-namespace music_lyric_player::base {
+namespace music_lyric_player::playback {
 	/**
 	 * Headless timing engine: owns the playback clock and tracks active lines.
 	 * Holds no rendering concern; the platform injects a `Clock` and drives `tick()`.
@@ -168,6 +168,6 @@ namespace music_lyric_player::base {
 		Offset           offset_;
 		std::size_t      configListenerId_ = 0;
 	};
-} // namespace music_lyric_player::base
+} // namespace music_lyric_player::playback
 
 #endif

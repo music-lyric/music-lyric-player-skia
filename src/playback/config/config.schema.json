@@ -1,5 +1,5 @@
 {
-  "namespace": "music_lyric_player::base",
+  "namespace": "music_lyric_player::playback",
   "file": "config.gen.h",
   "items": [
     {

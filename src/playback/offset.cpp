@@ -1,8 +1,8 @@
-#include "base/offset.h"
+#include "playback/offset.h"
 
 #include <cmath>
 
-namespace music_lyric_player::base {
+namespace music_lyric_player::playback {
 	void Offset::setTemp(double value) {
 		temp_ = std::isfinite(value) ? value : 0.0;
 	}
@@ -24,4 +24,4 @@ namespace music_lyric_player::base {
 		const double value = global + meta_ + temp_;
 		return std::isfinite(value) ? value : 0.0;
 	}
-} // namespace music_lyric_player::base
+} // namespace music_lyric_player::playback

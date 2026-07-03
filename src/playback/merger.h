@@ -1,11 +1,11 @@
-#ifndef MUSIC_LYRIC_PLAYER_BASE_MERGER_H_
-#define MUSIC_LYRIC_PLAYER_BASE_MERGER_H_
+#ifndef MUSIC_LYRIC_PLAYER_PLAYBACK_MERGER_H_
+#define MUSIC_LYRIC_PLAYER_PLAYBACK_MERGER_H_
 
 #include <vector>
 
 #include "info.pb.h"
 
-namespace music_lyric_player::base {
+namespace music_lyric_player::playback {
 	/**
 	 * Clusters consecutive lines whose ends fall within `mergeWindow` so they deactivate together.
 	 * Pure arithmetic over line start/end; an earlier line is only ever extended, never cut short.
@@ -33,6 +33,6 @@ namespace music_lyric_player::base {
 		const ::lyric::Info* info_ = nullptr;
 		std::vector<double>  mergedEnd_;
 	};
-} // namespace music_lyric_player::base
+} // namespace music_lyric_player::playback
 
 #endif

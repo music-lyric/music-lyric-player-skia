@@ -1,4 +1,4 @@
-#include "base/player.h"
+#include "playback/player.h"
 
 #include <cmath>
 #include <cstdio>
@@ -9,7 +9,7 @@
 #include "utils/clock/steady.h"
 #include "version.h"
 
-namespace music_lyric_player::base {
+namespace music_lyric_player::playback {
 	namespace {
 		/**
 		 * Shared stateless real-time clock used when no clock is injected.
@@ -312,4 +312,4 @@ namespace music_lyric_player::base {
 			syncTime();
 		}
 	}
-} // namespace music_lyric_player::base
+} // namespace music_lyric_player::playback

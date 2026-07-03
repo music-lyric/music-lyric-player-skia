@@ -23,9 +23,9 @@ namespace lyric {
 	class Info;
 } // namespace lyric
 
-namespace music_lyric_player::base {
+namespace music_lyric_player::playback {
 	class Player;
-} // namespace music_lyric_player::base
+} // namespace music_lyric_player::playback
 
 namespace music_lyric_player::render {
 	/**
@@ -39,7 +39,7 @@ namespace music_lyric_player::render {
 		 * Binds to the timing engine, a system font manager and the shared clock.
 		 * The clock is kept for future time-based effects and not sampled yet.
 		 */
-		Renderer(base::Player& base, sk_sp<SkFontMgr> fontMgr, const Clock& clock);
+		Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const Clock& clock);
 
 		/**
 		 * Unsubscribes from the timing engine and releases layout resources.
@@ -61,7 +61,7 @@ namespace music_lyric_player::render {
 		void render(SkCanvas* canvas);
 
 		/**
-		 * Detaches from the timing engine and drops all lines; safe to call before `base` is destroyed.
+		 * Detaches from the timing engine and drops all lines; safe to call before `player` is destroyed.
 		 */
 		void dispose();
 
@@ -109,7 +109,7 @@ namespace music_lyric_player::render {
 		 */
 		std::unique_ptr<::skia::textlayout::Paragraph> buildParagraph(const std::string& text) const;
 
-		base::Player&                             base_;
+		playback::Player&                         player_;
 		sk_sp<SkFontMgr>                          fontMgr_;
 		const Clock&                              clock_;
 		sk_sp<::skia::textlayout::FontCollection> fonts_;

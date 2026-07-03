@@ -5,10 +5,6 @@
 #include <utility>
 #include <vector>
 
-#include "base/player.h"
-#include "info.pb.h"
-#include "line/content.h"
-
 #include "include/core/SkBlendMode.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColor.h"
@@ -19,16 +15,17 @@
 #include "include/core/SkRect.h"
 #include "include/core/SkScalar.h"
 #include "include/core/SkString.h"
-
+#include "info.pb.h"
+#include "line/content.h"
 #include "modules/skparagraph/include/DartTypes.h"
 #include "modules/skparagraph/include/FontCollection.h"
 #include "modules/skparagraph/include/Paragraph.h"
 #include "modules/skparagraph/include/ParagraphBuilder.h"
 #include "modules/skparagraph/include/ParagraphStyle.h"
 #include "modules/skparagraph/include/TextStyle.h"
-
 #include "modules/skunicode/include/SkUnicode.h"
 #include "modules/skunicode/include/SkUnicode_icu.h"
+#include "playback/player.h"
 
 namespace tl = ::skia::textlayout;
 
@@ -39,18 +36,18 @@ namespace music_lyric_player::render {
 		 */
 		tl::TextAlign toTextAlign(int align) {
 			switch (align) {
-				case 1:
-					return tl::TextAlign::kCenter;
-				case 2:
-					return tl::TextAlign::kRight;
-				default:
-					return tl::TextAlign::kLeft;
+			case 1:
+				return tl::TextAlign::kCenter;
+			case 2:
+				return tl::TextAlign::kRight;
+			default:
+				return tl::TextAlign::kLeft;
 			}
 		}
 	} // namespace
 
-	Renderer::Renderer(base::Player& base, sk_sp<SkFontMgr> fontMgr, const Clock& clock)
-	    : base_(base),
+	Renderer::Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const Clock& clock)
+	    : player_(player),
 	      fontMgr_(std::move(fontMgr)),
 	      clock_(clock) {
 		// Resolve families from the system font manager, with per-glyph fallback so mixed scripts do not render as tofu.
@@ -61,10 +58,10 @@ namespace music_lyric_player::render {
 		// Unicode backend drives SkParagraph's word / grapheme / line-break boundaries.
 		unicode_ = SkUnicodes::ICU::Make();
 
-		lyricListener_ = base_.onLyricUpdate.add([this](const ::lyric::Info& info) {
+		lyricListener_  = player_.onLyricUpdate.add([this](const ::lyric::Info& info) {
 			handleLyricUpdate(info);
 		});
-		linesListener_ = base_.onLinesUpdate.add([this](const std::vector<int>&, int firstIndex, bool) {
+		linesListener_  = player_.onLinesUpdate.add([this](const std::vector<int>&, int firstIndex, bool) {
 			handleLinesUpdate(firstIndex);
 		});
 		configListener_ = config.onUpdate.add([this](const ChangeKeys&, const Config&) {
@@ -72,9 +69,9 @@ namespace music_lyric_player::render {
 		});
 
 		// Adopt any lyric already loaded before the renderer attached.
-		if (base_.currentInfo().lines_size() > 0) {
-			rebuildLines(base_.currentInfo());
-			activeIndex_ = base_.currentActive();
+		if (player_.currentInfo().lines_size() > 0) {
+			rebuildLines(player_.currentInfo());
+			activeIndex_ = player_.currentActive();
 		}
 	}
 
@@ -84,11 +81,11 @@ namespace music_lyric_player::render {
 
 	void Renderer::dispose() {
 		if (lyricListener_ != 0) {
-			base_.onLyricUpdate.remove(lyricListener_);
+			player_.onLyricUpdate.remove(lyricListener_);
 			lyricListener_ = 0;
 		}
 		if (linesListener_ != 0) {
-			base_.onLinesUpdate.remove(linesListener_);
+			player_.onLinesUpdate.remove(linesListener_);
 			linesListener_ = 0;
 		}
 		if (configListener_ != 0) {
@@ -224,12 +221,12 @@ namespace music_lyric_player::render {
 		}
 
 		// Centre the focus (primary active) line on the anchor; snap straight there, no transition yet.
-		const std::size_t focus = (activeIndex_ >= 0 && activeIndex_ < static_cast<int>(lines_.size()))
-		                              ? static_cast<std::size_t>(activeIndex_)
-		                              : 0;
-		const float anchorY     = logicalH * static_cast<float>(cfg.anchor);
-		const float focusCentre = tops[focus] + lines_[focus].height * 0.5f;
-		const float scrollY     = focusCentre - anchorY;
+		const std::size_t focus       = (activeIndex_ >= 0 && activeIndex_ < static_cast<int>(lines_.size()))
+			? static_cast<std::size_t>(activeIndex_)
+			: 0;
+		const float       anchorY     = logicalH * static_cast<float>(cfg.anchor);
+		const float       focusCentre = tops[focus] + lines_[focus].height * 0.5f;
+		const float       scrollY     = focusCentre - anchorY;
 
 		for (std::size_t i = 0; i < lines_.size(); ++i) {
 			RenderLine& line = lines_[i];

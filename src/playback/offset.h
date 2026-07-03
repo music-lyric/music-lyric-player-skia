@@ -1,9 +1,9 @@
-#ifndef MUSIC_LYRIC_PLAYER_BASE_OFFSET_H_
-#define MUSIC_LYRIC_PLAYER_BASE_OFFSET_H_
+#ifndef MUSIC_LYRIC_PLAYER_PLAYBACK_OFFSET_H_
+#define MUSIC_LYRIC_PLAYER_PLAYBACK_OFFSET_H_
 
 #include "info.pb.h"
 
-namespace music_lyric_player::base {
+namespace music_lyric_player::playback {
 	/**
 	 * Three-layer lyric offset `global + meta + temp` (global is supplied at resolve time).
 	 */
@@ -33,6 +33,6 @@ namespace music_lyric_player::base {
 		double temp_ = 0.0;
 		double meta_ = 0.0;
 	};
-} // namespace music_lyric_player::base
+} // namespace music_lyric_player::playback
 
 #endif

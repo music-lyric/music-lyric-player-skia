@@ -1,28 +1,46 @@
 {
-    "version": 3,
-    "cmakeMinimumRequired": {
-        "major": 3,
-        "minor": 21,
-        "patch": 0
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "default",
+      "displayName": "Default",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build"
     },
-    "configurePresets": [
-        {
-            "name": "default",
-            "displayName": "Default",
-            "generator": "Ninja Multi-Config",
-            "binaryDir": "${sourceDir}/build"
+    {
+      "name": "windows-example",
+      "displayName": "Windows Example",
+      "description": "Windows Example With Vlukan",
+      "inherits": "default",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "MUSIC_LYRIC_PLAYER_BUILD_EXAMPLE": {
+          "type": "BOOL",
+          "value": "ON"
         }
-    ],
-    "buildPresets": [
-        {
-            "name": "debug",
-            "configurePreset": "default",
-            "configuration": "Debug"
-        },
-        {
-            "name": "release",
-            "configurePreset": "default",
-            "configuration": "Release"
-        }
-    ]
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "release",
+      "configurePreset": "default",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-example-release",
+      "displayName": "Windows Example Release",
+      "configurePreset": "windows-example",
+      "configuration": "Release"
+    }
+  ]
 }

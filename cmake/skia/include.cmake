@@ -14,11 +14,6 @@ if(NOT EXISTS "${SKIA_SRC}/BUILD.gn")
 	message(FATAL_ERROR "Skia not found at: ${SKIA_SRC}")
 endif()
 
-# CRT alignment
-if(MSVC)
-	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL" CACHE STRING "" FORCE)
-endif()
-
 # Locate prebuilt products
 if(NOT DEFINED SKIA_BUILD_CONFIG)
 	set(SKIA_BUILD_CONFIG "Release")
@@ -52,11 +47,11 @@ message(STATUS "[Skia] ${SKIA_OUT}")
 
 # System libraries
 if(WIN32)
-	set(SKIA_SYSTEM_LIBRARIES Ole32 OleAut32 User32 Gdi32 Usp10 FontSub OpenGL32 Advapi32)
+	set(SKIA_SYSTEM_LIBRARIES Ole32 OleAut32 User32 Gdi32 Usp10 FontSub Advapi32)
 elseif(APPLE)
-	set(SKIA_SYSTEM_LIBRARIES "-framework CoreFoundation" "-framework CoreGraphics" "-framework CoreText" "-framework OpenGL")
+	set(SKIA_SYSTEM_LIBRARIES "-framework CoreFoundation" "-framework CoreGraphics" "-framework CoreText")
 else()
-	set(SKIA_SYSTEM_LIBRARIES fontconfig freetype GL dl pthread)
+	set(SKIA_SYSTEM_LIBRARIES fontconfig freetype dl pthread)
 endif()
 
 # Export target
@@ -72,5 +67,5 @@ target_include_directories(skia INTERFACE ${_skia_incs})
 
 target_link_libraries(skia INTERFACE ${SKIA_LIBRARIES} ${SKIA_SYSTEM_LIBRARIES})
 
-target_compile_definitions(skia INTERFACE SK_GANESH SK_GL)
+target_compile_definitions(skia INTERFACE SK_GANESH SK_VULKAN)
 target_compile_features(skia INTERFACE cxx_std_20)

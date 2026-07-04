@@ -78,7 +78,7 @@ namespace music_lyric_player::playback {
 	/**
 	 * Diffs two configs into a dot-path key set; a changed child also records its parent path.
 	 */
-	inline void diffConfig(const OffsetConfig& prev, const OffsetConfig& next, const ::std::string& prefix, ::music_lyric_player::ChangeKeys& keys) {
+	inline void diffConfig(const OffsetConfig& prev, const OffsetConfig& next, const ::std::string& prefix, ::music_lyric_player::config::ChangeKeys& keys) {
 		if (prev.global != next.global) {
 			keys.insert(prefix + "global");
 		}
@@ -93,7 +93,7 @@ namespace music_lyric_player::playback {
 	/**
 	 * Diffs two configs into a dot-path key set; a changed child also records its parent path.
 	 */
-	inline void diffConfig(const Config& prev, const Config& next, const ::std::string& prefix, ::music_lyric_player::ChangeKeys& keys) {
+	inline void diffConfig(const Config& prev, const Config& next, const ::std::string& prefix, ::music_lyric_player::config::ChangeKeys& keys) {
 		if (prev.bridgeActive != next.bridgeActive) {
 			keys.insert(prefix + "bridgeActive");
 		}

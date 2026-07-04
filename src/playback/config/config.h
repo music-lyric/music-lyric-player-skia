@@ -8,7 +8,10 @@ namespace music_lyric_player::playback {
 	/**
 	 * Config store for the timing engine, bound to this layer's generated `Config` / `ConfigPatch`.
 	 */
-	using ConfigManager = ::music_lyric_player::ConfigManager<Config, ConfigPatch>;
+	using ConfigManager = ::music_lyric_player::config::Manager<Config, ConfigPatch>;
+
+	using ::music_lyric_player::config::ChangeKeys;
+	using ::music_lyric_player::config::keyHas;
 } // namespace music_lyric_player::playback
 
 #endif

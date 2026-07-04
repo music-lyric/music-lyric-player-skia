@@ -163,7 +163,7 @@ def gen_diff(cfg):
     out = ["\t/**\n\t * Diffs two configs into a dot-path key set; a changed child also records its parent path.\n\t */"]
     out.append(
         f"\tinline void diffConfig({unused}const {name}& prev, {unused}const {name}& next, "
-        f"{unused}const ::std::string& prefix, {unused}::music_lyric_player::ChangeKeys& keys) {{"
+        f"{unused}const ::std::string& prefix, {unused}::music_lyric_player::config::ChangeKeys& keys) {{"
     )
     for field in fields:
         n = field["name"]

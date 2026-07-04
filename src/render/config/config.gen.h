@@ -13,7 +13,7 @@
 
 namespace music_lyric_player::render {
 	/**
-	 * Basic renderer configuration (static layout; animation deferred).
+	 * Basic renderer configuration with eased scrolling.
 	 */
 	struct Config {
 		::std::string fontFamily = {};  // system family name; empty uses the platform default
@@ -22,6 +22,7 @@ namespace music_lyric_player::render {
 		double lineGap = 16.0;  // vertical gap between lines in logical pixels
 		double paddingX = 48.0;  // horizontal padding on each side in logical pixels
 		double anchor = 0.5;  // vertical anchor ratio (0 top .. 1 bottom) the focus line centers on
+		double scrollDuration = 450.0;  // scroll ease duration in milliseconds when the focus line changes; 0 snaps
 		int align = 0;  // text alignment: 0 left, 1 center, 2 right
 		::std::string interludeText = "\u00b7 \u00b7 \u00b7";  // placeholder text drawn for interlude lines
 		unsigned int backgroundColor = 0xff101014u;  // ARGB background fill
@@ -37,6 +38,7 @@ namespace music_lyric_player::render {
 		::std::optional<double> lineGap;
 		::std::optional<double> paddingX;
 		::std::optional<double> anchor;
+		::std::optional<double> scrollDuration;
 		::std::optional<int> align;
 		::std::optional<::std::string> interludeText;
 		::std::optional<unsigned int> backgroundColor;
@@ -66,6 +68,9 @@ namespace music_lyric_player::render {
 		}
 		if (patch.anchor.has_value()) {
 			cfg.anchor = *patch.anchor;
+		}
+		if (patch.scrollDuration.has_value()) {
+			cfg.scrollDuration = *patch.scrollDuration;
 		}
 		if (patch.align.has_value()) {
 			cfg.align = *patch.align;
@@ -109,6 +114,9 @@ namespace music_lyric_player::render {
 		if (prev.anchor != next.anchor) {
 			keys.insert(prefix + "anchor");
 		}
+		if (prev.scrollDuration != next.scrollDuration) {
+			keys.insert(prefix + "scrollDuration");
+		}
 		if (prev.align != next.align) {
 			keys.insert(prefix + "align");
 		}
@@ -136,6 +144,7 @@ namespace music_lyric_player::render {
 		inline constexpr ::std::string_view lineGap{"lineGap"};
 		inline constexpr ::std::string_view paddingX{"paddingX"};
 		inline constexpr ::std::string_view anchor{"anchor"};
+		inline constexpr ::std::string_view scrollDuration{"scrollDuration"};
 		inline constexpr ::std::string_view align{"align"};
 		inline constexpr ::std::string_view interludeText{"interludeText"};
 		inline constexpr ::std::string_view backgroundColor{"backgroundColor"};

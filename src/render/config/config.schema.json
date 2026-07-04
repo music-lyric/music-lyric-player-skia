@@ -4,7 +4,7 @@
   "items": [
     {
       "name": "Config",
-      "desc": "Basic renderer configuration (static layout; animation deferred).",
+      "desc": "Basic renderer configuration with eased scrolling.",
       "fields": [
         { "name": "fontFamily", "type": "::std::string", "desc": "system family name; empty uses the platform default" },
         { "name": "fontSize", "type": "double", "default": "34.0", "desc": "base font size in logical pixels" },
@@ -12,6 +12,7 @@
         { "name": "lineGap", "type": "double", "default": "16.0", "desc": "vertical gap between lines in logical pixels" },
         { "name": "paddingX", "type": "double", "default": "48.0", "desc": "horizontal padding on each side in logical pixels" },
         { "name": "anchor", "type": "double", "default": "0.5", "desc": "vertical anchor ratio (0 top .. 1 bottom) the focus line centers on" },
+        { "name": "scrollDuration", "type": "double", "default": "450.0", "desc": "scroll ease duration in milliseconds when the focus line changes; 0 snaps" },
         { "name": "align", "type": "int", "default": "0", "desc": "text alignment: 0 left, 1 center, 2 right" },
         { "name": "interludeText", "type": "::std::string", "default": "\"\\u00b7 \\u00b7 \\u00b7\"", "desc": "placeholder text drawn for interlude lines" },
         { "name": "backgroundColor", "type": "unsigned int", "default": "0xff101014u", "desc": "ARGB background fill" },

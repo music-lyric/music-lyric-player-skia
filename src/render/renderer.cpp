@@ -44,6 +44,14 @@ namespace music_lyric_player::render {
 				return tl::TextAlign::kLeft;
 			}
 		}
+
+		/**
+		 * Cubic ease-in-out over a normalized 0..1 progress; the input is clamped to the range.
+		 */
+		float easeInOutCubic(float t) {
+			t = std::clamp(t, 0.0f, 1.0f);
+			return t < 0.5f ? 4.0f * t * t * t : 1.0f - std::pow(-2.0f * t + 2.0f, 3.0f) * 0.5f;
+		}
 	} // namespace
 
 	Renderer::Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const Clock& clock)
@@ -134,6 +142,9 @@ namespace music_lyric_player::render {
 			render.text      = render.interlude ? std::string{} : ::music_lyric_model::getLineText(line);
 			lines_.push_back(std::move(render));
 		}
+		// Drop the scroll tween so a freshly loaded lyric snaps into place instead of sliding from the old song.
+		scrollInit_  = false;
+		scrollFocus_ = -1;
 		layoutDirty_ = true;
 	}
 
@@ -183,6 +194,19 @@ namespace music_lyric_player::render {
 		layoutWidth_ = contentWidth;
 	}
 
+	float Renderer::sampleScroll(double nowMs) const {
+		const double duration = config.current().scrollDuration;
+		if (duration <= 0.0) {
+			return scrollTo_;
+		}
+		const double elapsed = nowMs - scrollAnimStartMs_;
+		if (elapsed >= duration) {
+			return scrollTo_;
+		}
+		const float t = easeInOutCubic(static_cast<float>(elapsed / duration));
+		return scrollFrom_ + (scrollTo_ - scrollFrom_) * t;
+	}
+
 	void Renderer::render(SkCanvas* canvas) {
 		if (canvas == nullptr) {
 			return;
@@ -220,13 +244,36 @@ namespace music_lyric_player::render {
 			cursor += lines_[i].height + gap;
 		}
 
-		// Centre the focus (primary active) line on the anchor; snap straight there, no transition yet.
+		// Centre the focus (primary active) line on the anchor.
 		const std::size_t focus       = (activeIndex_ >= 0 && activeIndex_ < static_cast<int>(lines_.size()))
 			? static_cast<std::size_t>(activeIndex_)
 			: 0;
 		const float       anchorY     = logicalH * static_cast<float>(cfg.anchor);
 		const float       focusCentre = tops[focus] + lines_[focus].height * 0.5f;
-		const float       scrollY     = focusCentre - anchorY;
+		const float       targetY     = focusCentre - anchorY;
+
+		// Ease the scroll towards the focus line: a focus change restarts the tween from the
+		// current animated position, while layout shifts under a stable focus retarget in place.
+		const double nowMs = clock_.nowMs();
+		if (!scrollInit_) {
+			scrollFrom_  = targetY;
+			scrollTo_    = targetY;
+			scrollFocus_ = static_cast<int>(focus);
+			scrollInit_  = true;
+		} else if (static_cast<int>(focus) != scrollFocus_) {
+			scrollFrom_        = sampleScroll(nowMs);
+			scrollTo_          = targetY;
+			scrollAnimStartMs_ = nowMs;
+			scrollFocus_       = static_cast<int>(focus);
+		} else if (nowMs - scrollAnimStartMs_ >= cfg.scrollDuration) {
+			// Tween finished; track layout-driven target changes instantly.
+			scrollFrom_ = targetY;
+			scrollTo_   = targetY;
+		} else {
+			// Tween still running; adjust its landing point without breaking the easing.
+			scrollTo_ = targetY;
+		}
+		const float scrollY = sampleScroll(nowMs);
 
 		for (std::size_t i = 0; i < lines_.size(); ++i) {
 			RenderLine& line = lines_[i];

@@ -3,7 +3,7 @@
 #include "include/core/SkFontMgr.h"
 #include "include/ports/SkTypeface_win.h"
 #include "playback/player.h"
-#include "render/config/config.h"
+#include "render/config/index.h"
 #include "render/renderer.h"
 #include "sample_lyric.h"
 #include "vulkan_window.h"
@@ -22,10 +22,10 @@ int main() {
 
 	// DirectWrite cannot resolve SkParagraph's default "sans-serif" family, so pick a concrete
 	// system family (covers CJK and latin); also centre-align the lyrics for the demo.
-	music_lyric_player::render::ConfigPatch config;
-	config.line.font.family = "Microsoft YaHei UI";
-	config.layout.align     = 1;
-	renderer.config.merge(config);
+	renderer.config.modify([](auto& cfg) {
+		cfg.line.font.family = "Microsoft YaHei UI";
+		cfg.layout.align     = 1;
+	});
 
 	player.updateLyric(example::buildSampleLyric());
 	player.play(0.0);

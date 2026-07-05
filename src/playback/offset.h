@@ -14,9 +14,6 @@ namespace music_lyric_player::playback {
 		 */
 		void setTemp(double value);
 
-		/**
-		 * Clears the temporary offset back to 0.
-		 */
 		void resetTemp();
 
 		/**

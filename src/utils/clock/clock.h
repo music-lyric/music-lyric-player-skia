@@ -2,10 +2,6 @@
 #define MUSIC_LYRIC_PLAYER_UTILS_CLOCK_CLOCK_H_
 
 namespace music_lyric_player {
-	/**
-	 * Monotonic time source injected by the platform.
-	 * The core pulls `now` on demand and never owns a clock loop.
-	 */
 	class Clock {
 	public:
 		virtual ~Clock() = default;

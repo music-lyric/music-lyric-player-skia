@@ -26,7 +26,7 @@ namespace music_lyric_player::render::config::scroll {
 	};
 
 	/**
-	 * Viewport scrolling behaviour driven by the active line.
+	 * Viewport scrolling that follows the active line.
 	 */
 	struct Root {
 		/**

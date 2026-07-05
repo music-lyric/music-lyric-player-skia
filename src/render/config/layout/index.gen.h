@@ -13,7 +13,7 @@
 
 namespace music_lyric_player::render::config::layout {
 	/**
-	 * Geometric layout rules applied to every lyric line.
+	 * Alignment and spacing applied to every lyric line.
 	 */
 	struct Root {
 		/**

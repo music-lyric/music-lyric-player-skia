@@ -21,7 +21,7 @@
     },
     {
       "name": "Root",
-      "desc": "Viewport scrolling behaviour driven by the active line.",
+      "desc": "Viewport scrolling that follows the active line.",
       "fields": [
         {
           "name": "anchor",

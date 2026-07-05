@@ -17,24 +17,23 @@
 
 namespace music_lyric_player::render::config {
 	/**
-	 * Renderer configuration, split by concern like the web player.
-	 * Each domain lives in its own sub-module.
+	 * Renderer configuration.
 	 */
 	struct Root {
 		/**
-		 * Outer wrapper: background fill and padding.
+		 * Background fill and padding of the player.
 		 */
 		::music_lyric_player::render::config::container::Root container;
 		/**
-		 * Geometric layout: alignment and inter-line spacing.
+		 * Alignment and spacing between lyric lines.
 		 */
 		::music_lyric_player::render::config::layout::Root layout;
 		/**
-		 * Viewport scrolling and transition animation.
+		 * Viewport scrolling and its transition animation.
 		 */
 		::music_lyric_player::render::config::scroll::Root scroll;
 		/**
-		 * Lyric line rendering: shared font and per-state colors.
+		 * Font and per-state colors of lyric lines.
 		 */
 		::music_lyric_player::render::config::line::Root line;
 	};

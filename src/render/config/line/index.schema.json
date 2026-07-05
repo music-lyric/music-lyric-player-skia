@@ -64,7 +64,7 @@
     },
     {
       "name": "Root",
-      "desc": "Lyric line rendering: shared font and per-state colors.",
+      "desc": "Font and per-state colors of lyric lines.",
       "fields": [
         {
           "name": "font",

@@ -4,7 +4,7 @@
   "items": [
     {
       "name": "Root",
-      "desc": "Outer wrapper of the lyric player: background fill and padding.",
+      "desc": "Background fill and padding of the player.",
       "fields": [
         {
           "name": "backgroundColor",

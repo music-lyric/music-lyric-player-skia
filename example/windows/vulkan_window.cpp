@@ -37,9 +37,6 @@ namespace example {
 			return vkGetInstanceProcAddr(instance, name);
 		}
 
-		/**
-		 * Clamps a value into an inclusive range.
-		 */
 		std::uint32_t clampU32(std::uint32_t value, std::uint32_t low, std::uint32_t high) {
 			return std::max(low, std::min(value, high));
 		}

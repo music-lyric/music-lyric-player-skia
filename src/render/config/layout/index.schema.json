@@ -4,7 +4,7 @@
   "items": [
     {
       "name": "Root",
-      "desc": "Geometric layout rules applied to every lyric line.",
+      "desc": "Alignment and spacing applied to every lyric line.",
       "fields": [
         {
           "name": "align",

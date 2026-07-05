@@ -4,9 +4,6 @@
 #include "utils/clock/clock.h"
 
 namespace music_lyric_player {
-	/**
-	 * Default `Clock` backed by `std::chrono::steady_clock` (portable std, no platform API).
-	 */
 	class SteadyClock : public Clock {
 	public:
 		/**

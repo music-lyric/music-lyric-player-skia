@@ -40,14 +40,8 @@ namespace example {
 		 */
 		bool init(int width, int height, const char* title);
 
-		/**
-		 * Whether the user asked to close the window.
-		 */
 		bool shouldClose() const;
 
-		/**
-		 * Pumps the window's event queue.
-		 */
 		void pollEvents();
 
 		/**
@@ -61,9 +55,6 @@ namespace example {
 		 */
 		bool createInstance();
 
-		/**
-		 * Creates the window surface from the GLFW window.
-		 */
 		bool createSurface();
 
 		/**
@@ -86,9 +77,6 @@ namespace example {
 		 */
 		bool createSwapchain();
 
-		/**
-		 * Releases the swapchain and its wrapped surfaces.
-		 */
 		void destroySwapchain();
 
 		/**

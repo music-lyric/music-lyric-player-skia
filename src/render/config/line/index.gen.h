@@ -58,7 +58,7 @@ namespace music_lyric_player::render::config::line {
 	};
 
 	/**
-	 * Lyric line rendering: shared font and per-state colors.
+	 * Font and per-state colors of lyric lines.
 	 */
 	struct Root {
 		/**

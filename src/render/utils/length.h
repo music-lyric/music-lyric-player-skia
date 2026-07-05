@@ -46,7 +46,7 @@ namespace music_lyric_player::render {
 	} // namespace detail
 
 	/**
-	 * Resolves a length string into logical pixels, mirroring the web player's length inputs.
+	 * Resolves a length string into logical pixels.
 	 * A bare number (`"12"`) or a `px` value (`"12px"`) is absolute; a percentage (`"5%"`) is taken
 	 * relative to `base`, the resolved value of the parent config it inherits from.
 	 * Any parse failure, or a percentage with no finite `base`, falls back to `fallback`.

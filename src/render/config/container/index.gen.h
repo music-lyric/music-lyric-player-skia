@@ -13,7 +13,7 @@
 
 namespace music_lyric_player::render::config::container {
 	/**
-	 * Outer wrapper of the lyric player: background fill and padding.
+	 * Background fill and padding of the player.
 	 */
 	struct Root {
 		/**

@@ -7,10 +7,6 @@
 #include <vector>
 
 namespace music_lyric_player {
-	/**
-	 * Minimal strongly-typed event channel: one `Signal` per event.
-	 * Replaces the web `Event<EventMap>` keyed emitter.
-	 */
 	template <typename... Args>
 	class Signal {
 	public:

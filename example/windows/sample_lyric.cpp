@@ -29,9 +29,6 @@ namespace example {
 			wordTime->set_end(endMs);
 		}
 
-		/**
-		 * Appends an interlude line spanning the given window.
-		 */
 		void addInterlude(::lyric::Info& info, std::uint32_t startMs, std::uint32_t endMs) {
 			// Time is on `Line`; the interlude body carries no fields of its own.
 			::lyric::Line* line = info.add_lines();

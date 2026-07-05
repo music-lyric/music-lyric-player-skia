@@ -122,9 +122,6 @@ namespace music_lyric_player::playback {
 		 */
 		double getEffectiveTime() const;
 
-		/**
-		 * Rebuilds the merged line-end table from the current lyric and merge config.
-		 */
 		void buildMergedLineEnd();
 
 		/**
@@ -137,9 +134,6 @@ namespace music_lyric_player::playback {
 		 */
 		std::vector<int> bridgeActive(const std::vector<int>& index) const;
 
-		/**
-		 * Emits `onLinesUpdate` with the bridged active indices.
-		 */
 		void emitLinesUpdate(bool isSeek);
 
 		/**

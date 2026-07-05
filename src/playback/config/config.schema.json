@@ -1,5 +1,5 @@
 {
-  "namespace": "music_lyric_player::playback",
+  "namespace": "music_lyric_player::playback::config",
   "file": "config.gen.h",
   "items": [
     {
@@ -12,7 +12,7 @@
       ]
     },
     {
-      "name": "Config",
+      "name": "Root",
       "desc": "Timing-engine configuration.",
       "fields": [
         { "name": "bridgeActive", "type": "bool", "default": "true", "desc": "fill active-index gaps" },

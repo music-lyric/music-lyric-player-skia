@@ -5,7 +5,7 @@
 #include <optional>
 #include <vector>
 
-#include "playback/config/config.h"
+#include "playback/config/index.h"
 #include "playback/merger.h"
 #include "playback/offset.h"
 #include "info.pb.h"
@@ -104,7 +104,7 @@ namespace music_lyric_player::playback {
 		 */
 		const Clock& clock() const;
 
-		ConfigManager config;
+		config::Manager config;
 
 		Signal<double>                             onPlay;
 		Signal<double>                             onPause;
@@ -155,7 +155,7 @@ namespace music_lyric_player::playback {
 		/**
 		 * Reacts to a config change by re-deriving offset / merge and resyncing.
 		 */
-		void onConfigUpdate(const ChangeKeys& keys);
+		void onConfigUpdate(const config::ChangeKeys& keys);
 
 		const Clock&     clock_;
 		bool             playing_   = false;

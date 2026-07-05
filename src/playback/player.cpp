@@ -67,7 +67,7 @@ namespace music_lyric_player::playback {
 
 	Player::Player(const Clock& clock)
 	    : clock_(clock) {
-		configListenerId_ = config.onUpdate.add([this](const ChangeKeys& keys, const Config&) {
+		configListenerId_ = config.onUpdate.add([this](const config::ChangeKeys& keys, const config::Root&) {
 			onConfigUpdate(keys);
 		});
 	}
@@ -296,18 +296,18 @@ namespace music_lyric_player::playback {
 		emitLinesUpdate(false);
 	}
 
-	void Player::onConfigUpdate(const ChangeKeys& keys) {
+	void Player::onConfigUpdate(const config::ChangeKeys& keys) {
 		// Toggling meta usage re-derives the lyric offset from the current info.
-		const bool metaToggled = keyHas(keys, ConfigKeys::offset::useMeta);
+		const bool metaToggled = config::keyHas(keys, config::Keys::offset::useMeta);
 		if (metaToggled) {
 			offset_.refreshFromMeta(info_, config.current().offset.useMeta);
 		}
 		// An offset change shifts effective time, so re-match active lines.
-		if (metaToggled || keyHas(keys, ConfigKeys::offset::global)) {
+		if (metaToggled || config::keyHas(keys, config::Keys::offset::global)) {
 			syncTime();
 		}
 		// Merge settings changed: rebuild merged ends and re-match.
-		if (keyHas(keys, ConfigKeys::mergeWindow) || keyHas(keys, ConfigKeys::mergeLimit)) {
+		if (config::keyHas(keys, config::Keys::mergeWindow) || config::keyHas(keys, config::Keys::mergeLimit)) {
 			buildMergedLineEnd();
 			syncTime();
 		}

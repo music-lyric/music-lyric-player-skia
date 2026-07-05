@@ -1,0 +1,50 @@
+{
+  "namespace": "music_lyric_player::render::config::scroll",
+  "file": "index.gen.h",
+  "items": [
+    {
+      "name": "AnimationConfig",
+      "desc": "Transition animation used when the active line changes.",
+      "fields": [
+        {
+          "name": "duration",
+          "type": "double",
+          "default": "450.0",
+          "desc": [
+            "Transition duration when the active line changes, in `ms`.",
+            "`0` snaps to the target without easing.",
+            "",
+            "@default 450"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Root",
+      "desc": "Viewport scrolling behaviour driven by the active line.",
+      "fields": [
+        {
+          "name": "anchor",
+          "type": "double",
+          "default": "0.5",
+          "desc": [
+            "Vertical anchor of the active line inside the viewport,",
+            "as a ratio (`0`–`1`) of its height.",
+            "",
+            "- `0.5` — keep the active line at the vertical center",
+            "- `0.3` — keep the active line closer to the top",
+            "",
+            "@default 0.5"
+          ]
+        },
+        {
+          "name": "animation",
+          "nested": "AnimationConfig",
+          "desc": [
+            "Transition animation used when the active line changes."
+          ]
+        }
+      ]
+    }
+  ]
+}

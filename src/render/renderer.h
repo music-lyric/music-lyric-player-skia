@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "include/core/SkRefCnt.h"
-#include "render/config/config.h"
+#include "render/config/index.h"
 #include "utils/clock/clock.h"
 
 class SkCanvas;
@@ -65,7 +65,7 @@ namespace music_lyric_player::render {
 		 */
 		void dispose();
 
-		ConfigManager config;
+		config::Manager config;
 
 	private:
 		/**

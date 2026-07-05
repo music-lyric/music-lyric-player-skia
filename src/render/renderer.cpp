@@ -26,11 +26,18 @@
 #include "modules/skunicode/include/SkUnicode.h"
 #include "modules/skunicode/include/SkUnicode_icu.h"
 #include "playback/player.h"
+#include "render/utils/length.h"
 
 namespace tl = ::skia::textlayout;
 
 namespace music_lyric_player::render {
 	namespace {
+		// Numeric fallbacks mirroring the string length defaults in the config schema,
+		// used when a config value fails to parse.
+		constexpr double kDefaultFontSize = 34.0; // line.font.size     ("34px")
+		constexpr double kDefaultPaddingX = 48.0; // container.paddingX ("48px")
+		constexpr double kDefaultGap      = 16.0; // layout.gap         ("16px")
+
 		/**
 		 * Maps the config's integer alignment onto SkParagraph's `TextAlign`.
 		 */
@@ -72,7 +79,7 @@ namespace music_lyric_player::render {
 		linesListener_  = player_.onLinesUpdate.add([this](const std::vector<int>&, int firstIndex, bool) {
 			handleLinesUpdate(firstIndex);
 		});
-		configListener_ = config.onUpdate.add([this](const ChangeKeys&, const Config&) {
+		configListener_ = config.onUpdate.add([this](const config::ChangeKeys&, const config::Root&) {
 			handleConfigUpdate();
 		});
 
@@ -152,19 +159,19 @@ namespace music_lyric_player::render {
 		if (!unicode_ || !fonts_) {
 			return nullptr;
 		}
-		const Config& cfg = config.current();
+		const config::Root& cfg = config.current();
 
 		tl::TextStyle textStyle;
 		textStyle.setColor(SK_ColorWHITE); // tinted per state at paint time via kModulate
-		textStyle.setFontSize(static_cast<SkScalar>(cfg.fontSize));
-		if (!cfg.fontFamily.empty()) {
-			textStyle.setFontFamilies({SkString(cfg.fontFamily.c_str())});
+		textStyle.setFontSize(static_cast<SkScalar>(resolveLength(cfg.line.font.size, kDefaultFontSize)));
+		if (!cfg.line.font.family.empty()) {
+			textStyle.setFontFamilies({SkString(cfg.line.font.family.c_str())});
 		}
 		textStyle.setFontStyle(SkFontStyle::Normal());
 
 		tl::ParagraphStyle paraStyle;
 		paraStyle.setTextStyle(textStyle);
-		paraStyle.setTextAlign(toTextAlign(cfg.align));
+		paraStyle.setTextAlign(toTextAlign(cfg.layout.align));
 
 		std::unique_ptr<tl::ParagraphBuilder> builder = tl::ParagraphBuilder::make(paraStyle, fonts_, unicode_);
 		if (!builder) {
@@ -178,11 +185,15 @@ namespace music_lyric_player::render {
 		if (!layoutDirty_ && contentWidth == layoutWidth_) {
 			return;
 		}
-		const Config& cfg       = config.current();
-		const float   wrapWidth = std::max(contentWidth, 1.0f);
+		const float wrapWidth = std::max(contentWidth, 1.0f);
 		for (RenderLine& line : lines_) {
-			const std::string& text = line.interlude ? cfg.interludeText : line.text;
-			line.paragraph          = buildParagraph(text);
+			// Interlude lines have no renderer yet; lay them out empty so they occupy no paint.
+			if (line.interlude) {
+				line.paragraph = nullptr;
+				line.height    = 0.0f;
+				continue;
+			}
+			line.paragraph = buildParagraph(line.text);
 			if (line.paragraph) {
 				line.paragraph->layout(wrapWidth);
 				line.height = line.paragraph->getHeight();
@@ -195,7 +206,7 @@ namespace music_lyric_player::render {
 	}
 
 	float Renderer::sampleScroll(double nowMs) const {
-		const double duration = config.current().scrollDuration;
+		const double duration = config.current().scroll.animation.duration;
 		if (duration <= 0.0) {
 			return scrollTo_;
 		}
@@ -211,10 +222,10 @@ namespace music_lyric_player::render {
 		if (canvas == nullptr) {
 			return;
 		}
-		const Config& cfg = config.current();
+		const config::Root& cfg = config.current();
 
 		// Background always fills, even before a lyric loads.
-		canvas->clear(static_cast<SkColor>(cfg.backgroundColor));
+		canvas->clear(static_cast<SkColor>(cfg.container.backgroundColor));
 
 		if (viewportW_ <= 0 || viewportH_ <= 0) {
 			return;
@@ -226,7 +237,7 @@ namespace music_lyric_player::render {
 		const float logicalW = static_cast<float>(viewportW_) / dpr_;
 		const float logicalH = static_cast<float>(viewportH_) / dpr_;
 
-		const float padX         = std::min(static_cast<float>(cfg.paddingX), logicalW * 0.5f);
+		const float padX         = std::min(static_cast<float>(resolveLength(cfg.container.paddingX, kDefaultPaddingX, logicalW)), logicalW * 0.5f);
 		const float contentWidth = std::max(logicalW - 2.0f * padX, 1.0f);
 		ensureLayout(contentWidth);
 
@@ -234,7 +245,7 @@ namespace music_lyric_player::render {
 			return;
 		}
 
-		const float gap = static_cast<float>(cfg.lineGap);
+		const float gap = static_cast<float>(resolveLength(cfg.layout.gap, kDefaultGap, logicalH));
 
 		// Stack each line below the previous plus the gap; no off-screen virtualization yet.
 		std::vector<float> tops(lines_.size(), 0.0f);
@@ -248,7 +259,7 @@ namespace music_lyric_player::render {
 		const std::size_t focus       = (activeIndex_ >= 0 && activeIndex_ < static_cast<int>(lines_.size()))
 			? static_cast<std::size_t>(activeIndex_)
 			: 0;
-		const float       anchorY     = logicalH * static_cast<float>(cfg.anchor);
+		const float       anchorY     = logicalH * static_cast<float>(cfg.scroll.anchor);
 		const float       focusCentre = tops[focus] + lines_[focus].height * 0.5f;
 		const float       targetY     = focusCentre - anchorY;
 
@@ -265,7 +276,7 @@ namespace music_lyric_player::render {
 			scrollTo_          = targetY;
 			scrollAnimStartMs_ = nowMs;
 			scrollFocus_       = static_cast<int>(focus);
-		} else if (nowMs - scrollAnimStartMs_ >= cfg.scrollDuration) {
+		} else if (nowMs - scrollAnimStartMs_ >= cfg.scroll.animation.duration) {
 			// Tween finished; track layout-driven target changes instantly.
 			scrollFrom_ = targetY;
 			scrollTo_   = targetY;
@@ -286,13 +297,8 @@ namespace music_lyric_player::render {
 				continue;
 			}
 
-			SkColor color;
-			if (line.interlude) {
-				color = static_cast<SkColor>(cfg.interludeColor);
-			} else {
-				const bool isActive = static_cast<int>(i) == activeIndex_;
-				color               = static_cast<SkColor>(isActive ? cfg.activeColor : cfg.normalColor);
-			}
+			const bool    isActive = static_cast<int>(i) == activeIndex_;
+			const SkColor color    = static_cast<SkColor>(isActive ? cfg.line.active.color : cfg.line.normal.color);
 
 			// The paragraph is opaque white; a modulate layer tints it to the state colour without re-shaping.
 			SkPaint layerPaint;

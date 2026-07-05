@@ -1,0 +1,40 @@
+{
+  "namespace": "music_lyric_player::render::config::layout",
+  "file": "index.gen.h",
+  "items": [
+    {
+      "name": "Root",
+      "desc": "Geometric layout rules applied to every lyric line.",
+      "fields": [
+        {
+          "name": "align",
+          "type": "int",
+          "default": "0",
+          "desc": [
+            "Horizontal alignment of lines within the container.",
+            "",
+            "- `0` — left",
+            "- `1` — center",
+            "- `2` — right",
+            "",
+            "@default 0"
+          ]
+        },
+        {
+          "name": "gap",
+          "type": "::std::string",
+          "default": "\"16px\"",
+          "desc": [
+            "Vertical spacing between adjacent lines.",
+            "A bare number or `px` is absolute; `%` is relative to the viewport height.",
+            "",
+            "@default \"16px\"",
+            "@example 16",
+            "@example \"16px\"",
+            "@example \"2%\""
+          ]
+        }
+      ]
+    }
+  ]
+}

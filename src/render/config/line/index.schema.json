@@ -1,0 +1,93 @@
+{
+  "namespace": "music_lyric_player::render::config::line",
+  "file": "index.gen.h",
+  "items": [
+    {
+      "name": "FontConfig",
+      "desc": "Font appearance shared by every lyric line.",
+      "fields": [
+        {
+          "name": "family",
+          "type": "::std::string",
+          "desc": [
+            "Font family name; empty uses the platform default.",
+            "",
+            "@default \"\"",
+            "@example \"PingFang SC\""
+          ]
+        },
+        {
+          "name": "size",
+          "type": "::std::string",
+          "default": "\"34px\"",
+          "desc": [
+            "Font size; a bare number or `px` is absolute.",
+            "`%` is relative to the parent line's font size (e.g. translation / background lines).",
+            "",
+            "@default \"34px\"",
+            "@example 34",
+            "@example \"34px\"",
+            "@example \"80%\""
+          ]
+        }
+      ]
+    },
+    {
+      "name": "NormalConfig",
+      "desc": "Style of inactive lines.",
+      "fields": [
+        {
+          "name": "color",
+          "type": "unsigned int",
+          "default": "0x66ffffffu",
+          "desc": [
+            "ARGB color of inactive lines.",
+            "@default 0x66ffffffu"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ActiveConfig",
+      "desc": "Style of the active line.",
+      "fields": [
+        {
+          "name": "color",
+          "type": "unsigned int",
+          "default": "0xffffffffu",
+          "desc": [
+            "ARGB color of the active line.",
+            "@default 0xffffffffu"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Root",
+      "desc": "Lyric line rendering: shared font and per-state colors.",
+      "fields": [
+        {
+          "name": "font",
+          "nested": "FontConfig",
+          "desc": [
+            "Font shared by every line."
+          ]
+        },
+        {
+          "name": "normal",
+          "nested": "NormalConfig",
+          "desc": [
+            "Style of inactive lines."
+          ]
+        },
+        {
+          "name": "active",
+          "nested": "ActiveConfig",
+          "desc": [
+            "Style of the active line."
+          ]
+        }
+      ]
+    }
+  ]
+}

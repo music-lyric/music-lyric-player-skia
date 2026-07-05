@@ -8,7 +8,7 @@
 
 #include "utils/event/signal.h"
 
-namespace music_lyric_player::config {
+namespace music_lyric_player::utils::config {
 	/**
 	 * Set of changed dot-path keys emitted on a config update.
 	 * Transparent comparator so lookups accept `string_view` / generated key constants.
@@ -78,6 +78,6 @@ namespace music_lyric_player::config {
 		Signal<const ChangeKeys&, const Config&> onUpdate;
 		Signal<const Config&>                    onReset;
 	};
-} // namespace music_lyric_player::config
+} // namespace music_lyric_player::utils::config
 
 #endif

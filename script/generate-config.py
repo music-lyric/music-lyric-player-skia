@@ -8,11 +8,17 @@ with defaults, its deeply-optional `Patch` mirror, `applyConfigPatch` (deep-merg
 next to the schema, opened with `// clang-format off`.
 
 Schema shape:
-    { "namespace": "a::b", "file": "config.gen.h", "items": [
+    { "namespace": "a::b", "file": "config.gen.h",
+      "imports"?: [ { "as": "alias", "schema": "other.schema.json" } ],
+      "items": [
         { "name": "Sub",  "fields": [ { "name": "x", "type": "double", "default"?: "0.0", "desc"?: "..." } ] },
-        { "name": "Root", "fields": [ { "name": "sub", "nested": "Sub" } ] } ] }
-A leaf field has `type` (+ optional `default`); a nested field has `nested` naming an
-earlier config. `desc` is optional.
+        { "name": "Root", "fields": [ { "name": "sub", "nested": "Sub" },
+                                      { "name": "ext", "nested": "alias.Root" } ] } ] }
+A leaf field has `type` (+ optional `default`); a nested field has `nested` naming a
+config. A bare name (`"Sub"`) targets an earlier config in the same schema; a
+dotted name (`"alias.Root"`) targets a config from an imported schema, referenced by
+its fully-qualified type and pulled in with an `#include`. `desc` (a string, or a
+list of lines) is optional.
 
 Usage: `python script/generate-config.py [<schema.json> ...]`. With no args, every
 *.schema.json under the project (excluding build / vendored dirs) is generated.
@@ -31,13 +37,30 @@ class SchemaError(Exception):
     """A human-readable problem with the input schema."""
 
 
+class Module:
+    """A loaded schema plus its resolved imports, ready to render or reference."""
+
+    def __init__(self, path, schema):
+        self.path = path
+        self.namespace = schema["namespace"]
+        self.file = schema["file"]
+        self.items = schema["items"]
+        self.by_name = {c["name"]: c for c in schema["items"]}
+        self.imports = {}  # alias -> Module
+
+
 def is_nested(field):
     """Whether a field is a nested child config rather than a leaf value."""
     return "nested" in field
 
 
-def validate(schema):
-    """Reject malformed schemas with a clear message before any code is emitted."""
+def is_valid_desc(value):
+    """Whether a `desc` is a string or a list of strings."""
+    return isinstance(value, str) or (isinstance(value, list) and all(isinstance(line, str) for line in value))
+
+
+def validate_structure(schema):
+    """Reject a malformed schema with a clear message; dotted `nested` targets are checked in `validate_refs`."""
     if not isinstance(schema, dict):
         raise SchemaError("root must be an object")
 
@@ -48,6 +71,23 @@ def validate(schema):
     out_file = schema.get("file")
     if not isinstance(out_file, str) or not out_file:
         raise SchemaError("'file' must be a non-empty string (the generated header name)")
+
+    imports = schema.get("imports", [])
+    if not isinstance(imports, list):
+        raise SchemaError("'imports' must be an array")
+    aliases = set()
+    for index, imp in enumerate(imports):
+        if not isinstance(imp, dict):
+            raise SchemaError(f"imports[{index}] must be an object")
+        alias = imp.get("as")
+        if not isinstance(alias, str) or not alias:
+            raise SchemaError(f"imports[{index}].as must be a non-empty string")
+        if alias in aliases:
+            raise SchemaError(f"duplicate import alias '{alias}'")
+        aliases.add(alias)
+        target = imp.get("schema")
+        if not isinstance(target, str) or not target:
+            raise SchemaError(f"import '{alias}'.schema must be a non-empty string (a *.schema.json path)")
 
     items = schema.get("items")
     if not isinstance(items, list) or not items:
@@ -63,6 +103,8 @@ def validate(schema):
             raise SchemaError(f"items[{index}].name must be a non-empty string")
         if name in defined:
             raise SchemaError(f"duplicate config name '{name}'")
+        if "desc" in item and not is_valid_desc(item["desc"]):
+            raise SchemaError(f"config '{name}'.desc must be a string or a list of strings")
 
         fields = item.get("fields")
         if not isinstance(fields, list):
@@ -81,13 +123,20 @@ def validate(schema):
                 raise SchemaError(f"duplicate field '{field_name}' in config '{name}'")
             seen.add(field_name)
 
+            if "desc" in field and not is_valid_desc(field["desc"]):
+                raise SchemaError(f"{at} ('{field_name}').desc must be a string or a list of strings")
+
             if is_nested(field):
                 if "type" in field or "default" in field:
                     raise SchemaError(f"{at} ('{field_name}') is nested and must not have 'type'/'default'")
                 target = field["nested"]
                 if not isinstance(target, str) or not target:
                     raise SchemaError(f"{at} ('{field_name}').nested must be a non-empty string")
-                if target not in defined:
+                if "." in target:
+                    alias = target.split(".", 1)[0]
+                    if alias not in aliases:
+                        raise SchemaError(f"{at} ('{field_name}') nests '{target}', but import '{alias}' is not declared")
+                elif target not in defined:
                     raise SchemaError(f"{at} ('{field_name}') nests '{target}', which must be defined before '{name}'")
             else:
                 field_type = field.get("type")
@@ -99,45 +148,141 @@ def validate(schema):
         defined.add(name)
 
 
+def validate_refs(module):
+    """Verify that every dotted `nested` target resolves to a struct in the named import."""
+    for cfg in module.items:
+        for field in cfg["fields"]:
+            if not is_nested(field) or "." not in field["nested"]:
+                continue
+            alias, _, struct = field["nested"].partition(".")
+            target = module.imports.get(alias)
+            if target is None:
+                raise SchemaError(f"config '{cfg['name']}' nests '{field['nested']}', but import '{alias}' failed to load")
+            if struct not in target.by_name:
+                raise SchemaError(f"config '{cfg['name']}' nests '{field['nested']}', but '{struct}' is not defined in that schema")
+
+
+def load_module(path, cache, loading=None):
+    """Read, validate and resolve a schema (and its imports) into a Module, memoised by path."""
+    key = path.resolve()
+    if key in cache:
+        return cache[key]
+    loading = loading if loading is not None else set()
+    if key in loading:
+        raise SchemaError(f"import cycle detected at {path}")
+    loading.add(key)
+
+    try:
+        raw = path.read_text(encoding="utf-8")
+    except OSError as error:
+        raise SchemaError(f"cannot read {path}: {error}")
+    try:
+        schema = json.loads(raw)
+    except json.JSONDecodeError as error:
+        raise SchemaError(f"invalid JSON in {path}: {error}")
+
+    validate_structure(schema)
+    module = Module(path, schema)
+
+    for imp in schema.get("imports", []):
+        imp_path = (path.parent / imp["schema"]).resolve()
+        if not imp_path.is_file():
+            raise SchemaError(f"import '{imp['as']}' of {path.name} points to missing schema {imp_path}")
+        module.imports[imp["as"]] = load_module(imp_path, cache, loading)
+
+    validate_refs(module)
+    loading.discard(key)
+    cache[key] = module
+    return module
+
+
+def resolve_nested(module, value):
+    """Resolve a `nested` reference (bare = local & unqualified, dotted `alias.Struct` = imported & fully-qualified) to `(module, cfg, type, patch_type)`."""
+    if "." in value:
+        alias, _, struct = value.partition(".")
+        target = module.imports[alias]
+        type_str = f"::{target.namespace}::{struct}"
+        return target, target.by_name[struct], type_str, type_str + "Patch"
+    return module, module.by_name[value], value, value + "Patch"
+
+
+def include_path_for(out_path):
+    """Project-relative include path for a generated header (relative to the nearest `src/`)."""
+    parts = out_path.resolve().parts
+    if "src" in parts:
+        cut = len(parts) - 1 - parts[::-1].index("src")
+        return "/".join(parts[cut + 1:])
+    return out_path.name
+
+
+def referenced_includes(module):
+    """Include paths for every imported header actually referenced by a nested field."""
+    paths = set()
+    for cfg in module.items:
+        for field in cfg["fields"]:
+            if is_nested(field) and "." in field["nested"]:
+                target = module.imports[field["nested"].split(".", 1)[0]]
+                paths.add(include_path_for(target.path.parent / target.file))
+    return sorted(paths)
+
+
+def doc_lines(desc):
+    """Normalise a `desc` (absent, a string, or a list of strings) into a list of lines."""
+    if desc is None:
+        return []
+    return list(desc) if isinstance(desc, list) else [desc]
+
+
 def jsdoc(desc, indent):
-    """Render an optional one-line description as a multi-line JSDoc block."""
-    if not desc:
+    """Render an optional description (a string or a list of lines) as a multi-line JSDoc block."""
+    lines = doc_lines(desc)
+    if not lines:
         return ""
-    return f"{indent}/**\n{indent} * {desc}\n{indent} */\n"
+    body = "\n".join(f"{indent} * {line}" if line else f"{indent} *" for line in lines)
+    return f"{indent}/**\n{body}\n{indent} */\n"
+
+
+def field_doc(field, indent):
+    """JSDoc block placed above a field whose `desc` is a list of lines; string descs use `note`."""
+    return jsdoc(field["desc"], indent) if isinstance(field.get("desc"), list) else ""
 
 
 def note(field):
-    """Trailing `// desc` comment for a field, or empty."""
-    return f"  // {field['desc']}" if field.get("desc") else ""
+    """Trailing `// desc` comment for a single-line (string) `desc`, or empty."""
+    desc = field.get("desc")
+    return f"  // {desc}" if isinstance(desc, str) and desc else ""
 
 
-def gen_struct(cfg):
+def gen_struct(cfg, module):
     """Emit the resolved struct; leaves carry their defaults (value-initialised when omitted)."""
     out = [jsdoc(cfg.get("desc"), "\t") + f"\tstruct {cfg['name']} {{"]
     for field in cfg["fields"]:
+        above = field_doc(field, "\t\t")
         if is_nested(field):
-            out.append(f"\t\t{field['nested']} {field['name']};{note(field)}")
+            _, _, type_str, _ = resolve_nested(module, field["nested"])
+            out.append(f"{above}\t\t{type_str} {field['name']};{note(field)}")
         else:
             default = field.get("default", "{}")
-            out.append(f"\t\t{field['type']} {field['name']} = {default};{note(field)}")
+            out.append(f"{above}\t\t{field['type']} {field['name']} = {default};{note(field)}")
     out.append("\t};")
     return "\n".join(out)
 
 
-def gen_patch(cfg):
+def gen_patch(cfg, module):
     """Emit the deeply-optional patch mirror of a config."""
     out = [f"\tstruct {cfg['name']}Patch {{"]
     for field in cfg["fields"]:
         if is_nested(field):
-            out.append(f"\t\t{field['nested']}Patch {field['name']};")
+            _, _, _, patch_str = resolve_nested(module, field["nested"])
+            out.append(f"\t\t{patch_str} {field['name']};")
         else:
             out.append(f"\t\t::std::optional<{field['type']}> {field['name']};")
     out.append("\t};")
     return "\n".join(out)
 
 
-def gen_apply(cfg):
-    """Emit applyConfigPatch: deep-merge a patch into a config."""
+def gen_apply(cfg, module):
+    """Emit applyConfigPatch: deep-merge a patch into a config (nested calls resolve via ADL)."""
     name = cfg["name"]
     fields = cfg["fields"]
     unused = "" if fields else "[[maybe_unused]] "
@@ -155,7 +300,7 @@ def gen_apply(cfg):
     return "\n".join(out)
 
 
-def gen_diff(cfg):
+def gen_diff(cfg, module):
     """Emit diffConfig: collect changed dot-paths; a changed child also records its parent path."""
     name = cfg["name"]
     fields = cfg["fields"]
@@ -163,7 +308,7 @@ def gen_diff(cfg):
     out = ["\t/**\n\t * Diffs two configs into a dot-path key set; a changed child also records its parent path.\n\t */"]
     out.append(
         f"\tinline void diffConfig({unused}const {name}& prev, {unused}const {name}& next, "
-        f"{unused}const ::std::string& prefix, {unused}::music_lyric_player::config::ChangeKeys& keys) {{"
+        f"{unused}const ::std::string& prefix, {unused}::music_lyric_player::utils::config::ChangeKeys& keys) {{"
     )
     for field in fields:
         n = field["name"]
@@ -183,31 +328,31 @@ def gen_diff(cfg):
     return "\n".join(out)
 
 
-def gen_keys(cfg, by_name):
+def gen_keys(cfg, module):
     """Emit `namespace <Name>Keys` of full dot-path string_view constants (nested = sub-namespaces)."""
-    def emit(fields, prefix, indent):
+    def emit(fields, prefix, indent, mod):
         lines = []
         for field in fields:
             n = field["name"]
             if is_nested(field):
+                target_mod, target_cfg, _, _ = resolve_nested(mod, field["nested"])
                 lines.append(f"{indent}namespace {n} {{")
-                lines += emit(by_name[field["nested"]]["fields"], prefix + n + ".", indent + "\t")
+                lines += emit(target_cfg["fields"], prefix + n + ".", indent + "\t", target_mod)
                 lines.append(f"{indent}}} // namespace {n}")
             else:
                 lines.append(f'{indent}inline constexpr ::std::string_view {n}{{"{prefix + n}"}};')
         return lines
 
     out = [f"\tnamespace {cfg['name']}Keys {{"]
-    out += emit(cfg["fields"], "", "\t\t")
+    out += emit(cfg["fields"], "", "\t\t", module)
     out.append(f"\t}} // namespace {cfg['name']}Keys")
     return "\n".join(out)
 
 
-def render(schema, schema_name):
+def render(module, schema_name):
     """Render the whole generated header as a string."""
-    namespace = schema["namespace"]
-    items = schema["items"]
-    by_name = {c["name"]: c for c in items}
+    namespace = module.namespace
+    items = module.items
     guard = namespace.replace("::", "_").upper() + "_CONFIG_GEN_H_"
 
     parts = [
@@ -223,6 +368,9 @@ def render(schema, schema_name):
         "#include <string_view>",
         "",
         '#include "utils/manager/config.h"',
+    ]
+    parts += [f'#include "{path}"' for path in referenced_includes(module)]
+    parts += [
         "",
         f"namespace {namespace} {{",
     ]
@@ -230,10 +378,10 @@ def render(schema, schema_name):
     # structs, then patches, then merge, then diff, then key trees
     for stage in (gen_struct, gen_patch, gen_apply, gen_diff):
         for cfg in items:
-            parts.append(stage(cfg))
+            parts.append(stage(cfg, module))
             parts.append("")
     for cfg in items:
-        parts.append(gen_keys(cfg, by_name))
+        parts.append(gen_keys(cfg, module))
         parts.append("")
 
     parts.append(f"}} // namespace {namespace}")
@@ -256,28 +404,16 @@ def scan_schemas(root):
 
 
 def generate_one(schema_path):
-    """Read, validate and generate a single schema; returns 0 on success, 1 on error."""
+    """Load, validate and generate a single schema (resolving imports); 0 on success, 1 on error."""
     try:
-        raw = schema_path.read_text(encoding="utf-8")
-    except OSError as error:
-        print(f"error: cannot read {schema_path}: {error}", file=sys.stderr)
-        return 1
-
-    try:
-        schema = json.loads(raw)
-    except json.JSONDecodeError as error:
-        print(f"error: invalid JSON in {schema_path}: {error}", file=sys.stderr)
-        return 1
-
-    try:
-        validate(schema)
+        module = load_module(schema_path, cache={})
     except SchemaError as error:
         print(f"error: {schema_path}: {error}", file=sys.stderr)
         return 1
 
-    out_path = schema_path.parent / schema["file"]
+    out_path = schema_path.parent / module.file
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(render(schema, schema_path.name), encoding="utf-8")
+    out_path.write_text(render(module, schema_path.name), encoding="utf-8")
     print(f"generated {out_path} from {schema_path}")
     return 0
 

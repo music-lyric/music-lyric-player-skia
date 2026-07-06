@@ -14,7 +14,8 @@ target_link_libraries(music_lyric_player_playback PUBLIC
 	music_lyric_model::music_lyric_model)
 
 add_library(music_lyric_player_render
-	render/components/line/normal.cpp
+	render/components/line/normal/index.cpp
+	render/components/line/interlude/index.cpp
 	render/renderer.cpp
 )
 add_library(music_lyric_player::render ALIAS music_lyric_player_render)

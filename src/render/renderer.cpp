@@ -17,7 +17,8 @@
 #include "modules/skunicode/include/SkUnicode_icu.h"
 #include "playback/player.h"
 #include "render/common/context.h"
-#include "render/components/line/normal.h"
+#include "render/components/line/interlude/index.h"
+#include "render/components/line/normal/index.h"
 #include "render/utils/animation/easing.h"
 #include "render/utils/length.h"
 
@@ -115,10 +116,12 @@ namespace music_lyric_player::render {
 		lines_.clear();
 		lines_.reserve(static_cast<std::size_t>(std::max(info.lines_size(), 0)));
 		for (int i = 0; i < info.lines_size(); ++i) {
-			const ::lyric::Line& line      = info.lines(i);
-			const bool           interlude = ::music_lyric_model::isLineInterlude(line);
-			std::string          text      = interlude ? std::string{} : ::music_lyric_model::getLineText(line);
-			lines_.push_back(std::make_unique<components::line::Normal>(i, std::move(text), interlude));
+			const ::lyric::Line& line = info.lines(i);
+			if (::music_lyric_model::isLineInterlude(line)) {
+				lines_.push_back(std::make_unique<components::line::interlude::Element>(i));
+			} else {
+				lines_.push_back(std::make_unique<components::line::normal::Element>(i, ::music_lyric_model::getLineText(line)));
+			}
 		}
 		// Drop the scroll tween so a freshly loaded lyric snaps into place instead of sliding from the old song.
 		scrollInit_  = false;
@@ -130,7 +133,7 @@ namespace music_lyric_player::render {
 		if (!layoutDirty_ && contentWidth == layoutWidth_) {
 			return;
 		}
-		for (const std::unique_ptr<components::line::Normal>& line : lines_) {
+		for (const std::unique_ptr<components::line::base::Element>& line : lines_) {
 			line->layout(contentWidth, context);
 		}
 		layoutDirty_ = false;
@@ -203,8 +206,8 @@ namespace music_lyric_player::render {
 		const float scrollY = scroll_.sample(nowMs);
 
 		for (std::size_t i = 0; i < lines_.size(); ++i) {
-			components::line::Normal& line = *lines_[i];
-			const float               y    = tops[i] - scrollY;
+			components::line::base::Element& line = *lines_[i];
+			const float                     y    = tops[i] - scrollY;
 			// Cull lines fully outside the viewport.
 			if (y + line.height() < 0.0f || y > logicalH) {
 				continue;

@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "include/core/SkRefCnt.h"
-#include "render/components/line/normal.h"
+#include "render/components/line/base/index.h"
 #include "render/config/index.h"
 #include "render/utils/animation/tween.h"
 #include "utils/clock/clock.h"
@@ -99,8 +99,8 @@ namespace music_lyric_player::render {
 		sk_sp<::skia::textlayout::FontCollection> fonts_;
 		sk_sp<SkUnicode>                          unicode_;
 
-		std::vector<std::unique_ptr<components::line::Normal>> lines_;
-		int                                                    activeIndex_ = -1;
+		std::vector<std::unique_ptr<components::line::base::Element>> lines_;
+		int                                                           activeIndex_ = -1;
 
 		int   viewportW_ = 0; // physical pixels
 		int   viewportH_ = 0; // physical pixels

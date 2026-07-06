@@ -1,4 +1,4 @@
-#include "render/components/line/normal.h"
+#include "render/components/line/normal/index.h"
 
 #include <algorithm>
 #include <memory>
@@ -25,7 +25,7 @@
 
 namespace tl = ::skia::textlayout;
 
-namespace music_lyric_player::render::components::line {
+namespace music_lyric_player::render::components::line::normal {
 	namespace {
 		// Numeric fallback mirroring the string default in the config schema, used when the value fails to parse.
 		constexpr double kDefaultFontSize = 34.0; // line.font.size ("34px")
@@ -45,18 +45,16 @@ namespace music_lyric_player::render::components::line {
 		}
 	} // namespace
 
-	Normal::Normal(int index, std::string text, bool interlude)
-	    : index_(index),
-	      text_(std::move(text)),
-	      interlude_(interlude) {}
+	Element::Element(int index, std::string text)
+	    : base::Element(index),
+	      text_(std::move(text)) {}
 
-	Normal::~Normal() = default;
+	Element::~Element() = default;
 
-	void Normal::layout(float width, const common::RenderContext& context) {
+	void Element::layout(float width, const common::RenderContext& context) {
 		width_ = std::max(width, 1.0f);
 
-		// Interlude lines have no component yet; keep them as zero-height placeholders that occupy no paint.
-		if (interlude_ || !context.fonts || !context.unicode) {
+		if (!context.fonts || !context.unicode) {
 			paragraph_ = nullptr;
 			height_    = 0.0f;
 			return;
@@ -92,7 +90,7 @@ namespace music_lyric_player::render::components::line {
 		}
 	}
 
-	void Normal::paint(SkCanvas* canvas, float x, float y, bool active, const common::RenderContext& context) const {
+	void Element::paint(SkCanvas* canvas, float x, float y, bool active, const common::RenderContext& context) const {
 		if (!paragraph_) {
 			return;
 		}
@@ -107,4 +105,4 @@ namespace music_lyric_player::render::components::line {
 		paragraph_->paint(canvas, x, y);
 		canvas->restore();
 	}
-} // namespace music_lyric_player::render::components::line
+} // namespace music_lyric_player::render::components::line::normal

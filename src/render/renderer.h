@@ -3,10 +3,10 @@
 
 #include <cstddef>
 #include <memory>
-#include <string>
 #include <vector>
 
 #include "include/core/SkRefCnt.h"
+#include "render/components/line/normal.h"
 #include "render/config/index.h"
 #include "render/utils/animation/tween.h"
 #include "utils/clock/clock.h"
@@ -17,7 +17,6 @@ class SkUnicode;
 
 namespace skia::textlayout {
 	class FontCollection;
-	class Paragraph;
 } // namespace skia::textlayout
 
 namespace lyric {
@@ -30,7 +29,7 @@ namespace music_lyric_player::playback {
 
 namespace music_lyric_player::render {
 	/**
-	 * Lays lyric lines out vertically with SkParagraph and paints each frame onto a caller-supplied `SkCanvas`.
+	 * Lays lyric line components out vertically and paints each frame onto a caller-supplied `SkCanvas`.
 	 * Owns no window or GPU context; holds the timing engine by reference and subscribes to its events.
 	 * Scrolling eases towards the active line with a clock-driven cubic tween.
 	 */
@@ -70,17 +69,6 @@ namespace music_lyric_player::render {
 
 	private:
 		/**
-		 * One lyric line's render state: its plain text plus lazily built, width-specific layout.
-		 */
-		struct RenderLine {
-			int                                            index     = -1;
-			bool                                           interlude = false;
-			std::string                                    text;
-			std::unique_ptr<::skia::textlayout::Paragraph> paragraph;
-			float                                          height = 0.0f;
-		};
-
-		/**
 		 * Rebuilds the line list from a freshly loaded lyric.
 		 */
 		void handleLyricUpdate(const ::lyric::Info& info);
@@ -101,14 +89,9 @@ namespace music_lyric_player::render {
 		void rebuildLines(const ::lyric::Info& info);
 
 		/**
-		 * (Re)builds each line's paragraph for the given content width when the layout is dirty.
+		 * (Re)lays out every line for the given content width when the layout is dirty.
 		 */
-		void ensureLayout(float contentWidth);
-
-		/**
-		 * Builds one white-text paragraph for `text`; the state colour is applied later at paint.
-		 */
-		std::unique_ptr<::skia::textlayout::Paragraph> buildParagraph(const std::string& text) const;
+		void ensureLayout(float contentWidth, const common::RenderContext& context);
 
 		playback::Player&                         player_;
 		sk_sp<SkFontMgr>                          fontMgr_;
@@ -116,8 +99,8 @@ namespace music_lyric_player::render {
 		sk_sp<::skia::textlayout::FontCollection> fonts_;
 		sk_sp<SkUnicode>                          unicode_;
 
-		std::vector<RenderLine> lines_;
-		int                     activeIndex_ = -1;
+		std::vector<std::unique_ptr<components::line::Normal>> lines_;
+		int                                                    activeIndex_ = -1;
 
 		int   viewportW_ = 0; // physical pixels
 		int   viewportH_ = 0; // physical pixels

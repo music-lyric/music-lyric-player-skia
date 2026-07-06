@@ -2,30 +2,22 @@
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
-#include "include/core/SkBlendMode.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColor.h"
-#include "include/core/SkColorFilter.h"
 #include "include/core/SkFontMgr.h"
-#include "include/core/SkFontStyle.h"
-#include "include/core/SkPaint.h"
-#include "include/core/SkRect.h"
-#include "include/core/SkScalar.h"
-#include "include/core/SkString.h"
 #include "info.pb.h"
 #include "line/content.h"
-#include "modules/skparagraph/include/DartTypes.h"
 #include "modules/skparagraph/include/FontCollection.h"
-#include "modules/skparagraph/include/Paragraph.h"
-#include "modules/skparagraph/include/ParagraphBuilder.h"
-#include "modules/skparagraph/include/ParagraphStyle.h"
-#include "modules/skparagraph/include/TextStyle.h"
 #include "modules/skunicode/include/SkUnicode.h"
 #include "modules/skunicode/include/SkUnicode_icu.h"
 #include "playback/player.h"
+#include "render/common/context.h"
+#include "render/components/line/normal.h"
 #include "render/utils/animation/easing.h"
 #include "render/utils/length.h"
 
@@ -35,23 +27,8 @@ namespace music_lyric_player::render {
 	namespace {
 		// Numeric fallbacks mirroring the string length defaults in the config schema,
 		// used when a config value fails to parse.
-		constexpr double kDefaultFontSize = 34.0; // line.font.size     ("34px")
 		constexpr double kDefaultPaddingX = 48.0; // container.paddingX ("48px")
 		constexpr double kDefaultGap      = 16.0; // layout.gap         ("16px")
-
-		/**
-		 * Maps the config's integer alignment onto SkParagraph's `TextAlign`.
-		 */
-		tl::TextAlign toTextAlign(int align) {
-			switch (align) {
-			case 1:
-				return tl::TextAlign::kCenter;
-			case 2:
-				return tl::TextAlign::kRight;
-			default:
-				return tl::TextAlign::kLeft;
-			}
-		}
 	} // namespace
 
 	Renderer::Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const Clock& clock)
@@ -138,12 +115,10 @@ namespace music_lyric_player::render {
 		lines_.clear();
 		lines_.reserve(static_cast<std::size_t>(std::max(info.lines_size(), 0)));
 		for (int i = 0; i < info.lines_size(); ++i) {
-			const ::lyric::Line& line = info.lines(i);
-			RenderLine           render;
-			render.index     = i;
-			render.interlude = ::music_lyric_model::isLineInterlude(line);
-			render.text      = render.interlude ? std::string{} : ::music_lyric_model::getLineText(line);
-			lines_.push_back(std::move(render));
+			const ::lyric::Line& line      = info.lines(i);
+			const bool           interlude = ::music_lyric_model::isLineInterlude(line);
+			std::string          text      = interlude ? std::string{} : ::music_lyric_model::getLineText(line);
+			lines_.push_back(std::make_unique<components::line::Normal>(i, std::move(text), interlude));
 		}
 		// Drop the scroll tween so a freshly loaded lyric snaps into place instead of sliding from the old song.
 		scrollInit_  = false;
@@ -151,51 +126,12 @@ namespace music_lyric_player::render {
 		layoutDirty_ = true;
 	}
 
-	std::unique_ptr<tl::Paragraph> Renderer::buildParagraph(const std::string& text) const {
-		if (!unicode_ || !fonts_) {
-			return nullptr;
-		}
-		const config::Root& cfg = config.current();
-
-		tl::TextStyle textStyle;
-		textStyle.setColor(SK_ColorWHITE); // tinted per state at paint time via kModulate
-		textStyle.setFontSize(static_cast<SkScalar>(resolveLength(cfg.line.font.size, kDefaultFontSize)));
-		if (!cfg.line.font.family.empty()) {
-			textStyle.setFontFamilies({SkString(cfg.line.font.family.c_str())});
-		}
-		textStyle.setFontStyle(SkFontStyle::Normal());
-
-		tl::ParagraphStyle paraStyle;
-		paraStyle.setTextStyle(textStyle);
-		paraStyle.setTextAlign(toTextAlign(cfg.layout.align));
-
-		std::unique_ptr<tl::ParagraphBuilder> builder = tl::ParagraphBuilder::make(paraStyle, fonts_, unicode_);
-		if (!builder) {
-			return nullptr;
-		}
-		builder->addText(text.c_str());
-		return builder->Build();
-	}
-
-	void Renderer::ensureLayout(float contentWidth) {
+	void Renderer::ensureLayout(float contentWidth, const common::RenderContext& context) {
 		if (!layoutDirty_ && contentWidth == layoutWidth_) {
 			return;
 		}
-		const float wrapWidth = std::max(contentWidth, 1.0f);
-		for (RenderLine& line : lines_) {
-			// Interlude lines have no renderer yet; lay them out empty so they occupy no paint.
-			if (line.interlude) {
-				line.paragraph = nullptr;
-				line.height    = 0.0f;
-				continue;
-			}
-			line.paragraph = buildParagraph(line.text);
-			if (line.paragraph) {
-				line.paragraph->layout(wrapWidth);
-				line.height = line.paragraph->getHeight();
-			} else {
-				line.height = 0.0f;
-			}
+		for (const std::unique_ptr<components::line::Normal>& line : lines_) {
+			line->layout(contentWidth, context);
 		}
 		layoutDirty_ = false;
 		layoutWidth_ = contentWidth;
@@ -205,7 +141,8 @@ namespace music_lyric_player::render {
 		if (canvas == nullptr) {
 			return;
 		}
-		const config::Root& cfg = config.current();
+		const config::Root&         cfg = config.current();
+		const common::RenderContext context{cfg, fonts_, unicode_};
 
 		// Background always fills, even before a lyric loads.
 		canvas->clear(static_cast<SkColor>(cfg.container.backgroundColor));
@@ -222,7 +159,7 @@ namespace music_lyric_player::render {
 
 		const float padX         = std::min(static_cast<float>(resolveLength(cfg.container.paddingX, kDefaultPaddingX, logicalW)), logicalW * 0.5f);
 		const float contentWidth = std::max(logicalW - 2.0f * padX, 1.0f);
-		ensureLayout(contentWidth);
+		ensureLayout(contentWidth, context);
 
 		if (lines_.empty()) {
 			return;
@@ -235,7 +172,7 @@ namespace music_lyric_player::render {
 		float              cursor = 0.0f;
 		for (std::size_t i = 0; i < lines_.size(); ++i) {
 			tops[i] = cursor;
-			cursor += lines_[i].height + gap;
+			cursor += lines_[i]->height() + gap;
 		}
 
 		// Centre the focus (primary active) line on the anchor.
@@ -243,7 +180,7 @@ namespace music_lyric_player::render {
 			? static_cast<std::size_t>(activeIndex_)
 			: 0;
 		const float       anchorY     = logicalH * static_cast<float>(cfg.scroll.anchor);
-		const float       focusCentre = tops[focus] + lines_[focus].height * 0.5f;
+		const float       focusCentre = tops[focus] + lines_[focus]->height() * 0.5f;
 		const float       targetY     = focusCentre - anchorY;
 
 		// Ease the scroll towards the focus line.
@@ -266,26 +203,14 @@ namespace music_lyric_player::render {
 		const float scrollY = scroll_.sample(nowMs);
 
 		for (std::size_t i = 0; i < lines_.size(); ++i) {
-			RenderLine& line = lines_[i];
-			if (!line.paragraph) {
-				continue;
-			}
-			const float y = tops[i] - scrollY;
+			components::line::Normal& line = *lines_[i];
+			const float               y    = tops[i] - scrollY;
 			// Cull lines fully outside the viewport.
-			if (y + line.height < 0.0f || y > logicalH) {
+			if (y + line.height() < 0.0f || y > logicalH) {
 				continue;
 			}
-
-			const bool    isActive = static_cast<int>(i) == activeIndex_;
-			const SkColor color    = static_cast<SkColor>(isActive ? cfg.line.active.color : cfg.line.normal.color);
-
-			// The paragraph is opaque white; a modulate layer tints it to the state colour without re-shaping.
-			SkPaint layerPaint;
-			layerPaint.setColorFilter(SkColorFilters::Blend(color, SkBlendMode::kModulate));
-			const SkRect bounds = SkRect::MakeXYWH(padX, y, contentWidth, line.height);
-			canvas->saveLayer(&bounds, &layerPaint);
-			line.paragraph->paint(canvas, padX, y);
-			canvas->restore();
+			const bool active = static_cast<int>(i) == activeIndex_;
+			line.paint(canvas, padX, y, active, context);
 		}
 	}
 } // namespace music_lyric_player::render

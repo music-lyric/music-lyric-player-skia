@@ -26,6 +26,7 @@
 #include "modules/skunicode/include/SkUnicode.h"
 #include "modules/skunicode/include/SkUnicode_icu.h"
 #include "playback/player.h"
+#include "render/utils/animation/easing.h"
 #include "render/utils/length.h"
 
 namespace tl = ::skia::textlayout;
@@ -51,14 +52,6 @@ namespace music_lyric_player::render {
 				return tl::TextAlign::kLeft;
 			}
 		}
-
-		/**
-		 * Cubic ease-in-out over a normalized 0..1 progress; the input is clamped to the range.
-		 */
-		float easeInOutCubic(float t) {
-			t = std::clamp(t, 0.0f, 1.0f);
-			return t < 0.5f ? 4.0f * t * t * t : 1.0f - std::pow(-2.0f * t + 2.0f, 3.0f) * 0.5f;
-		}
 	} // namespace
 
 	Renderer::Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const Clock& clock)
@@ -72,6 +65,9 @@ namespace music_lyric_player::render {
 
 		// Unicode backend drives SkParagraph's word / grapheme / line-break boundaries.
 		unicode_ = SkUnicodes::ICU::Make();
+
+		// The scroll offset eases with a fixed cubic curve; its duration is refreshed from config each frame.
+		scroll_.setEasing(animation::inOutCubic);
 
 		lyricListener_  = player_.onLyricUpdate.add([this](const ::lyric::Info& info) {
 			handleLyricUpdate(info);
@@ -205,19 +201,6 @@ namespace music_lyric_player::render {
 		layoutWidth_ = contentWidth;
 	}
 
-	float Renderer::sampleScroll(double nowMs) const {
-		const double duration = config.current().scroll.animation.duration;
-		if (duration <= 0.0) {
-			return scrollTo_;
-		}
-		const double elapsed = nowMs - scrollAnimStartMs_;
-		if (elapsed >= duration) {
-			return scrollTo_;
-		}
-		const float t = easeInOutCubic(static_cast<float>(elapsed / duration));
-		return scrollFrom_ + (scrollTo_ - scrollFrom_) * t;
-	}
-
 	void Renderer::render(SkCanvas* canvas) {
 		if (canvas == nullptr) {
 			return;
@@ -263,28 +246,24 @@ namespace music_lyric_player::render {
 		const float       focusCentre = tops[focus] + lines_[focus].height * 0.5f;
 		const float       targetY     = focusCentre - anchorY;
 
-		// Ease the scroll towards the focus line: a focus change restarts the tween from the
-		// current animated position, while layout shifts under a stable focus retarget in place.
+		// Ease the scroll towards the focus line.
+		// A focus change restarts the tween from the current position.
+		// Under a stable focus the landing follows layout drift, snapping once the ease finishes.
 		const double nowMs = clock_.nowMs();
+		scroll_.setDuration(cfg.scroll.animation.duration);
 		if (!scrollInit_) {
-			scrollFrom_  = targetY;
-			scrollTo_    = targetY;
+			scroll_.snap(targetY);
 			scrollFocus_ = static_cast<int>(focus);
 			scrollInit_  = true;
 		} else if (static_cast<int>(focus) != scrollFocus_) {
-			scrollFrom_        = sampleScroll(nowMs);
-			scrollTo_          = targetY;
-			scrollAnimStartMs_ = nowMs;
-			scrollFocus_       = static_cast<int>(focus);
-		} else if (nowMs - scrollAnimStartMs_ >= cfg.scroll.animation.duration) {
-			// Tween finished; track layout-driven target changes instantly.
-			scrollFrom_ = targetY;
-			scrollTo_   = targetY;
+			scroll_.retarget(nowMs, targetY);
+			scrollFocus_ = static_cast<int>(focus);
+		} else if (scroll_.finished(nowMs)) {
+			scroll_.snap(targetY);
 		} else {
-			// Tween still running; adjust its landing point without breaking the easing.
-			scrollTo_ = targetY;
+			scroll_.setTarget(targetY);
 		}
-		const float scrollY = sampleScroll(nowMs);
+		const float scrollY = scroll_.sample(nowMs);
 
 		for (std::size_t i = 0; i < lines_.size(); ++i) {
 			RenderLine& line = lines_[i];

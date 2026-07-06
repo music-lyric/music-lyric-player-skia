@@ -8,6 +8,7 @@
 
 #include "include/core/SkRefCnt.h"
 #include "render/config/index.h"
+#include "render/utils/animation/tween.h"
 #include "utils/clock/clock.h"
 
 class SkCanvas;
@@ -109,12 +110,6 @@ namespace music_lyric_player::render {
 		 */
 		std::unique_ptr<::skia::textlayout::Paragraph> buildParagraph(const std::string& text) const;
 
-		/**
-		 * Samples the in-flight scroll tween at `nowMs`, easing from `scrollFrom_` to `scrollTo_`.
-		 * Returns `scrollTo_` once the tween has run past its duration or animation is disabled.
-		 */
-		float sampleScroll(double nowMs) const;
-
 		playback::Player&                         player_;
 		sk_sp<SkFontMgr>                          fontMgr_;
 		const Clock&                              clock_;
@@ -131,13 +126,11 @@ namespace music_lyric_player::render {
 		bool  layoutDirty_ = true;
 		float layoutWidth_ = -1.0f; // content width the paragraphs were wrapped to
 
-		// Scroll ease state: the tween runs from `scrollFrom_` to `scrollTo_` starting at `scrollAnimStartMs_`.
-		// `scrollFocus_` is the focus line the current tween targets; a new focus restarts the tween.
-		bool   scrollInit_       = false;
-		int    scrollFocus_      = -1;
-		float  scrollFrom_       = 0.0f;
-		float  scrollTo_         = 0.0f;
-		double scrollAnimStartMs_ = 0.0;
+		// Scroll ease state: `scroll_` tweens the vertical offset towards the focus line.
+		// `scrollFocus_` is the focus it targets, so a new focus restarts the tween; `scrollInit_` guards the first frame, which snaps.
+		bool                    scrollInit_  = false;
+		int                     scrollFocus_ = -1;
+		animation::Tween<float> scroll_;
 
 		std::size_t lyricListener_  = 0;
 		std::size_t linesListener_  = 0;

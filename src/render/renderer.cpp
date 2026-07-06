@@ -19,7 +19,6 @@
 #include "render/common/context.h"
 #include "render/components/line/interlude/index.h"
 #include "render/components/line/normal/index.h"
-#include "render/utils/animation/easing.h"
 #include "render/utils/length.h"
 
 namespace tl = ::skia::textlayout;
@@ -43,9 +42,6 @@ namespace music_lyric_player::render {
 
 		// Unicode backend drives SkParagraph's word / grapheme / line-break boundaries.
 		unicode_ = SkUnicodes::ICU::Make();
-
-		// The scroll offset eases with a fixed cubic curve; its duration is refreshed from config each frame.
-		scroll_.setEasing(animation::inOutCubic);
 
 		lyricListener_  = player_.onLyricUpdate.add([this](const ::lyric::Info& info) {
 			handleLyricUpdate(info);
@@ -124,8 +120,7 @@ namespace music_lyric_player::render {
 			}
 		}
 		// Drop the scroll tween so a freshly loaded lyric snaps into place instead of sliding from the old song.
-		scrollInit_  = false;
-		scrollFocus_ = -1;
+		scroll_.reset();
 		layoutDirty_ = true;
 	}
 
@@ -169,45 +164,21 @@ namespace music_lyric_player::render {
 		}
 
 		const float gap = static_cast<float>(resolveLength(cfg.layout.gap, kDefaultGap, logicalH));
+		layout_.update(lines_, gap);
 
-		// Stack each line below the previous plus the gap; no off-screen virtualization yet.
-		std::vector<float> tops(lines_.size(), 0.0f);
-		float              cursor = 0.0f;
-		for (std::size_t i = 0; i < lines_.size(); ++i) {
-			tops[i] = cursor;
-			cursor += lines_[i]->height() + gap;
-		}
-
-		// Centre the focus (primary active) line on the anchor.
-		const std::size_t focus       = (activeIndex_ >= 0 && activeIndex_ < static_cast<int>(lines_.size()))
+		// Centre the focus (primary active) line on the anchor, then ease the scroll towards it.
+		const std::size_t focus   = (activeIndex_ >= 0 && activeIndex_ < static_cast<int>(lines_.size()))
 			? static_cast<std::size_t>(activeIndex_)
 			: 0;
-		const float       anchorY     = logicalH * static_cast<float>(cfg.scroll.anchor);
-		const float       focusCentre = tops[focus] + lines_[focus]->height() * 0.5f;
-		const float       targetY     = focusCentre - anchorY;
+		const float       anchorY = logicalH * static_cast<float>(cfg.scroll.anchor);
+		const float       targetY = layout_.top(focus) + lines_[focus]->height() * 0.5f - anchorY;
 
-		// Ease the scroll towards the focus line.
-		// A focus change restarts the tween from the current position.
-		// Under a stable focus the landing follows layout drift, snapping once the ease finishes.
-		const double nowMs = clock_.nowMs();
-		scroll_.setDuration(cfg.scroll.animation.duration);
-		if (!scrollInit_) {
-			scroll_.snap(targetY);
-			scrollFocus_ = static_cast<int>(focus);
-			scrollInit_  = true;
-		} else if (static_cast<int>(focus) != scrollFocus_) {
-			scroll_.retarget(nowMs, targetY);
-			scrollFocus_ = static_cast<int>(focus);
-		} else if (scroll_.finished(nowMs)) {
-			scroll_.snap(targetY);
-		} else {
-			scroll_.setTarget(targetY);
-		}
-		const float scrollY = scroll_.sample(nowMs);
+		const double nowMs   = clock_.nowMs();
+		const float  scrollY = scroll_.update(nowMs, targetY, static_cast<int>(focus), cfg.scroll.animation.duration);
 
 		for (std::size_t i = 0; i < lines_.size(); ++i) {
 			components::line::base::Element& line = *lines_[i];
-			const float                     y    = tops[i] - scrollY;
+			const float                     y    = layout_.top(i) - scrollY;
 			// Cull lines fully outside the viewport.
 			if (y + line.height() < 0.0f || y > logicalH) {
 				continue;

@@ -8,7 +8,8 @@
 #include "include/core/SkRefCnt.h"
 #include "render/components/line/base/index.h"
 #include "render/config/index.h"
-#include "render/utils/animation/tween.h"
+#include "render/core/layout.h"
+#include "render/core/scroll.h"
 #include "utils/clock/clock.h"
 
 class SkCanvas;
@@ -109,11 +110,8 @@ namespace music_lyric_player::render {
 		bool  layoutDirty_ = true;
 		float layoutWidth_ = -1.0f; // content width the paragraphs were wrapped to
 
-		// Scroll ease state: `scroll_` tweens the vertical offset towards the focus line.
-		// `scrollFocus_` is the focus it targets, so a new focus restarts the tween; `scrollInit_` guards the first frame, which snaps.
-		bool                    scrollInit_  = false;
-		int                     scrollFocus_ = -1;
-		animation::Tween<float> scroll_;
+		core::LayoutManager layout_;
+		core::ScrollManager scroll_;
 
 		std::size_t lyricListener_  = 0;
 		std::size_t linesListener_  = 0;

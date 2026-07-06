@@ -44,7 +44,25 @@ namespace music_lyric_player::playback {
 		}
 
 		/**
-		 * Caret check `^base`: same major and not below the base (the base major is >= 1 here).
+		 * Three-way comparison of two version triples: -1 / 0 / 1 for less / equal / greater.
+		 */
+		int compareSemVer(const SemVer& a, const SemVer& b) {
+			if (a.major != b.major) {
+				return a.major < b.major ? -1 : 1;
+			}
+			if (a.minor != b.minor) {
+				return a.minor < b.minor ? -1 : 1;
+			}
+			if (a.patch != b.patch) {
+				return a.patch < b.patch ? -1 : 1;
+			}
+			return 0;
+		}
+
+		/**
+		 * Caret range check `^base`: at least the base and below the next breaking version.
+		 * The breaking bump follows the base's left-most non-zero component, so `^1.2.3` allows
+		 * up to `< 2.0.0`, `^0.2.3` up to `< 0.3.0` and `^0.0.3` up to `< 0.0.4`.
 		 */
 		bool satisfiesCaret(const std::string& version, const std::string& base) {
 			SemVer v;
@@ -52,13 +70,20 @@ namespace music_lyric_player::playback {
 			if (!parseSemVer(version, v) || !parseSemVer(base, b)) {
 				return false;
 			}
-			if (v.major != b.major) {
+			// Reject anything below the base version.
+			if (compareSemVer(v, b) < 0) {
 				return false;
 			}
-			if (v.minor != b.minor) {
-				return v.minor > b.minor;
+			// Exclusive upper bound: bump the base's left-most non-zero component.
+			SemVer upper;
+			if (b.major > 0) {
+				upper = SemVer{b.major + 1, 0, 0};
+			} else if (b.minor > 0) {
+				upper = SemVer{0, b.minor + 1, 0};
+			} else {
+				upper = SemVer{0, 0, b.patch + 1};
 			}
-			return v.patch >= b.patch;
+			return compareSemVer(v, upper) < 0;
 		}
 	} // namespace
 

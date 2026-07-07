@@ -38,7 +38,6 @@ namespace music_lyric_player::render::components::line::normal {
 	private:
 		std::string                                    text;
 		std::unique_ptr<::skia::textlayout::Paragraph> paragraph;
-		float                                          width = 0.0f;
 	};
 } // namespace music_lyric_player::render::components::line::normal
 

@@ -44,8 +44,24 @@ namespace music_lyric_player::render::components::line::base {
 		explicit Element(int index)
 		    : lineIndex(index) {}
 
+		/**
+		 * The x of the left edge at which a rigid block of `blockWidth` sits inside `[x, x + width)` for `align`.
+		 * Shared horizontal-alignment policy (0 left / 1 center / 2 right) for line kinds that place a block.
+		 */
+		float alignBlockX(float x, float blockWidth, int align) const {
+			switch (align) {
+			case 1:
+				return x + (this->width - blockWidth) * 0.5f; // center
+			case 2:
+				return x + (this->width - blockWidth); // right
+			default:
+				return x; // left
+			}
+		}
+
 		int   lineIndex;
 		float measuredHeight = 0.0f;
+		float width          = 0.0f; // content width the line was laid out to
 	};
 } // namespace music_lyric_player::render::components::line::base
 

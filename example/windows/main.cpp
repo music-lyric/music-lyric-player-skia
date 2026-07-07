@@ -22,9 +22,11 @@ int main() {
 
 	// DirectWrite cannot resolve SkParagraph's default "sans-serif" family, so pick a concrete
 	// system family (covers CJK and latin); also centre-align the lyrics for the demo.
-	renderer.config.modify([](auto& cfg) {
-		cfg.line.font.family = "Microsoft YaHei UI";
-		cfg.layout.align     = 1;
+	renderer.config.modify([](music_lyric_player::render::config::Root& cfg) {
+		cfg.line.font.family  = "Microsoft YaHei UI";
+		cfg.layout.align      = 1;
+		cfg.line.normal.color = "rgb(255, 255, 61)";
+		cfg.line.active.color = "#ffffff";
 	});
 
 	player.updateLyric(example::buildSampleLyric());

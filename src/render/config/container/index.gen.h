@@ -17,10 +17,14 @@ namespace music_lyric_player::render::config::container {
 	 */
 	struct Root {
 		/**
-		 * ARGB background fill of the whole player.
-		 * @default 0xff101014u
+		 * Background fill of the whole player.
+		 * Accepts `#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`, `rgb(r, g, b)` or `rgba(r, g, b, a)` (a in 0..1).
+		 *
+		 * @default "#101014"
+		 * @example "#101014"
+		 * @example "rgb(16, 16, 20)"
 		 */
-		unsigned int backgroundColor = 0xff101014u;
+		::std::string backgroundColor = "#101014";
 		/**
 		 * Horizontal padding on each side of the content.
 		 * A bare number or `px` is absolute; `%` is relative to the viewport width.
@@ -34,7 +38,7 @@ namespace music_lyric_player::render::config::container {
 	};
 
 	struct RootPatch {
-		::std::optional<unsigned int> backgroundColor;
+		::std::optional<::std::string> backgroundColor;
 		::std::optional<::std::string> paddingX;
 	};
 

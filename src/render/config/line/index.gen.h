@@ -40,10 +40,14 @@ namespace music_lyric_player::render::config::line {
 	 */
 	struct NormalConfig {
 		/**
-		 * ARGB color of inactive lines.
-		 * @default 0x66ffffffu
+		 * Color of inactive lines.
+		 * Accepts `#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`, `rgb(r, g, b)` or `rgba(r, g, b, a)` (a in 0..1).
+		 *
+		 * @default "rgba(255, 255, 255, 0.4)"
+		 * @example "#fff"
+		 * @example "rgb(255, 255, 255)"
 		 */
-		unsigned int color = 0x66ffffffu;
+		::std::string color = "rgba(255, 255, 255, 0.4)";
 	};
 
 	/**
@@ -51,10 +55,14 @@ namespace music_lyric_player::render::config::line {
 	 */
 	struct ActiveConfig {
 		/**
-		 * ARGB color of the active line.
-		 * @default 0xffffffffu
+		 * Color of the active line.
+		 * Accepts `#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`, `rgb(r, g, b)` or `rgba(r, g, b, a)` (a in 0..1).
+		 *
+		 * @default "#ffffff"
+		 * @example "#fff"
+		 * @example "rgba(255, 255, 255, 0.8)"
 		 */
-		unsigned int color = 0xffffffffu;
+		::std::string color = "#ffffff";
 	};
 
 	/**
@@ -81,11 +89,11 @@ namespace music_lyric_player::render::config::line {
 	};
 
 	struct NormalConfigPatch {
-		::std::optional<unsigned int> color;
+		::std::optional<::std::string> color;
 	};
 
 	struct ActiveConfigPatch {
-		::std::optional<unsigned int> color;
+		::std::optional<::std::string> color;
 	};
 
 	struct RootPatch {

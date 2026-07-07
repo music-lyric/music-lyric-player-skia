@@ -15,6 +15,7 @@
 #include "playback/player.h"
 #include "render/common/context.h"
 #include "render/components/line/base/index.h"
+#include "render/utils/color/parse.h"
 #include "render/utils/length.h"
 
 namespace tl = ::skia::textlayout;
@@ -25,6 +26,9 @@ namespace music_lyric_player::render {
 		// used when a config value fails to parse.
 		constexpr double kDefaultPaddingX = 48.0; // container.paddingX ("48px")
 		constexpr double kDefaultGap      = 16.0; // layout.gap         ("16px")
+
+		// Colour fallback mirroring the config default, used when the string fails to parse.
+		constexpr SkColor kDefaultBackgroundColor = 0xff101014; // container.backgroundColor ("#101014")
 	} // namespace
 
 	Renderer::Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const Clock& clock)
@@ -118,7 +122,7 @@ namespace music_lyric_player::render {
 		const common::RenderContext context{cfg, this->fonts, this->unicode};
 
 		// Background always fills, even before a lyric loads.
-		canvas->clear(static_cast<SkColor>(cfg.container.backgroundColor));
+		canvas->clear(utils::color::resolve(cfg.container.backgroundColor, kDefaultBackgroundColor));
 
 		if (this->viewportW <= 0 || this->viewportH <= 0) {
 			return;

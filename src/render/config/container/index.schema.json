@@ -8,11 +8,15 @@
       "fields": [
         {
           "name": "backgroundColor",
-          "type": "unsigned int",
-          "default": "0xff101014u",
+          "type": "::std::string",
+          "default": "\"#101014\"",
           "desc": [
-            "ARGB background fill of the whole player.",
-            "@default 0xff101014u"
+            "Background fill of the whole player.",
+            "Accepts `#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`, `rgb(r, g, b)` or `rgba(r, g, b, a)` (a in 0..1).",
+            "",
+            "@default \"#101014\"",
+            "@example \"#101014\"",
+            "@example \"rgb(16, 16, 20)\""
           ]
         },
         {

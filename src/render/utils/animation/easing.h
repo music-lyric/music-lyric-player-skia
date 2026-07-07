@@ -3,7 +3,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <functional>
+#include <optional>
+#include <string>
+#include <string_view>
+
+#include "render/utils/length.h"
 
 namespace music_lyric_player::render::animation {
 	/**
@@ -126,6 +132,61 @@ namespace music_lyric_player::render::animation {
 		float by = 0.0f;
 		float cy = 0.0f;
 	};
+
+	/**
+	 * Resolves a CSS timing-function string into an `Easing`.
+	 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out`, or `cubic-bezier(x1, y1, x2, y2)`.
+	 * An unrecognised or malformed value falls back to `ease`.
+	 */
+	inline Easing resolveEasing(const ::std::string& value) {
+		const ::std::string_view token = detail::trimLength(value);
+
+		// cubic-bezier(x1, y1, x2, y2): parse the four control coordinates.
+		constexpr ::std::string_view kFunc = "cubic-bezier";
+		if (token.size() > kFunc.size() && token.substr(0, kFunc.size()) == kFunc) {
+			const ::std::size_t open = token.find('(');
+			if (open != ::std::string_view::npos && token.back() == ')') {
+				const ::std::string_view body = token.substr(open + 1, token.size() - open - 2);
+				double                   coords[4];
+				int                      count = 0;
+				::std::size_t            start = 0;
+				bool                     ok    = true;
+				while (ok && count < 4) {
+					const ::std::size_t           comma = body.find(',', start);
+					const ::std::string_view      piece = body.substr(start, comma == ::std::string_view::npos ? ::std::string_view::npos : comma - start);
+					const ::std::optional<double> number = detail::parseNumber(detail::trimLength(piece));
+					if (!number.has_value()) {
+						ok = false;
+						break;
+					}
+					coords[count++] = *number;
+					if (comma == ::std::string_view::npos) {
+						break;
+					}
+					start = comma + 1;
+				}
+				if (ok && count == 4) {
+					return CubicBezier(static_cast<float>(coords[0]), static_cast<float>(coords[1]), static_cast<float>(coords[2]), static_cast<float>(coords[3]));
+				}
+			}
+			return CubicBezier(0.25f, 0.1f, 0.25f, 1.0f); // malformed cubic-bezier falls back to `ease`
+		}
+
+		if (token == "linear") {
+			return linear;
+		}
+		if (token == "ease-in") {
+			return CubicBezier(0.42f, 0.0f, 1.0f, 1.0f);
+		}
+		if (token == "ease-out") {
+			return CubicBezier(0.0f, 0.0f, 0.58f, 1.0f);
+		}
+		if (token == "ease-in-out") {
+			return CubicBezier(0.42f, 0.0f, 0.58f, 1.0f);
+		}
+		// `ease` and every unrecognised value.
+		return CubicBezier(0.25f, 0.1f, 0.25f, 1.0f);
+	}
 } // namespace music_lyric_player::render::animation
 
 #endif // MUSIC_LYRIC_PLAYER_RENDER_UTILS_ANIMATION_EASING_H_

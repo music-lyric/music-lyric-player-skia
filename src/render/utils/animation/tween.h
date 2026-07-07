@@ -37,12 +37,13 @@ namespace music_lyric_player::render::animation {
 		}
 
 		/**
-		 * Starts a fresh animation from the current sampled value towards `target`, beginning at `now`.
+		 * Starts a fresh animation from the current sampled value towards `target`, beginning at `now` plus `delayMs`.
+		 * A positive `delayMs` holds the current value until the delay elapses, mirroring a CSS `transition-delay`.
 		 */
-		void retarget(double now, const T& target) {
+		void retarget(double now, const T& target, double delayMs = 0.0) {
 			this->from    = sample(now);
 			this->to      = target;
-			this->startMs = now;
+			this->startMs = now + (delayMs > 0.0 ? delayMs : 0.0);
 		}
 
 		/**

@@ -152,12 +152,12 @@ namespace music_lyric_player::render {
 		const float       anchorY = logicalH * static_cast<float>(cfg.scroll.anchor);
 		const float       targetY = this->layout.top(focus) + this->lines.at(focus).height() * 0.5f - anchorY;
 
-		const double now     = this->clock.now();
-		const float  scrollY = this->scroll.update(now, targetY, static_cast<int>(focus), cfg.scroll.animation.duration);
+		const double now = this->clock.now();
+		this->scroll.update(now, targetY, static_cast<int>(focus), this->lines.size(), cfg.scroll.animation);
 
 		for (std::size_t i = 0; i < this->lines.size(); ++i) {
 			const components::line::base::Element& line = this->lines.at(i);
-			const float                            y    = this->layout.top(i) - scrollY;
+			const float                            y    = this->layout.top(i) - this->scroll.offsetAt(i, now);
 			// Cull lines fully outside the viewport.
 			if (y + line.height() < 0.0f || y > logicalH) {
 				continue;

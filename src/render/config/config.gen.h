@@ -101,7 +101,24 @@ namespace music_lyric_player::render::config {
 		namespace scroll {
 			inline constexpr ::std::string_view anchor{"scroll.anchor"};
 			namespace animation {
+				inline constexpr ::std::string_view mode{"scroll.animation.mode"};
 				inline constexpr ::std::string_view duration{"scroll.animation.duration"};
+				inline constexpr ::std::string_view easing{"scroll.animation.easing"};
+				namespace smooth {
+					inline constexpr ::std::string_view delay{"scroll.animation.smooth.delay"};
+				} // namespace smooth
+				namespace ripple {
+					inline constexpr ::std::string_view range{"scroll.animation.ripple.range"};
+					inline constexpr ::std::string_view step{"scroll.animation.ripple.step"};
+				} // namespace ripple
+				namespace directional {
+					inline constexpr ::std::string_view range{"scroll.animation.directional.range"};
+					inline constexpr ::std::string_view step{"scroll.animation.directional.step"};
+				} // namespace directional
+				namespace stagger {
+					inline constexpr ::std::string_view range{"scroll.animation.stagger.range"};
+					inline constexpr ::std::string_view step{"scroll.animation.stagger.step"};
+				} // namespace stagger
 			} // namespace animation
 		} // namespace scroll
 		namespace line {

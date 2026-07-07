@@ -3,18 +3,170 @@
   "file": "index.gen.h",
   "items": [
     {
+      "name": "SmoothConfig",
+      "desc": "Parameters for the Smooth mode: a uniform, non-cascade transition.",
+      "fields": [
+        {
+          "name": "delay",
+          "type": "double",
+          "default": "0.0",
+          "desc": [
+            "Fixed delay before the transition starts, in `ms`.",
+            "",
+            "@default 0"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "RippleConfig",
+      "desc": "Parameters for the Ripple mode: a symmetric cascade radiating outward from the active line.",
+      "fields": [
+        {
+          "name": "range",
+          "type": "double",
+          "default": "5.0",
+          "desc": [
+            "Offset (in line units) at which the per-line delay saturates.",
+            "Lines with `|offset| >= range` all receive the maximum delay.",
+            "",
+            "@default 5"
+          ]
+        },
+        {
+          "name": "step",
+          "type": "double",
+          "default": "40.0",
+          "desc": [
+            "Delay increment per offset unit, in `ms`; scales the cascade curve.",
+            "",
+            "@default 40"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "DirectionalConfig",
+      "desc": "Parameters for the Directional mode: played lines move first, upcoming lines follow.",
+      "fields": [
+        {
+          "name": "range",
+          "type": "double",
+          "default": "5.0",
+          "desc": [
+            "Offset (in line units) at which the per-line delay saturates.",
+            "",
+            "@default 5"
+          ]
+        },
+        {
+          "name": "step",
+          "type": "double",
+          "default": "40.0",
+          "desc": [
+            "Delay increment per offset unit, in `ms`.",
+            "",
+            "@default 40"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "StaggerConfig",
+      "desc": "Parameters for the Stagger mode: a linear, direction-sensitive stagger cascade (legacy).",
+      "fields": [
+        {
+          "name": "range",
+          "type": "double",
+          "default": "4.0",
+          "desc": [
+            "Offset (in line units) at which the delay saturates.",
+            "",
+            "@default 4"
+          ]
+        },
+        {
+          "name": "step",
+          "type": "double",
+          "default": "50.0",
+          "desc": [
+            "Delay increment per offset unit, in `ms`.",
+            "",
+            "@default 50"
+          ]
+        }
+      ]
+    },
+    {
       "name": "AnimationConfig",
       "desc": "Transition animation used when the active line changes.",
       "fields": [
         {
+          "name": "mode",
+          "type": "int",
+          "default": "0",
+          "desc": [
+            "Cascade mode distributing per-line transition delays.",
+            "",
+            "- `0` — smooth (all lines move together, no cascade)",
+            "- `1` — ripple (symmetric cascade outward from the active line)",
+            "- `2` — directional (played lines move first, upcoming lines follow)",
+            "- `3` — stagger (legacy linear stagger; delay saturates at `range`)",
+            "",
+            "@default 0"
+          ]
+        },
+        {
           "name": "duration",
           "type": "double",
-          "default": "450.0",
+          "default": "500.0",
           "desc": [
-            "Transition duration when the active line changes, in `ms`.",
+            "Transition duration of each individual line, in `ms`.",
+            "In cascade modes the total visual length is roughly `duration + maxDelay`.",
             "`0` snaps to the target without easing.",
             "",
-            "@default 450"
+            "@default 500"
+          ]
+        },
+        {
+          "name": "easing",
+          "type": "::std::string",
+          "default": "\"ease\"",
+          "desc": [
+            "Easing curve for the transition.",
+            "Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.",
+            "",
+            "@default \"ease\"",
+            "@example \"ease-in-out\"",
+            "@example \"cubic-bezier(0.4, 0, 0.2, 1)\""
+          ]
+        },
+        {
+          "name": "smooth",
+          "nested": "SmoothConfig",
+          "desc": [
+            "Smooth mode parameters."
+          ]
+        },
+        {
+          "name": "ripple",
+          "nested": "RippleConfig",
+          "desc": [
+            "Ripple mode parameters."
+          ]
+        },
+        {
+          "name": "directional",
+          "nested": "DirectionalConfig",
+          "desc": [
+            "Directional mode parameters."
+          ]
+        },
+        {
+          "name": "stagger",
+          "nested": "StaggerConfig",
+          "desc": [
+            "Stagger mode parameters."
           ]
         }
       ]
@@ -29,7 +181,7 @@
           "default": "0.5",
           "desc": [
             "Vertical anchor of the active line inside the viewport,",
-            "as a ratio (`0`–`1`) of its height.",
+            "as a ratio (`0`-`1`) of its height.",
             "",
             "- `0.5` — keep the active line at the vertical center",
             "- `0.3` — keep the active line closer to the top",

@@ -13,16 +13,120 @@
 
 namespace music_lyric_player::render::config::scroll {
 	/**
+	 * Parameters for the Smooth mode: a uniform, non-cascade transition.
+	 */
+	struct SmoothConfig {
+		/**
+		 * Fixed delay before the transition starts, in `ms`.
+		 *
+		 * @default 0
+		 */
+		double delay = 0.0;
+	};
+
+	/**
+	 * Parameters for the Ripple mode: a symmetric cascade radiating outward from the active line.
+	 */
+	struct RippleConfig {
+		/**
+		 * Offset (in line units) at which the per-line delay saturates.
+		 * Lines with `|offset| >= range` all receive the maximum delay.
+		 *
+		 * @default 5
+		 */
+		double range = 5.0;
+		/**
+		 * Delay increment per offset unit, in `ms`; scales the cascade curve.
+		 *
+		 * @default 40
+		 */
+		double step = 40.0;
+	};
+
+	/**
+	 * Parameters for the Directional mode: played lines move first, upcoming lines follow.
+	 */
+	struct DirectionalConfig {
+		/**
+		 * Offset (in line units) at which the per-line delay saturates.
+		 *
+		 * @default 5
+		 */
+		double range = 5.0;
+		/**
+		 * Delay increment per offset unit, in `ms`.
+		 *
+		 * @default 40
+		 */
+		double step = 40.0;
+	};
+
+	/**
+	 * Parameters for the Stagger mode: a linear, direction-sensitive stagger cascade (legacy).
+	 */
+	struct StaggerConfig {
+		/**
+		 * Offset (in line units) at which the delay saturates.
+		 *
+		 * @default 4
+		 */
+		double range = 4.0;
+		/**
+		 * Delay increment per offset unit, in `ms`.
+		 *
+		 * @default 50
+		 */
+		double step = 50.0;
+	};
+
+	/**
 	 * Transition animation used when the active line changes.
 	 */
 	struct AnimationConfig {
 		/**
-		 * Transition duration when the active line changes, in `ms`.
+		 * Cascade mode distributing per-line transition delays.
+		 *
+		 * - `0` — smooth (all lines move together, no cascade)
+		 * - `1` — ripple (symmetric cascade outward from the active line)
+		 * - `2` — directional (played lines move first, upcoming lines follow)
+		 * - `3` — stagger (legacy linear stagger; delay saturates at `range`)
+		 *
+		 * @default 0
+		 */
+		int mode = 0;
+		/**
+		 * Transition duration of each individual line, in `ms`.
+		 * In cascade modes the total visual length is roughly `duration + maxDelay`.
 		 * `0` snaps to the target without easing.
 		 *
-		 * @default 450
+		 * @default 500
 		 */
-		double duration = 450.0;
+		double duration = 500.0;
+		/**
+		 * Easing curve for the transition.
+		 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.
+		 *
+		 * @default "ease"
+		 * @example "ease-in-out"
+		 * @example "cubic-bezier(0.4, 0, 0.2, 1)"
+		 */
+		::std::string easing = "ease";
+		/**
+		 * Smooth mode parameters.
+		 */
+		SmoothConfig smooth;
+		/**
+		 * Ripple mode parameters.
+		 */
+		RippleConfig ripple;
+		/**
+		 * Directional mode parameters.
+		 */
+		DirectionalConfig directional;
+		/**
+		 * Stagger mode parameters.
+		 */
+		StaggerConfig stagger;
 	};
 
 	/**
@@ -31,7 +135,7 @@ namespace music_lyric_player::render::config::scroll {
 	struct Root {
 		/**
 		 * Vertical anchor of the active line inside the viewport,
-		 * as a ratio (`0`–`1`) of its height.
+		 * as a ratio (`0`-`1`) of its height.
 		 *
 		 * - `0.5` — keep the active line at the vertical center
 		 * - `0.3` — keep the active line closer to the top
@@ -45,8 +149,33 @@ namespace music_lyric_player::render::config::scroll {
 		AnimationConfig animation;
 	};
 
+	struct SmoothConfigPatch {
+		::std::optional<double> delay;
+	};
+
+	struct RippleConfigPatch {
+		::std::optional<double> range;
+		::std::optional<double> step;
+	};
+
+	struct DirectionalConfigPatch {
+		::std::optional<double> range;
+		::std::optional<double> step;
+	};
+
+	struct StaggerConfigPatch {
+		::std::optional<double> range;
+		::std::optional<double> step;
+	};
+
 	struct AnimationConfigPatch {
+		::std::optional<int> mode;
 		::std::optional<double> duration;
+		::std::optional<::std::string> easing;
+		SmoothConfigPatch smooth;
+		RippleConfigPatch ripple;
+		DirectionalConfigPatch directional;
+		StaggerConfigPatch stagger;
 	};
 
 	struct RootPatch {
@@ -57,10 +186,65 @@ namespace music_lyric_player::render::config::scroll {
 	/**
 	 * Deep-merges a sparse patch into a config.
 	 */
+	inline void applyConfigPatch(SmoothConfig& cfg, const SmoothConfigPatch& patch) {
+		if (patch.delay.has_value()) {
+			cfg.delay = *patch.delay;
+		}
+	}
+
+	/**
+	 * Deep-merges a sparse patch into a config.
+	 */
+	inline void applyConfigPatch(RippleConfig& cfg, const RippleConfigPatch& patch) {
+		if (patch.range.has_value()) {
+			cfg.range = *patch.range;
+		}
+		if (patch.step.has_value()) {
+			cfg.step = *patch.step;
+		}
+	}
+
+	/**
+	 * Deep-merges a sparse patch into a config.
+	 */
+	inline void applyConfigPatch(DirectionalConfig& cfg, const DirectionalConfigPatch& patch) {
+		if (patch.range.has_value()) {
+			cfg.range = *patch.range;
+		}
+		if (patch.step.has_value()) {
+			cfg.step = *patch.step;
+		}
+	}
+
+	/**
+	 * Deep-merges a sparse patch into a config.
+	 */
+	inline void applyConfigPatch(StaggerConfig& cfg, const StaggerConfigPatch& patch) {
+		if (patch.range.has_value()) {
+			cfg.range = *patch.range;
+		}
+		if (patch.step.has_value()) {
+			cfg.step = *patch.step;
+		}
+	}
+
+	/**
+	 * Deep-merges a sparse patch into a config.
+	 */
 	inline void applyConfigPatch(AnimationConfig& cfg, const AnimationConfigPatch& patch) {
+		if (patch.mode.has_value()) {
+			cfg.mode = *patch.mode;
+		}
 		if (patch.duration.has_value()) {
 			cfg.duration = *patch.duration;
 		}
+		if (patch.easing.has_value()) {
+			cfg.easing = *patch.easing;
+		}
+		applyConfigPatch(cfg.smooth, patch.smooth);
+		applyConfigPatch(cfg.ripple, patch.ripple);
+		applyConfigPatch(cfg.directional, patch.directional);
+		applyConfigPatch(cfg.stagger, patch.stagger);
 	}
 
 	/**
@@ -76,9 +260,88 @@ namespace music_lyric_player::render::config::scroll {
 	/**
 	 * Diffs two configs into a dot-path key set; a changed child also records its parent path.
 	 */
+	inline void diffConfig(const SmoothConfig& prev, const SmoothConfig& next, const ::std::string& prefix, ::music_lyric_player::utils::config::ChangeKeys& keys) {
+		if (prev.delay != next.delay) {
+			keys.insert(prefix + "delay");
+		}
+	}
+
+	/**
+	 * Diffs two configs into a dot-path key set; a changed child also records its parent path.
+	 */
+	inline void diffConfig(const RippleConfig& prev, const RippleConfig& next, const ::std::string& prefix, ::music_lyric_player::utils::config::ChangeKeys& keys) {
+		if (prev.range != next.range) {
+			keys.insert(prefix + "range");
+		}
+		if (prev.step != next.step) {
+			keys.insert(prefix + "step");
+		}
+	}
+
+	/**
+	 * Diffs two configs into a dot-path key set; a changed child also records its parent path.
+	 */
+	inline void diffConfig(const DirectionalConfig& prev, const DirectionalConfig& next, const ::std::string& prefix, ::music_lyric_player::utils::config::ChangeKeys& keys) {
+		if (prev.range != next.range) {
+			keys.insert(prefix + "range");
+		}
+		if (prev.step != next.step) {
+			keys.insert(prefix + "step");
+		}
+	}
+
+	/**
+	 * Diffs two configs into a dot-path key set; a changed child also records its parent path.
+	 */
+	inline void diffConfig(const StaggerConfig& prev, const StaggerConfig& next, const ::std::string& prefix, ::music_lyric_player::utils::config::ChangeKeys& keys) {
+		if (prev.range != next.range) {
+			keys.insert(prefix + "range");
+		}
+		if (prev.step != next.step) {
+			keys.insert(prefix + "step");
+		}
+	}
+
+	/**
+	 * Diffs two configs into a dot-path key set; a changed child also records its parent path.
+	 */
 	inline void diffConfig(const AnimationConfig& prev, const AnimationConfig& next, const ::std::string& prefix, ::music_lyric_player::utils::config::ChangeKeys& keys) {
+		if (prev.mode != next.mode) {
+			keys.insert(prefix + "mode");
+		}
 		if (prev.duration != next.duration) {
 			keys.insert(prefix + "duration");
+		}
+		if (prev.easing != next.easing) {
+			keys.insert(prefix + "easing");
+		}
+		{
+			const ::std::size_t before = keys.size();
+			diffConfig(prev.smooth, next.smooth, prefix + "smooth" + ".", keys);
+			if (keys.size() > before) {
+				keys.insert(prefix + "smooth");
+			}
+		}
+		{
+			const ::std::size_t before = keys.size();
+			diffConfig(prev.ripple, next.ripple, prefix + "ripple" + ".", keys);
+			if (keys.size() > before) {
+				keys.insert(prefix + "ripple");
+			}
+		}
+		{
+			const ::std::size_t before = keys.size();
+			diffConfig(prev.directional, next.directional, prefix + "directional" + ".", keys);
+			if (keys.size() > before) {
+				keys.insert(prefix + "directional");
+			}
+		}
+		{
+			const ::std::size_t before = keys.size();
+			diffConfig(prev.stagger, next.stagger, prefix + "stagger" + ".", keys);
+			if (keys.size() > before) {
+				keys.insert(prefix + "stagger");
+			}
 		}
 	}
 
@@ -98,14 +361,67 @@ namespace music_lyric_player::render::config::scroll {
 		}
 	}
 
+	namespace SmoothConfigKeys {
+		inline constexpr ::std::string_view delay{"delay"};
+	} // namespace SmoothConfigKeys
+
+	namespace RippleConfigKeys {
+		inline constexpr ::std::string_view range{"range"};
+		inline constexpr ::std::string_view step{"step"};
+	} // namespace RippleConfigKeys
+
+	namespace DirectionalConfigKeys {
+		inline constexpr ::std::string_view range{"range"};
+		inline constexpr ::std::string_view step{"step"};
+	} // namespace DirectionalConfigKeys
+
+	namespace StaggerConfigKeys {
+		inline constexpr ::std::string_view range{"range"};
+		inline constexpr ::std::string_view step{"step"};
+	} // namespace StaggerConfigKeys
+
 	namespace AnimationConfigKeys {
+		inline constexpr ::std::string_view mode{"mode"};
 		inline constexpr ::std::string_view duration{"duration"};
+		inline constexpr ::std::string_view easing{"easing"};
+		namespace smooth {
+			inline constexpr ::std::string_view delay{"smooth.delay"};
+		} // namespace smooth
+		namespace ripple {
+			inline constexpr ::std::string_view range{"ripple.range"};
+			inline constexpr ::std::string_view step{"ripple.step"};
+		} // namespace ripple
+		namespace directional {
+			inline constexpr ::std::string_view range{"directional.range"};
+			inline constexpr ::std::string_view step{"directional.step"};
+		} // namespace directional
+		namespace stagger {
+			inline constexpr ::std::string_view range{"stagger.range"};
+			inline constexpr ::std::string_view step{"stagger.step"};
+		} // namespace stagger
 	} // namespace AnimationConfigKeys
 
 	namespace RootKeys {
 		inline constexpr ::std::string_view anchor{"anchor"};
 		namespace animation {
+			inline constexpr ::std::string_view mode{"animation.mode"};
 			inline constexpr ::std::string_view duration{"animation.duration"};
+			inline constexpr ::std::string_view easing{"animation.easing"};
+			namespace smooth {
+				inline constexpr ::std::string_view delay{"animation.smooth.delay"};
+			} // namespace smooth
+			namespace ripple {
+				inline constexpr ::std::string_view range{"animation.ripple.range"};
+				inline constexpr ::std::string_view step{"animation.ripple.step"};
+			} // namespace ripple
+			namespace directional {
+				inline constexpr ::std::string_view range{"animation.directional.range"};
+				inline constexpr ::std::string_view step{"animation.directional.step"};
+			} // namespace directional
+			namespace stagger {
+				inline constexpr ::std::string_view range{"animation.stagger.range"};
+				inline constexpr ::std::string_view step{"animation.stagger.step"};
+			} // namespace stagger
 		} // namespace animation
 	} // namespace RootKeys
 

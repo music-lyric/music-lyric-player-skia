@@ -9,7 +9,7 @@ namespace music_lyric_player {
 		/**
 		 * Returns a monotonically non-decreasing timestamp in milliseconds.
 		 */
-		virtual double nowMs() const = 0;
+		virtual double now() const = 0;
 	};
 } // namespace music_lyric_player
 

@@ -30,8 +30,8 @@ namespace music_lyric_player::playback {
 		 */
 		double getRawTime(int index) const;
 
-		const ::lyric::Info* info_ = nullptr;
-		std::vector<double>  mergedEnd_;
+		const ::lyric::Info* info = nullptr;
+		std::vector<double>  mergedEnd;
 	};
 } // namespace music_lyric_player::playback
 

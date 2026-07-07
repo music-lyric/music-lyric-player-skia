@@ -30,21 +30,21 @@ namespace music_lyric_player::utils::config {
 		 */
 		void emitChangesFrom(const Config& prev) {
 			ChangeKeys changed;
-			diffConfig(prev, current_, std::string{}, changed);
+			diffConfig(prev, this->currentConfig, std::string{}, changed);
 			if (!changed.empty()) {
-				onUpdate.emit(changed, current_);
+				this->onUpdate.emit(changed, this->currentConfig);
 			}
 		}
 
-		Config current_;
+		Config currentConfig;
 
 	public:
 		/**
 		 * Applies a sparse patch on top of the current config; emits `onUpdate` if anything changed.
 		 */
 		void merge(const Patch& patch) {
-			const Config prev = current_;
-			applyConfigPatch(current_, patch);
+			const Config prev = this->currentConfig;
+			applyConfigPatch(this->currentConfig, patch);
 			emitChangesFrom(prev);
 		}
 
@@ -53,8 +53,8 @@ namespace music_lyric_player::utils::config {
 		 */
 		template <typename Fn>
 		void modify(Fn&& fn) {
-			const Config prev = current_;
-			fn(current_);
+			const Config prev = this->currentConfig;
+			fn(this->currentConfig);
 			emitChangesFrom(prev);
 		}
 
@@ -62,17 +62,17 @@ namespace music_lyric_player::utils::config {
 		 * Resets every field to its default; emits `onUpdate` with the changes, then `onReset`.
 		 */
 		void reset() {
-			const Config prev = current_;
-			current_          = Config{};
+			const Config prev   = this->currentConfig;
+			this->currentConfig = Config{};
 			emitChangesFrom(prev);
-			onReset.emit(current_);
+			this->onReset.emit(this->currentConfig);
 		}
 
 		/**
 		 * Returns the current config.
 		 */
 		const Config& current() const {
-			return current_;
+			return this->currentConfig;
 		}
 
 		Signal<const ChangeKeys&, const Config&> onUpdate;

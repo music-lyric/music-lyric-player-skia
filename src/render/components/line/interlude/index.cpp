@@ -17,7 +17,7 @@ namespace music_lyric_player::render::components::line::interlude {
 	    : base::Element(index) {}
 
 	void Element::layout(float /*width*/, const common::RenderContext& /*context*/) {
-		height_ = kDotSize + 2.0f * kPaddingY;
+		this->measuredHeight = kDotSize + 2.0f * kPaddingY;
 	}
 
 	void Element::paint(SkCanvas* canvas, float x, float y, bool active, const common::RenderContext& context) const {

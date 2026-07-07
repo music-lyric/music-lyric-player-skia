@@ -27,8 +27,8 @@ namespace music_lyric_player::playback {
 		double resolve(double global) const;
 
 	private:
-		double temp_ = 0.0;
-		double meta_ = 0.0;
+		double temp = 0.0;
+		double meta = 0.0;
 	};
 } // namespace music_lyric_player::playback
 

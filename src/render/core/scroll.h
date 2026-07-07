@@ -18,14 +18,14 @@ namespace music_lyric_player::render::core {
 		void reset();
 
 		/**
-		 * Eases towards `target` for `focus` over `durationMs` and returns the offset sampled at `nowMs`.
+		 * Eases towards `target` for `focus` over `durationMs` and returns the offset sampled at `now`.
 		 */
-		float update(double nowMs, float target, int focus, double durationMs);
+		float update(double now, float target, int focus, double durationMs);
 
 	private:
-		animation::Tween<float> tween_;
-		bool                    initialized_ = false;
-		int                     focus_       = -1;
+		animation::Tween<float> tween;
+		bool                    initialized = false;
+		int                     focus       = -1;
 	};
 } // namespace music_lyric_player::render::core
 

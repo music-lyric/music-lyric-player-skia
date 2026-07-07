@@ -41,12 +41,12 @@ namespace music_lyric_player::render::animation {
 			x1 = ::std::clamp(x1, 0.0f, 1.0f);
 			x2 = ::std::clamp(x2, 0.0f, 1.0f);
 			// Polynomial form B(p) = ((a*p + b)*p + c)*p for each axis (P0 = 0, P3 = 1).
-			cx_ = 3.0f * x1;
-			bx_ = 3.0f * (x2 - x1) - cx_;
-			ax_ = 1.0f - cx_ - bx_;
-			cy_ = 3.0f * y1;
-			by_ = 3.0f * (y2 - y1) - cy_;
-			ay_ = 1.0f - cy_ - by_;
+			this->cx = 3.0f * x1;
+			this->bx = 3.0f * (x2 - x1) - this->cx;
+			this->ax = 1.0f - this->cx - this->bx;
+			this->cy = 3.0f * y1;
+			this->by = 3.0f * (y2 - y1) - this->cy;
+			this->ay = 1.0f - this->cy - this->by;
 		}
 
 		/**
@@ -65,21 +65,21 @@ namespace music_lyric_player::render::animation {
 		 * Evaluates x at curve parameter `p`.
 		 */
 		float sampleX(float p) const {
-			return ((ax_ * p + bx_) * p + cx_) * p;
+			return ((this->ax * p + this->bx) * p + this->cx) * p;
 		}
 
 		/**
 		 * Evaluates y at curve parameter `p`.
 		 */
 		float sampleY(float p) const {
-			return ((ay_ * p + by_) * p + cy_) * p;
+			return ((this->ay * p + this->by) * p + this->cy) * p;
 		}
 
 		/**
 		 * Derivative dx/dp at parameter `p`, used by the Newton step.
 		 */
 		float slopeX(float p) const {
-			return (3.0f * ax_ * p + 2.0f * bx_) * p + cx_;
+			return (3.0f * this->ax * p + 2.0f * this->bx) * p + this->cx;
 		}
 
 		/**
@@ -119,12 +119,12 @@ namespace music_lyric_player::render::animation {
 			return p;
 		}
 
-		float ax_ = 0.0f;
-		float bx_ = 0.0f;
-		float cx_ = 0.0f;
-		float ay_ = 0.0f;
-		float by_ = 0.0f;
-		float cy_ = 0.0f;
+		float ax = 0.0f;
+		float bx = 0.0f;
+		float cx = 0.0f;
+		float ay = 0.0f;
+		float by = 0.0f;
+		float cy = 0.0f;
 	};
 } // namespace music_lyric_player::render::animation
 

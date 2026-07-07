@@ -30,22 +30,22 @@ namespace music_lyric_player::render::components::line::base {
 		 * The measured height in logical pixels; valid after `layout`.
 		 */
 		float height() const {
-			return height_;
+			return this->measuredHeight;
 		}
 
 		/**
 		 * The lyric line index this component maps to.
 		 */
 		int index() const {
-			return index_;
+			return this->lineIndex;
 		}
 
 	protected:
 		explicit Element(int index)
-		    : index_(index) {}
+		    : lineIndex(index) {}
 
-		int   index_;
-		float height_ = 0.0f;
+		int   lineIndex;
+		float measuredHeight = 0.0f;
 	};
 } // namespace music_lyric_player::render::components::line::base
 

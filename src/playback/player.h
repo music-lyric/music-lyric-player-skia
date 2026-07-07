@@ -5,10 +5,10 @@
 #include <optional>
 #include <vector>
 
+#include "info.pb.h"
 #include "playback/config/index.h"
 #include "playback/merger.h"
 #include "playback/offset.h"
-#include "info.pb.h"
 #include "utils/clock/clock.h"
 #include "utils/event/signal.h"
 
@@ -151,16 +151,16 @@ namespace music_lyric_player::playback {
 		 */
 		void onConfigUpdate(const config::ChangeKeys& keys);
 
-		const Clock&     clock_;
-		bool             playing_   = false;
-		int              scanIndex_ = 0;
-		std::vector<int> activeIndex_;
-		double           startMs_ = 0.0;
-		double           seekMs_  = 0.0;
-		::lyric::Info    info_;
-		Merger           merger_;
-		Offset           offset_;
-		std::size_t      configListenerId_ = 0;
+		const Clock&     clockRef;
+		bool             playing   = false;
+		int              scanIndex = 0;
+		std::vector<int> activeIndex;
+		double           startMs = 0.0;
+		double           seekMs  = 0.0;
+		::lyric::Info    info;
+		Merger           merger;
+		Offset           offset;
+		std::size_t      configListenerId = 0;
 	};
 } // namespace music_lyric_player::playback
 

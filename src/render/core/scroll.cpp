@@ -4,29 +4,29 @@
 
 namespace music_lyric_player::render::core {
 	ScrollManager::ScrollManager() {
-		tween_.setEasing(animation::inOutCubic);
+		this->tween.setEasing(animation::inOutCubic);
 	}
 
 	void ScrollManager::reset() {
-		initialized_ = false;
-		focus_       = -1;
+		this->initialized = false;
+		this->focus       = -1;
 	}
 
-	float ScrollManager::update(double nowMs, float target, int focus, double durationMs) {
-		tween_.setDuration(durationMs);
-		if (!initialized_) {
-			tween_.snap(target);
-			focus_       = focus;
-			initialized_ = true;
-		} else if (focus != focus_) {
-			tween_.retarget(nowMs, target);
-			focus_ = focus;
-		} else if (tween_.finished(nowMs)) {
+	float ScrollManager::update(double now, float target, int focus, double durationMs) {
+		this->tween.setDuration(durationMs);
+		if (!this->initialized) {
+			this->tween.snap(target);
+			this->focus       = focus;
+			this->initialized = true;
+		} else if (focus != this->focus) {
+			this->tween.retarget(now, target);
+			this->focus = focus;
+		} else if (this->tween.finished(now)) {
 			// Settled under a stable focus: snap so the offset tracks any layout drift immediately.
-			tween_.snap(target);
+			this->tween.snap(target);
 		} else {
-			tween_.setTarget(target);
+			this->tween.setTarget(target);
 		}
-		return tween_.sample(nowMs);
+		return this->tween.sample(now);
 	}
 } // namespace music_lyric_player::render::core

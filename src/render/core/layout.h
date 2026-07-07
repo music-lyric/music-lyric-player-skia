@@ -23,11 +23,11 @@ namespace music_lyric_player::render::core {
 		 * The top offset of line `index` in logical pixels; valid after `update`.
 		 */
 		float top(std::size_t index) const {
-			return tops_[index];
+			return this->tops[index];
 		}
 
 	private:
-		std::vector<float> tops_;
+		std::vector<float> tops;
 	};
 } // namespace music_lyric_player::render::core
 

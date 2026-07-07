@@ -36,9 +36,9 @@ namespace music_lyric_player::render::components::line::normal {
 		void paint(SkCanvas* canvas, float x, float y, bool active, const common::RenderContext& context) const override;
 
 	private:
-		std::string                                    text_;
-		std::unique_ptr<::skia::textlayout::Paragraph> paragraph_;
-		float                                          width_ = 0.0f;
+		std::string                                    text;
+		std::unique_ptr<::skia::textlayout::Paragraph> paragraph;
+		float                                          width = 0.0f;
 	};
 } // namespace music_lyric_player::render::components::line::normal
 

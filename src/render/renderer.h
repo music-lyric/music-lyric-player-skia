@@ -94,28 +94,28 @@ namespace music_lyric_player::render {
 		 */
 		void ensureLayout(float contentWidth, const common::RenderContext& context);
 
-		playback::Player&                         player_;
-		sk_sp<SkFontMgr>                          fontMgr_;
-		const Clock&                              clock_;
-		sk_sp<::skia::textlayout::FontCollection> fonts_;
-		sk_sp<SkUnicode>                          unicode_;
+		playback::Player&                         player;
+		sk_sp<SkFontMgr>                          fontMgr;
+		const Clock&                              clock;
+		sk_sp<::skia::textlayout::FontCollection> fonts;
+		sk_sp<SkUnicode>                          unicode;
 
-		std::vector<std::unique_ptr<components::line::base::Element>> lines_;
-		int                                                           activeIndex_ = -1;
+		std::vector<std::unique_ptr<components::line::base::Element>> lines;
+		int                                                           activeIndex = -1;
 
-		int   viewportW_ = 0; // physical pixels
-		int   viewportH_ = 0; // physical pixels
-		float dpr_       = 1.0f;
+		int   viewportW = 0; // physical pixels
+		int   viewportH = 0; // physical pixels
+		float dpr       = 1.0f;
 
-		bool  layoutDirty_ = true;
-		float layoutWidth_ = -1.0f; // content width the paragraphs were wrapped to
+		bool  layoutDirty = true;
+		float layoutWidth = -1.0f; // content width the paragraphs were wrapped to
 
-		core::LayoutManager layout_;
-		core::ScrollManager scroll_;
+		core::LayoutManager layout;
+		core::ScrollManager scroll;
 
-		std::size_t lyricListener_  = 0;
-		std::size_t linesListener_  = 0;
-		std::size_t configListener_ = 0;
+		std::size_t lyricListener  = 0;
+		std::size_t linesListener  = 0;
+		std::size_t configListener = 0;
 	};
 } // namespace music_lyric_player::render
 

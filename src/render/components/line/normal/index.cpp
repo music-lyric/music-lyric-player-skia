@@ -47,16 +47,16 @@ namespace music_lyric_player::render::components::line::normal {
 
 	Element::Element(int index, std::string text)
 	    : base::Element(index),
-	      text_(std::move(text)) {}
+	      text(std::move(text)) {}
 
 	Element::~Element() = default;
 
 	void Element::layout(float width, const common::RenderContext& context) {
-		width_ = std::max(width, 1.0f);
+		this->width = std::max(width, 1.0f);
 
 		if (!context.fonts || !context.unicode) {
-			paragraph_ = nullptr;
-			height_    = 0.0f;
+			this->paragraph      = nullptr;
+			this->measuredHeight = 0.0f;
 			return;
 		}
 
@@ -76,22 +76,22 @@ namespace music_lyric_player::render::components::line::normal {
 
 		std::unique_ptr<tl::ParagraphBuilder> builder = tl::ParagraphBuilder::make(paraStyle, context.fonts, context.unicode);
 		if (!builder) {
-			paragraph_ = nullptr;
-			height_    = 0.0f;
+			this->paragraph      = nullptr;
+			this->measuredHeight = 0.0f;
 			return;
 		}
-		builder->addText(text_.c_str());
-		paragraph_ = builder->Build();
-		if (paragraph_) {
-			paragraph_->layout(width_);
-			height_ = paragraph_->getHeight();
+		builder->addText(this->text.c_str());
+		this->paragraph = builder->Build();
+		if (this->paragraph) {
+			this->paragraph->layout(this->width);
+			this->measuredHeight = this->paragraph->getHeight();
 		} else {
-			height_ = 0.0f;
+			this->measuredHeight = 0.0f;
 		}
 	}
 
 	void Element::paint(SkCanvas* canvas, float x, float y, bool active, const common::RenderContext& context) const {
-		if (!paragraph_) {
+		if (!this->paragraph) {
 			return;
 		}
 		const config::Root& cfg   = context.config;
@@ -100,9 +100,9 @@ namespace music_lyric_player::render::components::line::normal {
 		// The paragraph is opaque white; a modulate layer tints it to the state colour without re-shaping.
 		SkPaint layerPaint;
 		layerPaint.setColorFilter(SkColorFilters::Blend(color, SkBlendMode::kModulate));
-		const SkRect bounds = SkRect::MakeXYWH(x, y, width_, height_);
+		const SkRect bounds = SkRect::MakeXYWH(x, y, this->width, this->measuredHeight);
 		canvas->saveLayer(&bounds, &layerPaint);
-		paragraph_->paint(canvas, x, y);
+		this->paragraph->paint(canvas, x, y);
 		canvas->restore();
 	}
 } // namespace music_lyric_player::render::components::line::normal

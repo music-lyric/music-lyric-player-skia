@@ -32,31 +32,31 @@ namespace music_lyric_player::render {
 	} // namespace
 
 	Renderer::Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const Clock& clock)
-	    : player_(player),
-	      fontMgr_(std::move(fontMgr)),
-	      clock_(clock) {
+	    : player(player),
+	      fontMgr(std::move(fontMgr)),
+	      clock(clock) {
 		// Resolve families from the system font manager, with per-glyph fallback so mixed scripts do not render as tofu.
-		fonts_ = sk_make_sp<tl::FontCollection>();
-		fonts_->setDefaultFontManager(fontMgr_);
-		fonts_->enableFontFallback();
+		this->fonts = sk_make_sp<tl::FontCollection>();
+		this->fonts->setDefaultFontManager(this->fontMgr);
+		this->fonts->enableFontFallback();
 
 		// Unicode backend drives SkParagraph's word / grapheme / line-break boundaries.
-		unicode_ = SkUnicodes::ICU::Make();
+		this->unicode = SkUnicodes::ICU::Make();
 
-		lyricListener_  = player_.onLyricUpdate.add([this](const ::lyric::Info& info) {
+		this->lyricListener  = this->player.onLyricUpdate.add([this](const ::lyric::Info& info) {
 			handleLyricUpdate(info);
 		});
-		linesListener_  = player_.onLinesUpdate.add([this](const std::vector<int>&, int firstIndex, bool) {
+		this->linesListener  = this->player.onLinesUpdate.add([this](const std::vector<int>&, int firstIndex, bool) {
 			handleLinesUpdate(firstIndex);
 		});
-		configListener_ = config.onUpdate.add([this](const config::ChangeKeys&, const config::Root&) {
+		this->configListener = this->config.onUpdate.add([this](const config::ChangeKeys&, const config::Root&) {
 			handleConfigUpdate();
 		});
 
 		// Adopt any lyric already loaded before the renderer attached.
-		if (player_.currentInfo().lines_size() > 0) {
-			rebuildLines(player_.currentInfo());
-			activeIndex_ = player_.currentActive();
+		if (this->player.currentInfo().lines_size() > 0) {
+			rebuildLines(this->player.currentInfo());
+			this->activeIndex = this->player.currentActive();
 		}
 	}
 
@@ -65,125 +65,125 @@ namespace music_lyric_player::render {
 	}
 
 	void Renderer::dispose() {
-		if (lyricListener_ != 0) {
-			player_.onLyricUpdate.remove(lyricListener_);
-			lyricListener_ = 0;
+		if (this->lyricListener != 0) {
+			this->player.onLyricUpdate.remove(this->lyricListener);
+			this->lyricListener = 0;
 		}
-		if (linesListener_ != 0) {
-			player_.onLinesUpdate.remove(linesListener_);
-			linesListener_ = 0;
+		if (this->linesListener != 0) {
+			this->player.onLinesUpdate.remove(this->linesListener);
+			this->linesListener = 0;
 		}
-		if (configListener_ != 0) {
-			config.onUpdate.remove(configListener_);
-			configListener_ = 0;
+		if (this->configListener != 0) {
+			this->config.onUpdate.remove(this->configListener);
+			this->configListener = 0;
 		}
-		lines_.clear();
-		activeIndex_ = -1;
+		this->lines.clear();
+		this->activeIndex = -1;
 	}
 
 	void Renderer::setViewport(int widthPx, int heightPx, float dpr) {
 		dpr = (std::isfinite(dpr) && dpr > 0.0f) ? dpr : 1.0f;
-		if (widthPx == viewportW_ && heightPx == viewportH_ && dpr == dpr_) {
+		if (widthPx == this->viewportW && heightPx == this->viewportH && dpr == this->dpr) {
 			return;
 		}
 		// A width or dpr change re-wraps every line; a height change only shifts scrolling.
-		if (widthPx != viewportW_ || dpr != dpr_) {
-			layoutDirty_ = true;
+		if (widthPx != this->viewportW || dpr != this->dpr) {
+			this->layoutDirty = true;
 		}
-		viewportW_ = std::max(widthPx, 0);
-		viewportH_ = std::max(heightPx, 0);
-		dpr_       = dpr;
+		this->viewportW = std::max(widthPx, 0);
+		this->viewportH = std::max(heightPx, 0);
+		this->dpr       = dpr;
 	}
 
 	void Renderer::handleLyricUpdate(const ::lyric::Info& info) {
 		rebuildLines(info);
-		activeIndex_ = -1;
+		this->activeIndex = -1;
 	}
 
 	void Renderer::handleLinesUpdate(int firstIndex) {
-		activeIndex_ = firstIndex;
+		this->activeIndex = firstIndex;
 	}
 
 	void Renderer::handleConfigUpdate() {
-		layoutDirty_ = true;
+		this->layoutDirty = true;
 	}
 
 	void Renderer::rebuildLines(const ::lyric::Info& info) {
-		lines_.clear();
-		lines_.reserve(static_cast<std::size_t>(std::max(info.lines_size(), 0)));
+		this->lines.clear();
+		this->lines.reserve(static_cast<std::size_t>(std::max(info.lines_size(), 0)));
 		for (int i = 0; i < info.lines_size(); ++i) {
 			const ::lyric::Line& line = info.lines(i);
 			if (::music_lyric_model::isLineInterlude(line)) {
-				lines_.push_back(std::make_unique<components::line::interlude::Element>(i));
+				this->lines.push_back(std::make_unique<components::line::interlude::Element>(i));
 			} else {
-				lines_.push_back(std::make_unique<components::line::normal::Element>(i, ::music_lyric_model::getLineText(line)));
+				this->lines.push_back(std::make_unique<components::line::normal::Element>(i, ::music_lyric_model::getLineText(line)));
 			}
 		}
 		// Drop the scroll tween so a freshly loaded lyric snaps into place instead of sliding from the old song.
-		scroll_.reset();
-		layoutDirty_ = true;
+		this->scroll.reset();
+		this->layoutDirty = true;
 	}
 
 	void Renderer::ensureLayout(float contentWidth, const common::RenderContext& context) {
-		if (!layoutDirty_ && contentWidth == layoutWidth_) {
+		if (!this->layoutDirty && contentWidth == this->layoutWidth) {
 			return;
 		}
-		for (const std::unique_ptr<components::line::base::Element>& line : lines_) {
+		for (const std::unique_ptr<components::line::base::Element>& line : this->lines) {
 			line->layout(contentWidth, context);
 		}
-		layoutDirty_ = false;
-		layoutWidth_ = contentWidth;
+		this->layoutDirty = false;
+		this->layoutWidth = contentWidth;
 	}
 
 	void Renderer::render(SkCanvas* canvas) {
 		if (canvas == nullptr) {
 			return;
 		}
-		const config::Root&         cfg = config.current();
-		const common::RenderContext context{cfg, fonts_, unicode_};
+		const config::Root&         cfg = this->config.current();
+		const common::RenderContext context{cfg, this->fonts, this->unicode};
 
 		// Background always fills, even before a lyric loads.
 		canvas->clear(static_cast<SkColor>(cfg.container.backgroundColor));
 
-		if (viewportW_ <= 0 || viewportH_ <= 0) {
+		if (this->viewportW <= 0 || this->viewportH <= 0) {
 			return;
 		}
 
 		// Work in logical pixels; the device-pixel ratio is folded into the canvas transform.
 		SkAutoCanvasRestore autoRestore(canvas, true);
-		canvas->scale(dpr_, dpr_);
-		const float logicalW = static_cast<float>(viewportW_) / dpr_;
-		const float logicalH = static_cast<float>(viewportH_) / dpr_;
+		canvas->scale(this->dpr, this->dpr);
+		const float logicalW = static_cast<float>(this->viewportW) / this->dpr;
+		const float logicalH = static_cast<float>(this->viewportH) / this->dpr;
 
 		const float padX         = std::min(static_cast<float>(resolveLength(cfg.container.paddingX, kDefaultPaddingX, logicalW)), logicalW * 0.5f);
 		const float contentWidth = std::max(logicalW - 2.0f * padX, 1.0f);
 		ensureLayout(contentWidth, context);
 
-		if (lines_.empty()) {
+		if (this->lines.empty()) {
 			return;
 		}
 
 		const float gap = static_cast<float>(resolveLength(cfg.layout.gap, kDefaultGap, logicalH));
-		layout_.update(lines_, gap);
+		this->layout.update(this->lines, gap);
 
 		// Centre the focus (primary active) line on the anchor, then ease the scroll towards it.
-		const std::size_t focus   = (activeIndex_ >= 0 && activeIndex_ < static_cast<int>(lines_.size()))
-			? static_cast<std::size_t>(activeIndex_)
+		const std::size_t focus   = (this->activeIndex >= 0 && this->activeIndex < static_cast<int>(this->lines.size()))
+			? static_cast<std::size_t>(this->activeIndex)
 			: 0;
 		const float       anchorY = logicalH * static_cast<float>(cfg.scroll.anchor);
-		const float       targetY = layout_.top(focus) + lines_[focus]->height() * 0.5f - anchorY;
+		const float       targetY = this->layout.top(focus) + this->lines[focus]->height() * 0.5f - anchorY;
 
-		const double nowMs   = clock_.nowMs();
-		const float  scrollY = scroll_.update(nowMs, targetY, static_cast<int>(focus), cfg.scroll.animation.duration);
+		const double now     = this->clock.now();
+		const float  scrollY = this->scroll.update(now, targetY, static_cast<int>(focus), cfg.scroll.animation.duration);
 
-		for (std::size_t i = 0; i < lines_.size(); ++i) {
-			components::line::base::Element& line = *lines_[i];
-			const float                     y    = layout_.top(i) - scrollY;
+		for (std::size_t i = 0; i < this->lines.size(); ++i) {
+			components::line::base::Element& line = *this->lines[i];
+			const float                      y    = this->layout.top(i) - scrollY;
 			// Cull lines fully outside the viewport.
 			if (y + line.height() < 0.0f || y > logicalH) {
 				continue;
 			}
-			const bool active = static_cast<int>(i) == activeIndex_;
+			const bool active = static_cast<int>(i) == this->activeIndex;
 			line.paint(canvas, padX, y, active, context);
 		}
 	}

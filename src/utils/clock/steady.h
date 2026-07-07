@@ -9,7 +9,7 @@ namespace music_lyric_player {
 		/**
 		 * Returns the steady-clock time since epoch in milliseconds.
 		 */
-		double nowMs() const override;
+		double now() const override;
 	};
 } // namespace music_lyric_player
 

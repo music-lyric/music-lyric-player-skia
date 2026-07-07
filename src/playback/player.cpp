@@ -91,8 +91,8 @@ namespace music_lyric_player::playback {
 	    : Player(defaultClock()) {}
 
 	Player::Player(const Clock& clock)
-	    : clock_(clock) {
-		configListenerId_ = config.onUpdate.add([this](const config::ChangeKeys& keys, const config::Root&) {
+	    : clockRef(clock) {
+		this->configListenerId = this->config.onUpdate.add([this](const config::ChangeKeys& keys, const config::Root&) {
 			onConfigUpdate(keys);
 		});
 	}
@@ -106,48 +106,48 @@ namespace music_lyric_player::playback {
 		}
 
 		pause();
-		info_ = std::move(target);
+		this->info = std::move(target);
 		buildMergedLineEnd();
 
-		offset_.refreshFromMeta(info_, config.current().offset.useMeta);
-		if (config.current().offset.resetTempOnLyricChange) {
-			offset_.resetTemp();
+		this->offset.refreshFromMeta(this->info, this->config.current().offset.useMeta);
+		if (this->config.current().offset.resetTempOnLyricChange) {
+			this->offset.resetTemp();
 		}
 
-		activeIndex_.clear();
-		scanIndex_ = 0;
-		seekMs_    = 0.0;
+		this->activeIndex.clear();
+		this->scanIndex = 0;
+		this->seekMs    = 0.0;
 
-		onLyricUpdate.emit(info_);
-		onLinesUpdate.emit(std::vector<int>{}, -1, false);
+		this->onLyricUpdate.emit(this->info);
+		this->onLinesUpdate.emit(std::vector<int>{}, -1, false);
 	}
 
 	void Player::play(std::optional<double> seekMs) {
 		pause();
 
 		if (seekMs.has_value() && std::isfinite(*seekMs)) {
-			seekMs_ = *seekMs;
+			this->seekMs = *seekMs;
 			syncTime();
 		}
 
-		startMs_ = clock_.nowMs();
-		playing_ = true;
+		this->startMs = this->clockRef.now();
+		this->playing = true;
 		// Run one immediate pass so the active set is correct the instant playback starts.
 		updateActiveLines(getEffectiveTime());
 
-		onPlay.emit(getCurrentTime());
+		this->onPlay.emit(getCurrentTime());
 	}
 
 	void Player::pause() {
-		if (playing_) {
-			seekMs_  = getCurrentTime();
-			playing_ = false;
-			onPause.emit(seekMs_);
+		if (this->playing) {
+			this->seekMs  = getCurrentTime();
+			this->playing = false;
+			this->onPause.emit(this->seekMs);
 		}
 	}
 
 	void Player::tick() {
-		if (!playing_) {
+		if (!this->playing) {
 			return;
 		}
 		updateActiveLines(getEffectiveTime());
@@ -155,31 +155,31 @@ namespace music_lyric_player::playback {
 
 	void Player::dispose() {
 		pause();
-		onPlay.clear();
-		onPause.clear();
-		onLyricUpdate.clear();
-		onLinesUpdate.clear();
-		config.onUpdate.remove(configListenerId_);
+		this->onPlay.clear();
+		this->onPause.clear();
+		this->onLyricUpdate.clear();
+		this->onLinesUpdate.clear();
+		this->config.onUpdate.remove(this->configListenerId);
 
-		activeIndex_.clear();
-		info_ = ::lyric::Info{};
+		this->activeIndex.clear();
+		this->info = ::lyric::Info{};
 	}
 
 	void Player::updateTempOffset(double value) {
-		offset_.setTemp(value);
+		this->offset.setTemp(value);
 		syncTime();
 	}
 
 	std::vector<int> Player::matchLinesWithTime(double time) const {
 		const double     effective = time + currentOffset();
 		std::vector<int> index;
-		for (int i = 0; i < info_.lines_size(); ++i) {
-			const ::lyric::Time* lineTime = music_lyric_model::getLineTime(info_.lines(i));
+		for (int i = 0; i < this->info.lines_size(); ++i) {
+			const ::lyric::Time* lineTime = music_lyric_model::getLineTime(this->info.lines(i));
 			// Lines are sorted by start ascending, so the first line starting after `time` ends the scan.
 			if ((lineTime ? static_cast<double>(lineTime->start()) : 0.0) > effective) {
 				break;
 			}
-			if (merger_.getMergedTime(i) > effective) {
+			if (this->merger.getMergedTime(i) > effective) {
 				index.push_back(i);
 			}
 		}
@@ -191,11 +191,11 @@ namespace music_lyric_player::playback {
 	}
 
 	bool Player::currentPlaying() const {
-		return playing_;
+		return this->playing;
 	}
 
 	std::vector<int> Player::currentIndex() const {
-		return bridgeActive(activeIndex_);
+		return bridgeActive(this->activeIndex);
 	}
 
 	int Player::currentActive() const {
@@ -203,7 +203,7 @@ namespace music_lyric_player::playback {
 	}
 
 	const ::lyric::Info& Player::currentInfo() const {
-		return info_;
+		return this->info;
 	}
 
 	double Player::currentTime() const {
@@ -211,18 +211,18 @@ namespace music_lyric_player::playback {
 	}
 
 	double Player::currentOffset() const {
-		return offset_.resolve(config.current().offset.global);
+		return this->offset.resolve(this->config.current().offset.global);
 	}
 
 	const Clock& Player::clock() const {
-		return clock_;
+		return this->clockRef;
 	}
 
 	double Player::getCurrentTime() const {
-		if (!playing_) {
-			return seekMs_;
+		if (!this->playing) {
+			return this->seekMs;
 		}
-		return seekMs_ + (clock_.nowMs() - startMs_);
+		return this->seekMs + (this->clockRef.now() - this->startMs);
 	}
 
 	double Player::getEffectiveTime() const {
@@ -230,15 +230,15 @@ namespace music_lyric_player::playback {
 	}
 
 	void Player::buildMergedLineEnd() {
-		merger_.build(info_, config.current().mergeWindow, config.current().mergeLimit);
+		this->merger.build(this->info, this->config.current().mergeWindow, this->config.current().mergeLimit);
 	}
 
 	int Player::getActiveIndex() const {
-		return activeIndex_.empty() ? -1 : activeIndex_.front();
+		return this->activeIndex.empty() ? -1 : this->activeIndex.front();
 	}
 
 	std::vector<int> Player::bridgeActive(const std::vector<int>& index) const {
-		if (!config.current().bridgeActive || index.size() < 2) {
+		if (!this->config.current().bridgeActive || index.size() < 2) {
 			return index;
 		}
 		const int min = index.front();
@@ -248,7 +248,7 @@ namespace music_lyric_player::playback {
 		}
 		// Promote the sandwiched (already-ended) lines back so the range is contiguous.
 		std::vector<int> bridged;
-		for (int i = min; i <= max && i < info_.lines_size(); ++i) {
+		for (int i = min; i <= max && i < this->info.lines_size(); ++i) {
 			if (i >= 0) {
 				bridged.push_back(i);
 			}
@@ -257,11 +257,11 @@ namespace music_lyric_player::playback {
 	}
 
 	void Player::emitLinesUpdate(bool isSeek) {
-		onLinesUpdate.emit(bridgeActive(activeIndex_), getActiveIndex(), isSeek);
+		this->onLinesUpdate.emit(bridgeActive(this->activeIndex), getActiveIndex(), isSeek);
 	}
 
 	void Player::syncTime(std::optional<double> time) {
-		if (info_.lines_size() == 0) {
+		if (this->info.lines_size() == 0) {
 			return;
 		}
 
@@ -271,20 +271,20 @@ namespace music_lyric_player::playback {
 		}
 
 		std::vector<int> index;
-		int              firstIndex = info_.lines_size();
-		for (int i = 0; i < info_.lines_size(); ++i) {
-			const ::lyric::Time* lineTime = music_lyric_model::getLineTime(info_.lines(i));
+		int              firstIndex = this->info.lines_size();
+		for (int i = 0; i < this->info.lines_size(); ++i) {
+			const ::lyric::Time* lineTime = music_lyric_model::getLineTime(this->info.lines(i));
 			if ((lineTime ? static_cast<double>(lineTime->start()) : 0.0) > effective) {
 				firstIndex = i;
 				break;
 			}
-			if (merger_.getMergedTime(i) > effective) {
+			if (this->merger.getMergedTime(i) > effective) {
 				index.push_back(i);
 			}
 		}
 
-		scanIndex_   = firstIndex;
-		activeIndex_ = std::move(index);
+		this->scanIndex   = firstIndex;
+		this->activeIndex = std::move(index);
 		emitLinesUpdate(true);
 	}
 
@@ -292,22 +292,22 @@ namespace music_lyric_player::playback {
 		bool             hasChanged = false;
 		std::vector<int> newActive;
 
-		for (const int infoIndex : activeIndex_) {
-			if (now >= merger_.getMergedTime(infoIndex)) {
+		for (const int infoIndex : this->activeIndex) {
+			if (now >= this->merger.getMergedTime(infoIndex)) {
 				hasChanged = true;
 			} else {
 				newActive.push_back(infoIndex);
 			}
 		}
 
-		while (scanIndex_ < info_.lines_size()) {
-			const ::lyric::Time* lineTime = music_lyric_model::getLineTime(info_.lines(scanIndex_));
+		while (this->scanIndex < this->info.lines_size()) {
+			const ::lyric::Time* lineTime = music_lyric_model::getLineTime(this->info.lines(this->scanIndex));
 			if (now >= (lineTime ? static_cast<double>(lineTime->start()) : 0.0)) {
-				if (now < merger_.getMergedTime(scanIndex_)) {
-					newActive.push_back(scanIndex_);
+				if (now < this->merger.getMergedTime(this->scanIndex)) {
+					newActive.push_back(this->scanIndex);
 					hasChanged = true;
 				}
-				scanIndex_++;
+				this->scanIndex++;
 			} else {
 				break;
 			}
@@ -317,7 +317,7 @@ namespace music_lyric_player::playback {
 			return;
 		}
 
-		activeIndex_ = std::move(newActive);
+		this->activeIndex = std::move(newActive);
 		emitLinesUpdate(false);
 	}
 
@@ -325,7 +325,7 @@ namespace music_lyric_player::playback {
 		// Toggling meta usage re-derives the lyric offset from the current info.
 		const bool metaToggled = config::keyHas(keys, config::Keys::offset::useMeta);
 		if (metaToggled) {
-			offset_.refreshFromMeta(info_, config.current().offset.useMeta);
+			this->offset.refreshFromMeta(this->info, this->config.current().offset.useMeta);
 		}
 		// An offset change shifts effective time, so re-match active lines.
 		if (metaToggled || config::keyHas(keys, config::Keys::offset::global)) {

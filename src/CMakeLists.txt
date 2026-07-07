@@ -17,6 +17,7 @@ add_library(music_lyric_player_render
 	render/components/line/normal/index.cpp
 	render/components/line/interlude/index.cpp
 	render/core/layout.cpp
+	render/core/line.cpp
 	render/core/scroll.cpp
 	render/renderer.cpp
 )

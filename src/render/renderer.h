@@ -2,13 +2,11 @@
 #define MUSIC_LYRIC_PLAYER_RENDER_RENDERER_H_
 
 #include <cstddef>
-#include <memory>
-#include <vector>
 
 #include "include/core/SkRefCnt.h"
-#include "render/components/line/base/index.h"
 #include "render/config/index.h"
 #include "render/core/layout.h"
+#include "render/core/line.h"
 #include "render/core/scroll.h"
 #include "utils/clock/clock.h"
 
@@ -85,14 +83,9 @@ namespace music_lyric_player::render {
 		void handleConfigUpdate();
 
 		/**
-		 * Extracts plain text / interlude flags from the lyric into `lines_`.
+		 * Rebuilds the line list from a freshly loaded lyric and resets scrolling.
 		 */
 		void rebuildLines(const ::lyric::Info& info);
-
-		/**
-		 * (Re)lays out every line for the given content width when the layout is dirty.
-		 */
-		void ensureLayout(float contentWidth, const common::RenderContext& context);
 
 		playback::Player&                         player;
 		sk_sp<SkFontMgr>                          fontMgr;
@@ -100,16 +93,13 @@ namespace music_lyric_player::render {
 		sk_sp<::skia::textlayout::FontCollection> fonts;
 		sk_sp<SkUnicode>                          unicode;
 
-		std::vector<std::unique_ptr<components::line::base::Element>> lines;
-		int                                                           activeIndex = -1;
+		int activeIndex = -1;
 
 		int   viewportW = 0; // physical pixels
 		int   viewportH = 0; // physical pixels
 		float dpr       = 1.0f;
 
-		bool  layoutDirty = true;
-		float layoutWidth = -1.0f; // content width the paragraphs were wrapped to
-
+		core::LineManager   lines;
 		core::LayoutManager layout;
 		core::ScrollManager scroll;
 

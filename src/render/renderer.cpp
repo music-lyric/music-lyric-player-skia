@@ -2,8 +2,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <memory>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -11,14 +9,12 @@
 #include "include/core/SkColor.h"
 #include "include/core/SkFontMgr.h"
 #include "info.pb.h"
-#include "line/content.h"
 #include "modules/skparagraph/include/FontCollection.h"
 #include "modules/skunicode/include/SkUnicode.h"
 #include "modules/skunicode/include/SkUnicode_icu.h"
 #include "playback/player.h"
 #include "render/common/context.h"
-#include "render/components/line/interlude/index.h"
-#include "render/components/line/normal/index.h"
+#include "render/components/line/base/index.h"
 #include "render/utils/length.h"
 
 namespace tl = ::skia::textlayout;
@@ -88,7 +84,7 @@ namespace music_lyric_player::render {
 		}
 		// A width or dpr change re-wraps every line; a height change only shifts scrolling.
 		if (widthPx != this->viewportW || dpr != this->dpr) {
-			this->layoutDirty = true;
+			this->lines.invalidateLayout();
 		}
 		this->viewportW = std::max(widthPx, 0);
 		this->viewportH = std::max(heightPx, 0);
@@ -105,34 +101,13 @@ namespace music_lyric_player::render {
 	}
 
 	void Renderer::handleConfigUpdate() {
-		this->layoutDirty = true;
+		this->lines.invalidateLayout();
 	}
 
 	void Renderer::rebuildLines(const ::lyric::Info& info) {
-		this->lines.clear();
-		this->lines.reserve(static_cast<std::size_t>(std::max(info.lines_size(), 0)));
-		for (int i = 0; i < info.lines_size(); ++i) {
-			const ::lyric::Line& line = info.lines(i);
-			if (::music_lyric_model::isLineInterlude(line)) {
-				this->lines.push_back(std::make_unique<components::line::interlude::Element>(i));
-			} else {
-				this->lines.push_back(std::make_unique<components::line::normal::Element>(i, ::music_lyric_model::getLineText(line)));
-			}
-		}
+		this->lines.rebuild(info);
 		// Drop the scroll tween so a freshly loaded lyric snaps into place instead of sliding from the old song.
 		this->scroll.reset();
-		this->layoutDirty = true;
-	}
-
-	void Renderer::ensureLayout(float contentWidth, const common::RenderContext& context) {
-		if (!this->layoutDirty && contentWidth == this->layoutWidth) {
-			return;
-		}
-		for (const std::unique_ptr<components::line::base::Element>& line : this->lines) {
-			line->layout(contentWidth, context);
-		}
-		this->layoutDirty = false;
-		this->layoutWidth = contentWidth;
 	}
 
 	void Renderer::render(SkCanvas* canvas) {
@@ -157,28 +132,28 @@ namespace music_lyric_player::render {
 
 		const float padX         = std::min(static_cast<float>(resolveLength(cfg.container.paddingX, kDefaultPaddingX, logicalW)), logicalW * 0.5f);
 		const float contentWidth = std::max(logicalW - 2.0f * padX, 1.0f);
-		ensureLayout(contentWidth, context);
+		this->lines.ensureLayout(contentWidth, context);
 
 		if (this->lines.empty()) {
 			return;
 		}
 
 		const float gap = static_cast<float>(resolveLength(cfg.layout.gap, kDefaultGap, logicalH));
-		this->layout.update(this->lines, gap);
+		this->layout.update(this->lines.all(), gap);
 
 		// Centre the focus (primary active) line on the anchor, then ease the scroll towards it.
 		const std::size_t focus   = (this->activeIndex >= 0 && this->activeIndex < static_cast<int>(this->lines.size()))
 			? static_cast<std::size_t>(this->activeIndex)
 			: 0;
 		const float       anchorY = logicalH * static_cast<float>(cfg.scroll.anchor);
-		const float       targetY = this->layout.top(focus) + this->lines[focus]->height() * 0.5f - anchorY;
+		const float       targetY = this->layout.top(focus) + this->lines.at(focus).height() * 0.5f - anchorY;
 
 		const double now     = this->clock.now();
 		const float  scrollY = this->scroll.update(now, targetY, static_cast<int>(focus), cfg.scroll.animation.duration);
 
 		for (std::size_t i = 0; i < this->lines.size(); ++i) {
-			components::line::base::Element& line = *this->lines[i];
-			const float                      y    = this->layout.top(i) - scrollY;
+			const components::line::base::Element& line = this->lines.at(i);
+			const float                            y    = this->layout.top(i) - scrollY;
 			// Cull lines fully outside the viewport.
 			if (y + line.height() < 0.0f || y > logicalH) {
 				continue;

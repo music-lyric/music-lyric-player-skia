@@ -90,12 +90,12 @@ namespace music_lyric_player::render::components::line::normal {
 		}
 	}
 
-	void Element::paint(SkCanvas* canvas, float x, float y, bool active, const common::RenderContext& context) const {
+	void Element::paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const {
 		if (!this->paragraph) {
 			return;
 		}
 		const config::Root& cfg   = context.config;
-		const SkColor       color = static_cast<SkColor>(active ? cfg.line.active.color : cfg.line.normal.color);
+		const SkColor       color = this->stateColor(now, active, static_cast<SkColor>(cfg.line.normal.color), static_cast<SkColor>(cfg.line.active.color));
 
 		// The paragraph is opaque white; a modulate layer tints it to the state colour without re-shaping.
 		SkPaint layerPaint;

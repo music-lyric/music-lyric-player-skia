@@ -19,7 +19,7 @@ namespace music_lyric_player::render::components::line::interlude {
 		explicit Element(int index);
 
 		void layout(float width, const common::RenderContext& context) override;
-		void paint(SkCanvas* canvas, float x, float y, bool active, const common::RenderContext& context) const override;
+		void paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const override;
 
 	private:
 		static constexpr int kDotCount = 3;

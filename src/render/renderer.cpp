@@ -159,7 +159,7 @@ namespace music_lyric_player::render {
 				continue;
 			}
 			const bool active = static_cast<int>(i) == this->activeIndex;
-			line.paint(canvas, padX, y, active, context);
+			line.paint(canvas, padX, y, now, active, context);
 		}
 	}
 } // namespace music_lyric_player::render

@@ -1,6 +1,9 @@
 #ifndef MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_BASE_INDEX_H_
 #define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_BASE_INDEX_H_
 
+#include "include/core/SkColor.h"
+#include "render/utils/animation/tween.h"
+
 class SkCanvas;
 
 namespace music_lyric_player::render::common {
@@ -22,9 +25,9 @@ namespace music_lyric_player::render::components::line::base {
 		virtual void layout(float width, const common::RenderContext& context) = 0;
 
 		/**
-		 * Paints the line with its top-left at (`x`, `y`), styled for the active or normal state.
+		 * Paints the line with its top-left at (`x`, `y`), sampling any per-frame animation at `now` and styling for the active or normal state.
 		 */
-		virtual void paint(SkCanvas* canvas, float x, float y, bool active, const common::RenderContext& context) const = 0;
+		virtual void paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const = 0;
 
 		/**
 		 * The measured height in logical pixels; valid after `layout`.
@@ -42,7 +45,9 @@ namespace music_lyric_player::render::components::line::base {
 
 	protected:
 		explicit Element(int index)
-		    : lineIndex(index) {}
+		    : lineIndex(index) {
+			this->colorTween.setEasing(animation::inOutCubic);
+		}
 
 		/**
 		 * The x of the left edge at which a rigid block of `blockWidth` sits inside `[x, x + width)` for `align`.
@@ -59,9 +64,37 @@ namespace music_lyric_player::render::components::line::base {
 			}
 		}
 
+		/**
+		 * Advances the shared inactive-to-active tint to `now` and returns it, easing across `active` flips.
+		 * The first call seeds the colour without animating; a stable state tracks config colour edits without restarting the ease.
+		 */
+		SkColor stateColor(double now, bool active, SkColor normalColor, SkColor activeColor) const {
+			const SkColor target = active ? activeColor : normalColor;
+			if (!this->colorReady) {
+				this->colorTween.snap(target);
+				this->active     = active;
+				this->colorReady = true;
+			} else if (active != this->active) {
+				this->colorTween.setDuration(kStateColorDurationMs);
+				this->colorTween.retarget(now, target);
+				this->active = active;
+			} else {
+				this->colorTween.setTarget(target);
+			}
+			return this->colorTween.sample(now);
+		}
+
 		int   lineIndex;
 		float measuredHeight = 0.0f;
 		float width          = 0.0f; // content width the line was laid out to
+
+	private:
+		// Line colour transition; a dedicated config (duration / easing) is not ported yet (M2.3+).
+		static constexpr double kStateColorDurationMs = 300.0;
+
+		mutable animation::Tween<SkColor> colorTween;
+		mutable bool                      active     = false; // last state the tint was resolved for
+		mutable bool                      colorReady = false; // whether the tint tween has been seeded
 	};
 } // namespace music_lyric_player::render::components::line::base
 

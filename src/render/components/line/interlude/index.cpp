@@ -23,9 +23,9 @@ namespace music_lyric_player::render::components::line::interlude {
 		this->measuredHeight = kDotSize + 2.0f * kPaddingY;
 	}
 
-	void Element::paint(SkCanvas* canvas, float x, float y, bool active, const common::RenderContext& context) const {
+	void Element::paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const {
 		const config::Root& cfg   = context.config;
-		const SkColor       color = static_cast<SkColor>(active ? cfg.line.active.color : cfg.line.normal.color);
+		const SkColor       color = this->stateColor(now, active, static_cast<SkColor>(cfg.line.normal.color), static_cast<SkColor>(cfg.line.active.color));
 
 		SkPaint paint;
 		paint.setAntiAlias(true);

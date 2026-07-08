@@ -8,15 +8,11 @@
       "fields": [
         {
           "name": "align",
-          "type": "int",
-          "default": "0",
-          "comment": [
-            "Horizontal alignment of lines within the container.",
-            "",
-            "- `0` — left",
-            "- `1` — center",
-            "- `2` — right"
-          ]
+          "enum": "Align",
+          "enumComment": "Horizontal alignment of a line within the container.",
+          "values": ["Left", "Center", "Right"],
+          "default": "Left",
+          "comment": "Horizontal alignment of lines within the container."
         },
         {
           "name": "gap",

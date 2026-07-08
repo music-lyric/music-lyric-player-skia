@@ -28,15 +28,19 @@ namespace tl = ::skia::textlayout;
 
 namespace music_lyric_player::render::components::line::normal {
 	namespace {
+		// Local alias for the config alignment enum, so the switch below reads without the full path.
+		using Align = config::layout::Align;
+
 		/**
-		 * Maps the config's integer alignment onto SkParagraph's `TextAlign`.
+		 * Maps the config's alignment enum onto SkParagraph's `TextAlign`.
 		 */
-		tl::TextAlign toTextAlign(int align) {
+		tl::TextAlign toTextAlign(Align align) {
 			switch (align) {
-			case 1:
+			case Align::Center:
 				return tl::TextAlign::kCenter;
-			case 2:
+			case Align::Right:
 				return tl::TextAlign::kRight;
+			case Align::Left:
 			default:
 				return tl::TextAlign::kLeft;
 			}

@@ -83,15 +83,17 @@
       "fields": [
         {
           "name": "mode",
-          "type": "int",
-          "default": "0",
+          "enum": "Mode",
+          "enumComment": "Scroll cascade mode selecting how per-line transition delays are distributed.",
+          "values": ["Smooth", "Ripple", "Directional", "Stagger"],
+          "default": "Smooth",
           "comment": [
             "Cascade mode distributing per-line transition delays.",
             "",
-            "- `0` — smooth (all lines move together, no cascade)",
-            "- `1` — ripple (symmetric cascade outward from the active line)",
-            "- `2` — directional (played lines move first, upcoming lines follow)",
-            "- `3` — stagger (legacy linear stagger; delay saturates at `range`)"
+            "- `Smooth` — all lines move together, no cascade",
+            "- `Ripple` — symmetric cascade outward from the active line",
+            "- `Directional` — played lines move first, upcoming lines follow",
+            "- `Stagger` — legacy linear stagger; delay saturates at `range`"
           ]
         },
         {

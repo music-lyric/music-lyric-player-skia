@@ -9,19 +9,14 @@
 
 namespace music_lyric_player::render::core {
 	namespace {
-		// Cascade modes, matching config `scroll.animation.mode`.
-		enum Mode {
-			kSmooth      = 0,
-			kRipple      = 1,
-			kDirectional = 2,
-			kStagger     = 3,
-		};
+		// Local alias for the config cascade-mode enum, so the switch below reads without the full path.
+		using Mode = config::scroll::Mode;
 	} // namespace
 
 	ScrollManager::Transition ScrollManager::lineTransition(const config::scroll::AnimationConfig& anim, int offset, bool played, int direction) {
 		const double duration = ::std::max(anim.duration, 0.0);
 		switch (anim.mode) {
-		case kRipple: {
+		case Mode::Ripple: {
 			const double step       = ::std::max(anim.ripple.step, 10.0);
 			const double range      = ::std::max(anim.ripple.range, 1.0);
 			const double distance   = ::std::min(::std::abs(static_cast<double>(offset)), range);
@@ -29,7 +24,7 @@ namespace music_lyric_player::render::core {
 			const double eased      = 1.0 - (1.0 - normalized) * (1.0 - normalized);
 			return {duration, ::std::round(eased * range * step)};
 		}
-		case kDirectional: {
+		case Mode::Directional: {
 			const double step       = ::std::max(anim.directional.step, 10.0);
 			const double range      = ::std::max(anim.directional.range, 1.0);
 			const double distance   = ::std::min(::std::abs(static_cast<double>(offset)), range);
@@ -39,7 +34,7 @@ namespace music_lyric_player::render::core {
 			         : 1.0 - (1.0 - normalized) * (1.0 - normalized);
 			return {duration, ::std::round(eased * range * step)};
 		}
-		case kStagger: {
+		case Mode::Stagger: {
 			if (direction == 0) {
 				return {duration, 0.0};
 			}
@@ -48,7 +43,7 @@ namespace music_lyric_player::render::core {
 			const double clamped = ::std::max(-range, ::std::min(range, static_cast<double>(offset)));
 			return {duration, ::std::round((range + direction * clamped) * step)};
 		}
-		case kSmooth:
+		case Mode::Smooth:
 		default:
 			return {duration, ::std::max(anim.smooth.delay, 0.0)};
 		}

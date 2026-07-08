@@ -17,9 +17,10 @@ Schema shape:
                                         "example"?: [1, 2], "min"?: 0, "max"?: 10, "comment"?: "..." } ] },
         { "name": "Root", "fields": [ { "name": "sub", "nested": "Sub", "defaults"?: { "x": "1.0" } },
                                       { "name": "ext", "nested": "alias.Root" } ] } ] }
-A leaf field has `type` (+ optional `default`, a C++ literal string), or `kind`
+A leaf field has `type` (+ optional `default`, a C++ literal string), `kind`
 (`"color"` / `"length"` / `"easing"`) which implies `type: ::std::string` and appends a standard
-format note to the doc. A nested field has `nested`
+format note to the doc, or `enum` (+ `values`, + optional `enumComment`) which emits an `enum class`
+and types the field as it (`default` is then an enumerator name). A nested field has `nested`
 naming a config (+ optional `defaults`, a map of sub-field -> C++ literal overriding that nesting's
 defaults via designated initialisers). A bare name (`"Sub"`) targets an earlier config in the same
 schema; a dotted name (`"alias.Root"`) targets a config from an imported schema, referenced by its
@@ -73,8 +74,17 @@ def is_nested(field):
 
 
 def leaf_type(field):
-    """C++ type of a leaf field: a `kind` implies `::std::string`, otherwise the explicit `type`."""
+    """C++ type of a leaf field: `enum` names its enum class, `kind` implies `::std::string`, otherwise the explicit `type`."""
+    if "enum" in field:
+        return field["enum"]
     return "::std::string" if "kind" in field else field["type"]
+
+
+def leaf_default(field):
+    """The C++ default initialiser for a leaf: `Enum::Value` for enums, the raw literal otherwise (`{}` when unset)."""
+    if "enum" in field:
+        return f"{field['enum']}::{field['default']}" if "default" in field else "{}"
+    return field.get("default", "{}")
 
 
 def is_valid_comment(value):
@@ -161,8 +171,8 @@ def validate_structure(schema):
                     raise SchemaError(f"{at} ('{field_name}').example must be a scalar or a non-empty list of scalars")
 
             if is_nested(field):
-                if any(key in field for key in ("type", "kind", "default", "example", "min", "max")):
-                    raise SchemaError(f"{at} ('{field_name}') is nested and must not have 'type'/'kind'/'default'/'example'/'min'/'max'")
+                if any(key in field for key in ("type", "kind", "enum", "values", "default", "example", "min", "max")):
+                    raise SchemaError(f"{at} ('{field_name}') is nested and must not have 'type'/'kind'/'enum'/'values'/'default'/'example'/'min'/'max'")
                 overrides = field.get("defaults")
                 if overrides is not None and not (
                     isinstance(overrides, dict) and overrides and all(isinstance(k, str) and isinstance(v, str) for k, v in overrides.items())
@@ -178,8 +188,23 @@ def validate_structure(schema):
                 elif target not in defined:
                     raise SchemaError(f"{at} ('{field_name}') nests '{target}', which must be defined before '{name}'")
             else:
+                enum_name = field.get("enum")
                 kind = field.get("kind")
-                if kind is not None:
+                if enum_name is not None:
+                    if not isinstance(enum_name, str) or not enum_name:
+                        raise SchemaError(f"{at} ('{field_name}').enum must be a non-empty string (the enum class name)")
+                    if "type" in field or kind is not None:
+                        raise SchemaError(f"{at} ('{field_name}') has 'enum' and must not also set 'type'/'kind'")
+                    values = field.get("values")
+                    if not (isinstance(values, list) and values and all(isinstance(v, str) and v for v in values)):
+                        raise SchemaError(f"{at} ('{field_name}').values must be a non-empty array of enumerator name strings")
+                    if len(set(values)) != len(values):
+                        raise SchemaError(f"{at} ('{field_name}').values has duplicate enumerator names")
+                    if "default" in field and field["default"] not in values:
+                        raise SchemaError(f"{at} ('{field_name}').default must be one of 'values'")
+                    if "enumComment" in field and not is_valid_comment(field["enumComment"]):
+                        raise SchemaError(f"{at} ('{field_name}').enumComment must be a string or a list of strings")
+                elif kind is not None:
                     if kind not in KIND_NOTES:
                         raise SchemaError(f"{at} ('{field_name}').kind must be one of {sorted(KIND_NOTES)}")
                     if "type" in field:
@@ -187,7 +212,7 @@ def validate_structure(schema):
                 else:
                     field_type = field.get("type")
                     if not isinstance(field_type, str) or not field_type:
-                        raise SchemaError(f"{at} ('{field_name}') must have a non-empty 'type', a 'kind', or 'nested'")
+                        raise SchemaError(f"{at} ('{field_name}') must have a non-empty 'type', a 'kind', an 'enum', or 'nested'")
                 if "default" in field and not isinstance(field["default"], str):
                     raise SchemaError(f"{at} ('{field_name}').default must be a string holding a C++ literal")
 
@@ -300,7 +325,8 @@ def field_tags(field):
 
     lines = []
     if "default" in field:
-        lines.append(f"@default {field['default']}")  # `default` is already a C++/display literal, emitted verbatim.
+        default = f"{field['enum']}::{field['default']}" if "enum" in field else field["default"]
+        lines.append(f"@default {default}")  # a C++/display literal (`Enum::Value` for enums), emitted verbatim.
     example = field.get("example")
     for item in example if isinstance(example, list) else ([] if example is None else [example]):
         lines.append(f"@example {render(item)}")
@@ -348,8 +374,7 @@ def gen_struct(cfg, module):
             else:
                 out.append(f"{above}\t\t{type_str} {field['name']};{note(field, module.inline)}")
         else:
-            default = field.get("default", "{}")
-            out.append(f"{above}\t\t{leaf_type(field)} {field['name']} = {default};{note(field, module.inline)}")
+            out.append(f"{above}\t\t{leaf_type(field)} {field['name']} = {leaf_default(field)};{note(field, module.inline)}")
     out.append("\t};")
     return "\n".join(out)
 
@@ -435,6 +460,32 @@ def gen_keys(cfg, module):
     return "\n".join(out)
 
 
+def collect_enums(module):
+    """Ordered `{enum_name: (values, comment)}` across every leaf field in the module; errors on a conflicting redefinition."""
+    enums = {}
+    for cfg in module.items:
+        for field in cfg["fields"]:
+            if is_nested(field) or "enum" not in field:
+                continue
+            name = field["enum"]
+            values = tuple(field["values"])
+            if name in enums and enums[name][0] != values:
+                raise SchemaError(f"enum '{name}' has conflicting 'values' across fields in {module.path.name}")
+            enums.setdefault(name, (values, field.get("enumComment")))
+    return enums
+
+
+def gen_enums(module):
+    """The `enum class` blocks for the module's enum fields, emitted before the structs that reference them."""
+    blocks = []
+    for name, (values, comment) in collect_enums(module).items():
+        lines = [jsdoc(comment, "\t") + f"\tenum class {name} {{"]
+        lines += [f"\t\t{value}," for value in values]
+        lines.append("\t};")
+        blocks.append("\n".join(lines))
+    return blocks
+
+
 def gen_default(cfg):
     """Emit `inline const Root Default` (every field at its schema default) for a `Root` config, so consumers can fall back to it; empty otherwise."""
     if cfg["name"] != "Root":
@@ -472,7 +523,10 @@ def render(module, schema_name):
         f"namespace {namespace} {{",
     ]
 
-    # structs, then patches, then merge, then diff, then key trees, then the `Root` default instance
+    # enums first (referenced by the structs below), then structs / patches / merge / diff / key trees / the `Root` default instance
+    for block in gen_enums(module):
+        parts.append(block)
+        parts.append("")
     for stage in (gen_struct, gen_patch, gen_apply, gen_diff):
         for cfg in items:
             parts.append(stage(cfg, module))

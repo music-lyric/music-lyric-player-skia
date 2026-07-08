@@ -24,10 +24,10 @@ int main() {
 	// system family (covers CJK and latin); also centre-align the lyrics for the demo.
 	renderer.config.modify([](music_lyric_player::render::config::Root& cfg) {
 		cfg.line.font.family      = "Microsoft YaHei UI";
-		cfg.layout.align          = 1;
+		cfg.layout.align          = music_lyric_player::render::config::layout::Align::Center;
 		cfg.line.normal.color     = "rgb(255, 255, 61)";
 		cfg.line.active.color     = "#ffffff";
-		cfg.scroll.animation.mode = 1; // ripple cascade, to show off the scroll modes
+		cfg.scroll.animation.mode = music_lyric_player::render::config::scroll::Mode::Ripple; // show off the scroll modes
 	});
 
 	player.updateLyric(example::buildSampleLyric());

@@ -13,6 +13,16 @@
 
 namespace music_lyric_player::render::config::scroll {
 	/**
+	 * Scroll cascade mode selecting how per-line transition delays are distributed.
+	 */
+	enum class Mode {
+		Smooth,
+		Ripple,
+		Directional,
+		Stagger,
+	};
+
+	/**
 	 * Parameters for the Smooth mode: a uniform, non-cascade transition.
 	 */
 	struct SmoothConfig {
@@ -92,14 +102,14 @@ namespace music_lyric_player::render::config::scroll {
 		/**
 		 * Cascade mode distributing per-line transition delays.
 		 *
-		 * - `0` — smooth (all lines move together, no cascade)
-		 * - `1` — ripple (symmetric cascade outward from the active line)
-		 * - `2` — directional (played lines move first, upcoming lines follow)
-		 * - `3` — stagger (legacy linear stagger; delay saturates at `range`)
+		 * - `Smooth` — all lines move together, no cascade
+		 * - `Ripple` — symmetric cascade outward from the active line
+		 * - `Directional` — played lines move first, upcoming lines follow
+		 * - `Stagger` — legacy linear stagger; delay saturates at `range`
 		 *
-		 * @default 0
+		 * @default Mode::Smooth
 		 */
-		int mode = 0;
+		Mode mode = Mode::Smooth;
 		/**
 		 * Transition duration of each individual line, in `ms`.
 		 * In cascade modes the total visual length is roughly `duration + maxDelay`.
@@ -176,7 +186,7 @@ namespace music_lyric_player::render::config::scroll {
 	};
 
 	struct AnimationConfigPatch {
-		::std::optional<int> mode;
+		::std::optional<Mode> mode;
 		::std::optional<double> duration;
 		::std::optional<::std::string> easing;
 		SmoothConfigPatch smooth;

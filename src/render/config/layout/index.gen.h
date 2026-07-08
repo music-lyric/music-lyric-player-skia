@@ -13,19 +13,24 @@
 
 namespace music_lyric_player::render::config::layout {
 	/**
+	 * Horizontal alignment of a line within the container.
+	 */
+	enum class Align {
+		Left,
+		Center,
+		Right,
+	};
+
+	/**
 	 * Alignment and spacing applied to every lyric line.
 	 */
 	struct Root {
 		/**
 		 * Horizontal alignment of lines within the container.
 		 *
-		 * - `0` — left
-		 * - `1` — center
-		 * - `2` — right
-		 *
-		 * @default 0
+		 * @default Align::Left
 		 */
-		int align = 0;
+		Align align = Align::Left;
 		/**
 		 * Vertical spacing between adjacent lines.
 		 * A `%` value is relative to the viewport height.
@@ -40,7 +45,7 @@ namespace music_lyric_player::render::config::layout {
 	};
 
 	struct RootPatch {
-		::std::optional<int> align;
+		::std::optional<Align> align;
 		::std::optional<::std::string> gap;
 	};
 

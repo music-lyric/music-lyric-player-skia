@@ -2,6 +2,7 @@
 #define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_BASE_INDEX_H_
 
 #include "include/core/SkColor.h"
+#include "render/config/layout/index.gen.h"
 #include "render/utils/animation/tween.h"
 
 class SkCanvas;
@@ -51,16 +52,18 @@ namespace music_lyric_player::render::components::line::base {
 
 		/**
 		 * The x of the left edge at which a rigid block of `blockWidth` sits inside `[x, x + width)` for `align`.
-		 * Shared horizontal-alignment policy (0 left / 1 center / 2 right) for line kinds that place a block.
+		 * Shared horizontal-alignment policy for line kinds that place a rigid block.
 		 */
-		float alignBlockX(float x, float blockWidth, int align) const {
+		float alignBlockX(float x, float blockWidth, config::layout::Align align) const {
+			using Align = config::layout::Align;
 			switch (align) {
-			case 1:
-				return x + (this->width - blockWidth) * 0.5f; // center
-			case 2:
-				return x + (this->width - blockWidth); // right
+			case Align::Center:
+				return x + (this->width - blockWidth) * 0.5f;
+			case Align::Right:
+				return x + (this->width - blockWidth);
+			case Align::Left:
 			default:
-				return x; // left
+				return x;
 			}
 		}
 

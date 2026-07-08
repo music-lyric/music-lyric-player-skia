@@ -10,61 +10,9 @@
 #include <string_view>
 
 #include "utils/manager/config.h"
+#include "render/config/common/index.gen.h"
 
 namespace music_lyric_player::render::config::line {
-	/**
-	 * Font appearance shared by every lyric line.
-	 */
-	struct FontConfig {
-		/**
-		 * Font family name; empty uses the platform default.
-		 *
-		 * @default ""
-		 * @example "PingFang SC"
-		 */
-		::std::string family = {};
-		/**
-		 * Font size; a bare number or `px` is absolute.
-		 * `%` is relative to the parent line's font size (e.g. translation / background lines).
-		 *
-		 * @default "34px"
-		 * @example 34
-		 * @example "34px"
-		 * @example "80%"
-		 */
-		::std::string size = "34px";
-	};
-
-	/**
-	 * Style of inactive lines.
-	 */
-	struct NormalConfig {
-		/**
-		 * Color of inactive lines.
-		 * Accepts `#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`, `rgb(r, g, b)` or `rgba(r, g, b, a)` (a in 0..1).
-		 *
-		 * @default "rgba(255, 255, 255, 0.4)"
-		 * @example "#fff"
-		 * @example "rgb(255, 255, 255)"
-		 */
-		::std::string color = "rgba(255, 255, 255, 0.4)";
-	};
-
-	/**
-	 * Style of the active line.
-	 */
-	struct ActiveConfig {
-		/**
-		 * Color of the active line.
-		 * Accepts `#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`, `rgb(r, g, b)` or `rgba(r, g, b, a)` (a in 0..1).
-		 *
-		 * @default "#ffffff"
-		 * @example "#fff"
-		 * @example "rgba(255, 255, 255, 0.8)"
-		 */
-		::std::string color = "#ffffff";
-	};
-
 	/**
 	 * Font and per-state colors of lyric lines.
 	 */
@@ -72,65 +20,22 @@ namespace music_lyric_player::render::config::line {
 		/**
 		 * Font shared by every line.
 		 */
-		FontConfig font;
+		::music_lyric_player::render::config::common::FontConfig font;
 		/**
-		 * Style of inactive lines.
+		 * Style of inactive lines (default color `rgba(255, 255, 255, 0.4)`).
 		 */
-		NormalConfig normal;
+		::music_lyric_player::render::config::common::StyleConfig normal = ::music_lyric_player::render::config::common::StyleConfig{ .color = "rgba(255, 255, 255, 0.4)" };
 		/**
-		 * Style of the active line.
+		 * Style of the active line (default color `#ffffff`).
 		 */
-		ActiveConfig active;
-	};
-
-	struct FontConfigPatch {
-		::std::optional<::std::string> family;
-		::std::optional<::std::string> size;
-	};
-
-	struct NormalConfigPatch {
-		::std::optional<::std::string> color;
-	};
-
-	struct ActiveConfigPatch {
-		::std::optional<::std::string> color;
+		::music_lyric_player::render::config::common::StyleConfig active = ::music_lyric_player::render::config::common::StyleConfig{ .color = "#ffffff" };
 	};
 
 	struct RootPatch {
-		FontConfigPatch font;
-		NormalConfigPatch normal;
-		ActiveConfigPatch active;
+		::music_lyric_player::render::config::common::FontConfigPatch font;
+		::music_lyric_player::render::config::common::StyleConfigPatch normal;
+		::music_lyric_player::render::config::common::StyleConfigPatch active;
 	};
-
-	/**
-	 * Deep-merges a sparse patch into a config.
-	 */
-	inline void applyConfigPatch(FontConfig& cfg, const FontConfigPatch& patch) {
-		if (patch.family.has_value()) {
-			cfg.family = *patch.family;
-		}
-		if (patch.size.has_value()) {
-			cfg.size = *patch.size;
-		}
-	}
-
-	/**
-	 * Deep-merges a sparse patch into a config.
-	 */
-	inline void applyConfigPatch(NormalConfig& cfg, const NormalConfigPatch& patch) {
-		if (patch.color.has_value()) {
-			cfg.color = *patch.color;
-		}
-	}
-
-	/**
-	 * Deep-merges a sparse patch into a config.
-	 */
-	inline void applyConfigPatch(ActiveConfig& cfg, const ActiveConfigPatch& patch) {
-		if (patch.color.has_value()) {
-			cfg.color = *patch.color;
-		}
-	}
 
 	/**
 	 * Deep-merges a sparse patch into a config.
@@ -139,36 +44,6 @@ namespace music_lyric_player::render::config::line {
 		applyConfigPatch(cfg.font, patch.font);
 		applyConfigPatch(cfg.normal, patch.normal);
 		applyConfigPatch(cfg.active, patch.active);
-	}
-
-	/**
-	 * Diffs two configs into a dot-path key set; a changed child also records its parent path.
-	 */
-	inline void diffConfig(const FontConfig& prev, const FontConfig& next, const ::std::string& prefix, ::music_lyric_player::utils::config::ChangeKeys& keys) {
-		if (prev.family != next.family) {
-			keys.insert(prefix + "family");
-		}
-		if (prev.size != next.size) {
-			keys.insert(prefix + "size");
-		}
-	}
-
-	/**
-	 * Diffs two configs into a dot-path key set; a changed child also records its parent path.
-	 */
-	inline void diffConfig(const NormalConfig& prev, const NormalConfig& next, const ::std::string& prefix, ::music_lyric_player::utils::config::ChangeKeys& keys) {
-		if (prev.color != next.color) {
-			keys.insert(prefix + "color");
-		}
-	}
-
-	/**
-	 * Diffs two configs into a dot-path key set; a changed child also records its parent path.
-	 */
-	inline void diffConfig(const ActiveConfig& prev, const ActiveConfig& next, const ::std::string& prefix, ::music_lyric_player::utils::config::ChangeKeys& keys) {
-		if (prev.color != next.color) {
-			keys.insert(prefix + "color");
-		}
 	}
 
 	/**
@@ -197,19 +72,6 @@ namespace music_lyric_player::render::config::line {
 			}
 		}
 	}
-
-	namespace FontConfigKeys {
-		inline constexpr ::std::string_view family{"family"};
-		inline constexpr ::std::string_view size{"size"};
-	} // namespace FontConfigKeys
-
-	namespace NormalConfigKeys {
-		inline constexpr ::std::string_view color{"color"};
-	} // namespace NormalConfigKeys
-
-	namespace ActiveConfigKeys {
-		inline constexpr ::std::string_view color{"color"};
-	} // namespace ActiveConfigKeys
 
 	namespace RootKeys {
 		namespace font {

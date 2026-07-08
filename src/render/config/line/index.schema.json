@@ -1,98 +1,39 @@
 {
   "namespace": "music_lyric_player::render::config::line",
   "file": "index.gen.h",
+  "imports": [
+    { "as": "common", "schema": "../common/index.schema.json" }
+  ],
   "items": [
-    {
-      "name": "FontConfig",
-      "desc": "Font appearance shared by every lyric line.",
-      "fields": [
-        {
-          "name": "family",
-          "type": "::std::string",
-          "desc": [
-            "Font family name; empty uses the platform default.",
-            "",
-            "@default \"\"",
-            "@example \"PingFang SC\""
-          ]
-        },
-        {
-          "name": "size",
-          "type": "::std::string",
-          "default": "\"34px\"",
-          "desc": [
-            "Font size; a bare number or `px` is absolute.",
-            "`%` is relative to the parent line's font size (e.g. translation / background lines).",
-            "",
-            "@default \"34px\"",
-            "@example 34",
-            "@example \"34px\"",
-            "@example \"80%\""
-          ]
-        }
-      ]
-    },
-    {
-      "name": "NormalConfig",
-      "desc": "Style of inactive lines.",
-      "fields": [
-        {
-          "name": "color",
-          "type": "::std::string",
-          "default": "\"rgba(255, 255, 255, 0.4)\"",
-          "desc": [
-            "Color of inactive lines.",
-            "Accepts `#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`, `rgb(r, g, b)` or `rgba(r, g, b, a)` (a in 0..1).",
-            "",
-            "@default \"rgba(255, 255, 255, 0.4)\"",
-            "@example \"#fff\"",
-            "@example \"rgb(255, 255, 255)\""
-          ]
-        }
-      ]
-    },
-    {
-      "name": "ActiveConfig",
-      "desc": "Style of the active line.",
-      "fields": [
-        {
-          "name": "color",
-          "type": "::std::string",
-          "default": "\"#ffffff\"",
-          "desc": [
-            "Color of the active line.",
-            "Accepts `#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`, `rgb(r, g, b)` or `rgba(r, g, b, a)` (a in 0..1).",
-            "",
-            "@default \"#ffffff\"",
-            "@example \"#fff\"",
-            "@example \"rgba(255, 255, 255, 0.8)\""
-          ]
-        }
-      ]
-    },
     {
       "name": "Root",
       "desc": "Font and per-state colors of lyric lines.",
       "fields": [
         {
           "name": "font",
-          "nested": "FontConfig",
+          "nested": "common.FontConfig",
           "desc": [
             "Font shared by every line."
           ]
         },
         {
           "name": "normal",
-          "nested": "NormalConfig",
+          "nested": "common.StyleConfig",
+          "defaults": {
+            "color": "\"rgba(255, 255, 255, 0.4)\""
+          },
           "desc": [
-            "Style of inactive lines."
+            "Style of inactive lines (default color `rgba(255, 255, 255, 0.4)`)."
           ]
         },
         {
           "name": "active",
-          "nested": "ActiveConfig",
+          "nested": "common.StyleConfig",
+          "defaults": {
+            "color": "\"#ffffff\""
+          },
           "desc": [
-            "Style of the active line."
+            "Style of the active line (default color `#ffffff`)."
           ]
         }
       ]

@@ -129,6 +129,11 @@ def validate_structure(schema):
             if is_nested(field):
                 if "type" in field or "default" in field:
                     raise SchemaError(f"{at} ('{field_name}') is nested and must not have 'type'/'default'")
+                overrides = field.get("defaults")
+                if overrides is not None and not (
+                    isinstance(overrides, dict) and overrides and all(isinstance(k, str) and isinstance(v, str) for k, v in overrides.items())
+                ):
+                    raise SchemaError(f"{at} ('{field_name}').defaults must be a non-empty object of field -> C++ literal string")
                 target = field["nested"]
                 if not isinstance(target, str) or not target:
                     raise SchemaError(f"{at} ('{field_name}').nested must be a non-empty string")
@@ -260,7 +265,13 @@ def gen_struct(cfg, module):
         above = field_doc(field, "\t\t")
         if is_nested(field):
             _, _, type_str, _ = resolve_nested(module, field["nested"])
-            out.append(f"{above}\t\t{type_str} {field['name']};{note(field)}")
+            overrides = field.get("defaults")
+            if overrides:
+                # C++20 designated initialisers override chosen sub-fields; the rest keep their in-class defaults.
+                inits = ", ".join(f".{key} = {value}" for key, value in overrides.items())
+                out.append(f"{above}\t\t{type_str} {field['name']} = {type_str}{{ {inits} }};{note(field)}")
+            else:
+                out.append(f"{above}\t\t{type_str} {field['name']};{note(field)}")
         else:
             default = field.get("default", "{}")
             out.append(f"{above}\t\t{field['type']} {field['name']} = {default};{note(field)}")

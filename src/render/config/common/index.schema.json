@@ -1,0 +1,55 @@
+{
+  "namespace": "music_lyric_player::render::config::common",
+  "file": "index.gen.h",
+  "items": [
+    {
+      "name": "FontConfig",
+      "desc": "Font appearance shared by lyric lines and their annotation sub-lines.",
+      "fields": [
+        {
+          "name": "family",
+          "type": "::std::string",
+          "desc": [
+            "Font family name; empty uses the platform default.",
+            "",
+            "@default \"\"",
+            "@example \"PingFang SC\""
+          ]
+        },
+        {
+          "name": "size",
+          "type": "::std::string",
+          "default": "\"34px\"",
+          "desc": [
+            "Font size; a bare number or `px` is absolute.",
+            "`%` is relative to the parent line's font size (e.g. translation / background lines).",
+            "",
+            "@default \"34px\"",
+            "@example 34",
+            "@example \"34px\"",
+            "@example \"80%\""
+          ]
+        }
+      ]
+    },
+    {
+      "name": "StyleConfig",
+      "desc": "Visual style for a single render state.",
+      "fields": [
+        {
+          "name": "color",
+          "type": "::std::string",
+          "default": "\"#000000\"",
+          "desc": [
+            "Color of the render state.",
+            "Accepts `#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`, `rgb(r, g, b)` or `rgba(r, g, b, a)` (a in 0..1).",
+            "",
+            "@default \"#000000\"",
+            "@example \"#fff\"",
+            "@example \"rgba(255, 255, 255, 0.8)\""
+          ]
+        }
+      ]
+    }
+  ]
+}

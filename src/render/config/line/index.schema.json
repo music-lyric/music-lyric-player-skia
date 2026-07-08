@@ -7,14 +7,12 @@
   "items": [
     {
       "name": "Root",
-      "desc": "Font and per-state colors of lyric lines.",
+      "comment": "Font and per-state colors of lyric lines.",
       "fields": [
         {
           "name": "font",
           "nested": "common.FontConfig",
-          "desc": [
-            "Font shared by every line."
-          ]
+          "comment": "Font shared by every line."
         },
         {
           "name": "normal",
@@ -22,9 +20,7 @@
           "defaults": {
             "color": "\"rgba(255, 255, 255, 0.4)\""
           },
-          "desc": [
-            "Style of inactive lines (default color `rgba(255, 255, 255, 0.4)`)."
-          ]
+          "comment": "Style of inactive lines (default color `rgba(255, 255, 255, 0.4)`)."
         },
         {
           "name": "active",
@@ -32,9 +28,7 @@
           "defaults": {
             "color": "\"#ffffff\""
           },
-          "desc": [
-            "Style of the active line (default color `#ffffff`)."
-          ]
+          "comment": "Style of the active line (default color `#ffffff`)."
         }
       ]
     }

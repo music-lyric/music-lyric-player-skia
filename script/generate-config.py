@@ -11,14 +11,20 @@ Schema shape:
     { "namespace": "a::b", "file": "config.gen.h",
       "imports"?: [ { "as": "alias", "schema": "other.schema.json" } ],
       "items": [
-        { "name": "Sub",  "fields": [ { "name": "x", "type": "double", "default"?: "0.0", "desc"?: "..." } ] },
-        { "name": "Root", "fields": [ { "name": "sub", "nested": "Sub" },
+        { "name": "Sub",  "fields": [ { "name": "x", "type": "double", "default"?: "0.0",
+                                        "example"?: [1, 2], "min"?: 0, "max"?: 10, "comment"?: "..." } ] },
+        { "name": "Root", "fields": [ { "name": "sub", "nested": "Sub", "defaults"?: { "x": "1.0" } },
                                       { "name": "ext", "nested": "alias.Root" } ] } ] }
-A leaf field has `type` (+ optional `default`); a nested field has `nested` naming a
-config. A bare name (`"Sub"`) targets an earlier config in the same schema; a
-dotted name (`"alias.Root"`) targets a config from an imported schema, referenced by
-its fully-qualified type and pulled in with an `#include`. `desc` (a string, or a
-list of lines) is optional.
+A leaf field has `type` (+ optional `default`, a C++ literal string); a nested field has `nested`
+naming a config (+ optional `defaults`, a map of sub-field -> C++ literal overriding that nesting's
+defaults via designated initialisers). A bare name (`"Sub"`) targets an earlier config in the same
+schema; a dotted name (`"alias.Root"`) targets a config from an imported schema, referenced by its
+fully-qualified type and pulled in with an `#include`.
+
+`comment` (a string, or a list of lines) is optional documentation. On a leaf with a list comment (or
+none), the generator auto-appends `@default` / `@example` / `@minimum` / `@maximum` JSDoc lines from
+the leaf's `default` / `example` (scalar or list) / `min` / `max`; a string comment stays an inline
+`// ...` and gets no tags.
 
 Usage: `python script/generate-config.py [<schema.json> ...]`. With no args, every
 *.schema.json under the project (excluding build / vendored dirs) is generated.
@@ -44,6 +50,7 @@ class Module:
         self.path = path
         self.namespace = schema["namespace"]
         self.file = schema["file"]
+        self.inline = schema.get("inline", False)
         self.items = schema["items"]
         self.by_name = {c["name"]: c for c in schema["items"]}
         self.imports = {}  # alias -> Module
@@ -54,8 +61,8 @@ def is_nested(field):
     return "nested" in field
 
 
-def is_valid_desc(value):
-    """Whether a `desc` is a string or a list of strings."""
+def is_valid_comment(value):
+    """Whether a `comment` is a string or a list of strings."""
     return isinstance(value, str) or (isinstance(value, list) and all(isinstance(line, str) for line in value))
 
 
@@ -71,6 +78,9 @@ def validate_structure(schema):
     out_file = schema.get("file")
     if not isinstance(out_file, str) or not out_file:
         raise SchemaError("'file' must be a non-empty string (the generated header name)")
+
+    if "inline" in schema and not isinstance(schema["inline"], bool):
+        raise SchemaError("'inline' must be a boolean (fields render as inline `// ...` with no tags)")
 
     imports = schema.get("imports", [])
     if not isinstance(imports, list):
@@ -103,8 +113,8 @@ def validate_structure(schema):
             raise SchemaError(f"items[{index}].name must be a non-empty string")
         if name in defined:
             raise SchemaError(f"duplicate config name '{name}'")
-        if "desc" in item and not is_valid_desc(item["desc"]):
-            raise SchemaError(f"config '{name}'.desc must be a string or a list of strings")
+        if "comment" in item and not is_valid_comment(item["comment"]):
+            raise SchemaError(f"config '{name}'.comment must be a string or a list of strings")
 
         fields = item.get("fields")
         if not isinstance(fields, list):
@@ -123,12 +133,20 @@ def validate_structure(schema):
                 raise SchemaError(f"duplicate field '{field_name}' in config '{name}'")
             seen.add(field_name)
 
-            if "desc" in field and not is_valid_desc(field["desc"]):
-                raise SchemaError(f"{at} ('{field_name}').desc must be a string or a list of strings")
+            if "comment" in field and not is_valid_comment(field["comment"]):
+                raise SchemaError(f"{at} ('{field_name}').comment must be a string or a list of strings")
+
+            for bound in ("min", "max"):
+                if bound in field and not isinstance(field[bound], (int, float)):
+                    raise SchemaError(f"{at} ('{field_name}').{bound} must be a number")
+            if "example" in field:
+                examples = field["example"] if isinstance(field["example"], list) else [field["example"]]
+                if not examples or not all(isinstance(e, (str, int, float, bool)) for e in examples):
+                    raise SchemaError(f"{at} ('{field_name}').example must be a scalar or a non-empty list of scalars")
 
             if is_nested(field):
-                if "type" in field or "default" in field:
-                    raise SchemaError(f"{at} ('{field_name}') is nested and must not have 'type'/'default'")
+                if any(key in field for key in ("type", "default", "example", "min", "max")):
+                    raise SchemaError(f"{at} ('{field_name}') is nested and must not have 'type'/'default'/'example'/'min'/'max'")
                 overrides = field.get("defaults")
                 if overrides is not None and not (
                     isinstance(overrides, dict) and overrides and all(isinstance(k, str) and isinstance(v, str) for k, v in overrides.items())
@@ -247,34 +265,65 @@ def jsdoc(desc, indent):
     return f"{indent}/**\n{body}\n{indent} */\n"
 
 
-def field_doc(field, indent):
-    """JSDoc block placed above a field whose `desc` is a list of lines; string descs use `note`."""
-    return jsdoc(field["desc"], indent) if isinstance(field.get("desc"), list) else ""
+def field_tags(field):
+    """The `@default` / `@example` / `@minimum` / `@maximum` JSDoc lines derived from a field's structured metadata."""
+
+    def render(value):
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        if isinstance(value, str):
+            return f'"{value}"'
+        return str(value)
+
+    lines = []
+    if "default" in field:
+        lines.append(f"@default {field['default']}")  # `default` is already a C++/display literal, emitted verbatim.
+    example = field.get("example")
+    for item in example if isinstance(example, list) else ([] if example is None else [example]):
+        lines.append(f"@example {render(item)}")
+    if "min" in field:
+        lines.append(f"@minimum {render(field['min'])}")
+    if "max" in field:
+        lines.append(f"@maximum {render(field['max'])}")
+    return lines
 
 
-def note(field):
-    """Trailing `// desc` comment for a single-line (string) `desc`, or empty."""
-    desc = field.get("desc")
-    return f"  // {desc}" if isinstance(desc, str) and desc else ""
+def field_doc(field, indent, inline):
+    """Block-style JSDoc above a field: its `comment` lines then the auto `@default`/`@example`/... tags. Inline modules use `note` instead."""
+    if inline:
+        return ""
+    lines = doc_lines(field.get("comment"))
+    tags = field_tags(field)
+    if tags:
+        if lines and lines[-1] != "":
+            lines.append("")
+        lines += tags
+    return jsdoc(lines, indent)
+
+
+def note(field, inline):
+    """Trailing `// comment` for an inline-module field with a string comment, or empty."""
+    comment = field.get("comment")
+    return f"  // {comment}" if inline and isinstance(comment, str) and comment else ""
 
 
 def gen_struct(cfg, module):
     """Emit the resolved struct; leaves carry their defaults (value-initialised when omitted)."""
-    out = [jsdoc(cfg.get("desc"), "\t") + f"\tstruct {cfg['name']} {{"]
+    out = [jsdoc(cfg.get("comment"), "\t") + f"\tstruct {cfg['name']} {{"]
     for field in cfg["fields"]:
-        above = field_doc(field, "\t\t")
+        above = field_doc(field, "\t\t", module.inline)
         if is_nested(field):
             _, _, type_str, _ = resolve_nested(module, field["nested"])
             overrides = field.get("defaults")
             if overrides:
                 # C++20 designated initialisers override chosen sub-fields; the rest keep their in-class defaults.
                 inits = ", ".join(f".{key} = {value}" for key, value in overrides.items())
-                out.append(f"{above}\t\t{type_str} {field['name']} = {type_str}{{ {inits} }};{note(field)}")
+                out.append(f"{above}\t\t{type_str} {field['name']} = {type_str}{{ {inits} }};{note(field, module.inline)}")
             else:
-                out.append(f"{above}\t\t{type_str} {field['name']};{note(field)}")
+                out.append(f"{above}\t\t{type_str} {field['name']};{note(field, module.inline)}")
         else:
             default = field.get("default", "{}")
-            out.append(f"{above}\t\t{field['type']} {field['name']} = {default};{note(field)}")
+            out.append(f"{above}\t\t{field['type']} {field['name']} = {default};{note(field, module.inline)}")
     out.append("\t};")
     return "\n".join(out)
 

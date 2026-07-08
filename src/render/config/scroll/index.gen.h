@@ -19,7 +19,7 @@ namespace music_lyric_player::render::config::scroll {
 		/**
 		 * Fixed delay before the transition starts, in `ms`.
 		 *
-		 * @default 0
+		 * @default 0.0
 		 */
 		double delay = 0.0;
 	};
@@ -32,13 +32,15 @@ namespace music_lyric_player::render::config::scroll {
 		 * Offset (in line units) at which the per-line delay saturates.
 		 * Lines with `|offset| >= range` all receive the maximum delay.
 		 *
-		 * @default 5
+		 * @default 5.0
+		 * @minimum 1
 		 */
 		double range = 5.0;
 		/**
 		 * Delay increment per offset unit, in `ms`; scales the cascade curve.
 		 *
-		 * @default 40
+		 * @default 40.0
+		 * @minimum 10
 		 */
 		double step = 40.0;
 	};
@@ -50,13 +52,15 @@ namespace music_lyric_player::render::config::scroll {
 		/**
 		 * Offset (in line units) at which the per-line delay saturates.
 		 *
-		 * @default 5
+		 * @default 5.0
+		 * @minimum 1
 		 */
 		double range = 5.0;
 		/**
 		 * Delay increment per offset unit, in `ms`.
 		 *
-		 * @default 40
+		 * @default 40.0
+		 * @minimum 10
 		 */
 		double step = 40.0;
 	};
@@ -68,13 +72,15 @@ namespace music_lyric_player::render::config::scroll {
 		/**
 		 * Offset (in line units) at which the delay saturates.
 		 *
-		 * @default 4
+		 * @default 4.0
+		 * @minimum 1
 		 */
 		double range = 4.0;
 		/**
 		 * Delay increment per offset unit, in `ms`.
 		 *
-		 * @default 50
+		 * @default 50.0
+		 * @minimum 1
 		 */
 		double step = 50.0;
 	};
@@ -99,7 +105,7 @@ namespace music_lyric_player::render::config::scroll {
 		 * In cascade modes the total visual length is roughly `duration + maxDelay`.
 		 * `0` snaps to the target without easing.
 		 *
-		 * @default 500
+		 * @default 500.0
 		 */
 		double duration = 500.0;
 		/**
@@ -134,13 +140,14 @@ namespace music_lyric_player::render::config::scroll {
 	 */
 	struct Root {
 		/**
-		 * Vertical anchor of the active line inside the viewport,
-		 * as a ratio (`0`-`1`) of its height.
+		 * Vertical anchor of the active line inside the viewport, as a ratio of its height.
 		 *
 		 * - `0.5` — keep the active line at the vertical center
 		 * - `0.3` — keep the active line closer to the top
 		 *
 		 * @default 0.5
+		 * @minimum 0
+		 * @maximum 1
 		 */
 		double anchor = 0.5;
 		/**

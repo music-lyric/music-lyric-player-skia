@@ -4,33 +4,26 @@
   "items": [
     {
       "name": "Root",
-      "desc": "Background fill and padding of the player.",
+      "comment": "Background fill and padding of the player.",
       "fields": [
         {
           "name": "backgroundColor",
           "type": "::std::string",
           "default": "\"#101014\"",
-          "desc": [
+          "example": ["#101014", "rgb(16, 16, 20)"],
+          "comment": [
             "Background fill of the whole player.",
-            "Accepts `#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`, `rgb(r, g, b)` or `rgba(r, g, b, a)` (a in 0..1).",
-            "",
-            "@default \"#101014\"",
-            "@example \"#101014\"",
-            "@example \"rgb(16, 16, 20)\""
+            "Accepts `#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`, `rgb(r, g, b)` or `rgba(r, g, b, a)` (a in 0..1)."
           ]
         },
         {
           "name": "paddingX",
           "type": "::std::string",
           "default": "\"48px\"",
-          "desc": [
+          "example": [48, "48px", "5%"],
+          "comment": [
             "Horizontal padding on each side of the content.",
-            "A bare number or `px` is absolute; `%` is relative to the viewport width.",
-            "",
-            "@default \"48px\"",
-            "@example 48",
-            "@example \"48px\"",
-            "@example \"5%\""
+            "A bare number or `px` is absolute; `%` is relative to the viewport width."
           ]
         }
       ]

@@ -4,34 +4,28 @@
   "items": [
     {
       "name": "Root",
-      "desc": "Alignment and spacing applied to every lyric line.",
+      "comment": "Alignment and spacing applied to every lyric line.",
       "fields": [
         {
           "name": "align",
           "type": "int",
           "default": "0",
-          "desc": [
+          "comment": [
             "Horizontal alignment of lines within the container.",
             "",
             "- `0` — left",
             "- `1` — center",
-            "- `2` — right",
-            "",
-            "@default 0"
+            "- `2` — right"
           ]
         },
         {
           "name": "gap",
           "type": "::std::string",
           "default": "\"16px\"",
-          "desc": [
+          "example": [16, "16px", "2%"],
+          "comment": [
             "Vertical spacing between adjacent lines.",
-            "A bare number or `px` is absolute; `%` is relative to the viewport height.",
-            "",
-            "@default \"16px\"",
-            "@example 16",
-            "@example \"16px\"",
-            "@example \"2%\""
+            "A bare number or `px` is absolute; `%` is relative to the viewport height."
           ]
         }
       ]

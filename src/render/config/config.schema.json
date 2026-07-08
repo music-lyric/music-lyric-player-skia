@@ -10,35 +10,27 @@
   "items": [
     {
       "name": "Root",
-      "desc": "Renderer configuration.",
+      "comment": "Renderer configuration.",
       "fields": [
         {
           "name": "container",
           "nested": "container.Root",
-          "desc": [
-            "Background fill and padding of the player."
-          ]
+          "comment": "Background fill and padding of the player."
         },
         {
           "name": "layout",
           "nested": "layout.Root",
-          "desc": [
-            "Alignment and spacing between lyric lines."
-          ]
+          "comment": "Alignment and spacing between lyric lines."
         },
         {
           "name": "scroll",
           "nested": "scroll.Root",
-          "desc": [
-            "Viewport scrolling and its transition animation."
-          ]
+          "comment": "Viewport scrolling and its transition animation."
         },
         {
           "name": "line",
           "nested": "line.Root",
-          "desc": [
-            "Font and per-state colors of lyric lines."
-          ]
+          "comment": "Font and per-state colors of lyric lines."
         }
       ]
     }

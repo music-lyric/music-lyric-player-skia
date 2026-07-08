@@ -19,7 +19,6 @@ namespace music_lyric_player::render::config::common {
 		/**
 		 * Font family name; empty uses the platform default.
 		 *
-		 * @default ""
 		 * @example "PingFang SC"
 		 */
 		::std::string family = {};

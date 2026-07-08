@@ -14,10 +14,6 @@ namespace music_lyric_player::render::components::line::interlude {
 		constexpr float kDotSize  = 16.0f;
 		constexpr float kDotGap   = 12.0f;
 		constexpr float kPaddingY = 6.0f;
-
-		// Colour fallbacks mirroring the config defaults, used when a colour string fails to parse.
-		constexpr SkColor kDefaultNormalColor = 0x66ffffff; // line.normal.color ("rgba(255, 255, 255, 0.4)")
-		constexpr SkColor kDefaultActiveColor = 0xffffffff; // line.active.color ("#ffffff")
 	} // namespace
 
 	Element::Element(int index)
@@ -30,7 +26,7 @@ namespace music_lyric_player::render::components::line::interlude {
 
 	void Element::paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const {
 		const config::Root& cfg   = context.config;
-		const SkColor       color = this->stateColor(now, active, utils::color::resolve(cfg.line.normal.color, kDefaultNormalColor), utils::color::resolve(cfg.line.active.color, kDefaultActiveColor));
+		const SkColor       color = this->stateColor(now, active, utils::color::resolve(cfg.line.normal.color, config::Default.line.normal.color), utils::color::resolve(cfg.line.active.color, config::Default.line.active.color));
 
 		SkPaint paint;
 		paint.setAntiAlias(true);

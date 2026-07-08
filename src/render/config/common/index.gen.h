@@ -23,8 +23,9 @@ namespace music_lyric_player::render::config::common {
 		 */
 		::std::string family = {};
 		/**
-		 * Font size; a bare number or `px` is absolute.
-		 * `%` is relative to the parent line's font size (e.g. translation / background lines).
+		 * Font size of the lyric lines.
+		 * A `%` value is relative to the parent line's font size (e.g. translation / background lines).
+		 * A bare number or `px` is an absolute length in logical pixels.
 		 *
 		 * @default "34px"
 		 * @example 34

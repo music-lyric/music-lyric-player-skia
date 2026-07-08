@@ -86,6 +86,11 @@ namespace music_lyric_player::render::config::line {
 		} // namespace active
 	} // namespace RootKeys
 
+	/**
+	 * Built-in defaults (every field at its schema default); the fallback when a config value fails to parse.
+	 */
+	inline const Root Default{};
+
 } // namespace music_lyric_player::render::config::line
 
 #endif // MUSIC_LYRIC_PLAYER_RENDER_CONFIG_LINE_CONFIG_GEN_H_

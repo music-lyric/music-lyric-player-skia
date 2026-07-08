@@ -28,13 +28,6 @@ namespace tl = ::skia::textlayout;
 
 namespace music_lyric_player::render::components::line::normal {
 	namespace {
-		// Numeric fallback mirroring the string default in the config schema, used when the value fails to parse.
-		constexpr double kDefaultFontSize = 34.0; // line.font.size ("34px")
-
-		// Colour fallbacks mirroring the config defaults, used when a colour string fails to parse.
-		constexpr SkColor kDefaultNormalColor = 0x66ffffff; // line.normal.color ("rgba(255, 255, 255, 0.4)")
-		constexpr SkColor kDefaultActiveColor = 0xffffffff; // line.active.color ("#ffffff")
-
 		/**
 		 * Maps the config's integer alignment onto SkParagraph's `TextAlign`.
 		 */
@@ -69,7 +62,7 @@ namespace music_lyric_player::render::components::line::normal {
 
 		tl::TextStyle textStyle;
 		textStyle.setColor(SK_ColorWHITE); // tinted per state at paint time via kModulate
-		textStyle.setFontSize(static_cast<SkScalar>(resolveLength(cfg.line.font.size, kDefaultFontSize)));
+		textStyle.setFontSize(static_cast<SkScalar>(resolveLength(cfg.line.font.size, config::Default.line.font.size)));
 		if (!cfg.line.font.family.empty()) {
 			textStyle.setFontFamilies({SkString(cfg.line.font.family.c_str())});
 		}
@@ -100,7 +93,7 @@ namespace music_lyric_player::render::components::line::normal {
 			return;
 		}
 		const config::Root& cfg   = context.config;
-		const SkColor       color = this->stateColor(now, active, utils::color::resolve(cfg.line.normal.color, kDefaultNormalColor), utils::color::resolve(cfg.line.active.color, kDefaultActiveColor));
+		const SkColor       color = this->stateColor(now, active, utils::color::resolve(cfg.line.normal.color, config::Default.line.normal.color), utils::color::resolve(cfg.line.active.color, config::Default.line.active.color));
 
 		// The paragraph is opaque white; a modulate layer tints it to the state colour without re-shaping.
 		SkPaint layerPaint;

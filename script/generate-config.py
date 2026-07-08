@@ -4,8 +4,10 @@
 Per config in `items[]`, emits (in the schema's `namespace`): the resolved `struct`
 with defaults, its deeply-optional `Patch` mirror, `applyConfigPatch` (deep-merge),
 `diffConfig` (dot-path diff incl. parent paths), and `<Name>Keys` (full-dot-path
-`string_view` constants for IDE completion). Output goes to the schema's `file`,
-next to the schema, opened with `// clang-format off`.
+`string_view` constants for IDE completion). A config named `Root` additionally gets an
+`inline const Root Default` instance (all schema defaults) so consumers can fall back to a default
+value on a parse failure. Output goes to the schema's `file`, next to the schema, opened with
+`// clang-format off`.
 
 Schema shape:
     { "namespace": "a::b", "file": "config.gen.h",
@@ -15,7 +17,9 @@ Schema shape:
                                         "example"?: [1, 2], "min"?: 0, "max"?: 10, "comment"?: "..." } ] },
         { "name": "Root", "fields": [ { "name": "sub", "nested": "Sub", "defaults"?: { "x": "1.0" } },
                                       { "name": "ext", "nested": "alias.Root" } ] } ] }
-A leaf field has `type` (+ optional `default`, a C++ literal string); a nested field has `nested`
+A leaf field has `type` (+ optional `default`, a C++ literal string), or `kind`
+(`"color"` / `"length"` / `"easing"`) which implies `type: ::std::string` and appends a standard
+format note to the doc. A nested field has `nested`
 naming a config (+ optional `defaults`, a map of sub-field -> C++ literal overriding that nesting's
 defaults via designated initialisers). A bare name (`"Sub"`) targets an earlier config in the same
 schema; a dotted name (`"alias.Root"`) targets a config from an imported schema, referenced by its
@@ -38,6 +42,13 @@ from pathlib import Path
 # Directories never scanned for schemas.
 SKIP_DIRS = {"build", "third-party", ".history", ".git", "node_modules", ".turbo", ".vscode", ".claude"}
 
+# Standard format notes appended to a `kind`-typed leaf's doc, so schemas never repeat the format prose.
+KIND_NOTES = {
+    "color": "Accepts `#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`, `rgb(r, g, b)` or `rgba(r, g, b, a)` (a in 0..1).",
+    "length": "A bare number or `px` is an absolute length in logical pixels.",
+    "easing": "Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.",
+}
+
 
 class SchemaError(Exception):
     """A human-readable problem with the input schema."""
@@ -59,6 +70,11 @@ class Module:
 def is_nested(field):
     """Whether a field is a nested child config rather than a leaf value."""
     return "nested" in field
+
+
+def leaf_type(field):
+    """C++ type of a leaf field: a `kind` implies `::std::string`, otherwise the explicit `type`."""
+    return "::std::string" if "kind" in field else field["type"]
 
 
 def is_valid_comment(value):
@@ -145,8 +161,8 @@ def validate_structure(schema):
                     raise SchemaError(f"{at} ('{field_name}').example must be a scalar or a non-empty list of scalars")
 
             if is_nested(field):
-                if any(key in field for key in ("type", "default", "example", "min", "max")):
-                    raise SchemaError(f"{at} ('{field_name}') is nested and must not have 'type'/'default'/'example'/'min'/'max'")
+                if any(key in field for key in ("type", "kind", "default", "example", "min", "max")):
+                    raise SchemaError(f"{at} ('{field_name}') is nested and must not have 'type'/'kind'/'default'/'example'/'min'/'max'")
                 overrides = field.get("defaults")
                 if overrides is not None and not (
                     isinstance(overrides, dict) and overrides and all(isinstance(k, str) and isinstance(v, str) for k, v in overrides.items())
@@ -162,9 +178,16 @@ def validate_structure(schema):
                 elif target not in defined:
                     raise SchemaError(f"{at} ('{field_name}') nests '{target}', which must be defined before '{name}'")
             else:
-                field_type = field.get("type")
-                if not isinstance(field_type, str) or not field_type:
-                    raise SchemaError(f"{at} ('{field_name}') must have a non-empty 'type', or 'nested'")
+                kind = field.get("kind")
+                if kind is not None:
+                    if kind not in KIND_NOTES:
+                        raise SchemaError(f"{at} ('{field_name}').kind must be one of {sorted(KIND_NOTES)}")
+                    if "type" in field:
+                        raise SchemaError(f"{at} ('{field_name}') has 'kind' and must not also set 'type' (kind implies ::std::string)")
+                else:
+                    field_type = field.get("type")
+                    if not isinstance(field_type, str) or not field_type:
+                        raise SchemaError(f"{at} ('{field_name}') must have a non-empty 'type', a 'kind', or 'nested'")
                 if "default" in field and not isinstance(field["default"], str):
                     raise SchemaError(f"{at} ('{field_name}').default must be a string holding a C++ literal")
 
@@ -289,10 +312,13 @@ def field_tags(field):
 
 
 def field_doc(field, indent, inline):
-    """Block-style JSDoc above a field: its `comment` lines then the auto `@default`/`@example`/... tags. Inline modules use `note` instead."""
+    """Block-style JSDoc above a field: its `comment` lines, the `kind` format note, then the auto `@default`/`@example`/... tags. Inline modules use `note` instead."""
     if inline:
         return ""
     lines = doc_lines(field.get("comment"))
+    kind = field.get("kind")
+    if kind:
+        lines.append(KIND_NOTES[kind])
     tags = field_tags(field)
     if tags:
         if lines and lines[-1] != "":
@@ -323,7 +349,7 @@ def gen_struct(cfg, module):
                 out.append(f"{above}\t\t{type_str} {field['name']};{note(field, module.inline)}")
         else:
             default = field.get("default", "{}")
-            out.append(f"{above}\t\t{field['type']} {field['name']} = {default};{note(field, module.inline)}")
+            out.append(f"{above}\t\t{leaf_type(field)} {field['name']} = {default};{note(field, module.inline)}")
     out.append("\t};")
     return "\n".join(out)
 
@@ -336,7 +362,7 @@ def gen_patch(cfg, module):
             _, _, _, patch_str = resolve_nested(module, field["nested"])
             out.append(f"\t\t{patch_str} {field['name']};")
         else:
-            out.append(f"\t\t::std::optional<{field['type']}> {field['name']};")
+            out.append(f"\t\t::std::optional<{leaf_type(field)}> {field['name']};")
     out.append("\t};")
     return "\n".join(out)
 
@@ -409,12 +435,23 @@ def gen_keys(cfg, module):
     return "\n".join(out)
 
 
+def gen_default(cfg):
+    """Emit `inline const Root Default` (every field at its schema default) for a `Root` config, so consumers can fall back to it; empty otherwise."""
+    if cfg["name"] != "Root":
+        return ""
+    return "\n".join([
+        "\t/**",
+        "\t * Built-in defaults (every field at its schema default); the fallback when a config value fails to parse.",
+        "\t */",
+        "\tinline const Root Default{};",
+    ])
+
+
 def render(module, schema_name):
     """Render the whole generated header as a string."""
     namespace = module.namespace
     items = module.items
     guard = namespace.replace("::", "_").upper() + "_CONFIG_GEN_H_"
-
     parts = [
         "// clang-format off",
         f"// Generated by script/generate-config.py from {schema_name}. DO NOT EDIT.",
@@ -435,7 +472,7 @@ def render(module, schema_name):
         f"namespace {namespace} {{",
     ]
 
-    # structs, then patches, then merge, then diff, then key trees
+    # structs, then patches, then merge, then diff, then key trees, then the `Root` default instance
     for stage in (gen_struct, gen_patch, gen_apply, gen_diff):
         for cfg in items:
             parts.append(stage(cfg, module))
@@ -443,6 +480,11 @@ def render(module, schema_name):
     for cfg in items:
         parts.append(gen_keys(cfg, module))
         parts.append("")
+    for cfg in items:
+        block = gen_default(cfg)
+        if block:
+            parts.append(block)
+            parts.append("")
 
     parts.append(f"}} // namespace {namespace}")
     parts.append("")

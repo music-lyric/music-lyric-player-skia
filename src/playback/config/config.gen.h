@@ -129,6 +129,11 @@ namespace music_lyric_player::playback::config {
 		} // namespace offset
 	} // namespace RootKeys
 
+	/**
+	 * Built-in defaults (every field at its schema default); the fallback when a config value fails to parse.
+	 */
+	inline const Root Default{};
+
 } // namespace music_lyric_player::playback::config
 
 #endif // MUSIC_LYRIC_PLAYER_PLAYBACK_CONFIG_CONFIG_GEN_H_

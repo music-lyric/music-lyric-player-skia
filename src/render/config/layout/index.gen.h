@@ -28,7 +28,8 @@ namespace music_lyric_player::render::config::layout {
 		int align = 0;
 		/**
 		 * Vertical spacing between adjacent lines.
-		 * A bare number or `px` is absolute; `%` is relative to the viewport height.
+		 * A `%` value is relative to the viewport height.
+		 * A bare number or `px` is an absolute length in logical pixels.
 		 *
 		 * @default "16px"
 		 * @example 16
@@ -71,6 +72,11 @@ namespace music_lyric_player::render::config::layout {
 		inline constexpr ::std::string_view align{"align"};
 		inline constexpr ::std::string_view gap{"gap"};
 	} // namespace RootKeys
+
+	/**
+	 * Built-in defaults (every field at its schema default); the fallback when a config value fails to parse.
+	 */
+	inline const Root Default{};
 
 } // namespace music_lyric_player::render::config::layout
 

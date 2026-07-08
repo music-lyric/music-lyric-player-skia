@@ -14,12 +14,12 @@
         },
         {
           "name": "size",
-          "type": "::std::string",
+          "kind": "length",
           "default": "\"34px\"",
           "example": [34, "34px", "80%"],
           "comment": [
-            "Font size; a bare number or `px` is absolute.",
-            "`%` is relative to the parent line's font size (e.g. translation / background lines)."
+            "Font size of the lyric lines.",
+            "A `%` value is relative to the parent line's font size (e.g. translation / background lines)."
           ]
         }
       ]
@@ -30,13 +30,10 @@
       "fields": [
         {
           "name": "color",
-          "type": "::std::string",
+          "kind": "color",
           "default": "\"#000000\"",
           "example": ["#fff", "rgba(255, 255, 255, 0.8)"],
-          "comment": [
-            "Color of the render state.",
-            "Accepts `#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`, `rgb(r, g, b)` or `rgba(r, g, b, a)` (a in 0..1)."
-          ]
+          "comment": "Color of the render state."
         }
       ]
     }

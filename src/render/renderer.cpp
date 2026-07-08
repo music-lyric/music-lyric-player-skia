@@ -21,16 +21,6 @@
 namespace tl = ::skia::textlayout;
 
 namespace music_lyric_player::render {
-	namespace {
-		// Numeric fallbacks mirroring the string length defaults in the config schema,
-		// used when a config value fails to parse.
-		constexpr double kDefaultPaddingX = 48.0; // container.paddingX ("48px")
-		constexpr double kDefaultGap      = 16.0; // layout.gap         ("16px")
-
-		// Colour fallback mirroring the config default, used when the string fails to parse.
-		constexpr SkColor kDefaultBackgroundColor = 0xff101014; // container.backgroundColor ("#101014")
-	} // namespace
-
 	Renderer::Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const Clock& clock)
 	    : player(player),
 	      fontMgr(std::move(fontMgr)),
@@ -122,7 +112,7 @@ namespace music_lyric_player::render {
 		const common::RenderContext context{cfg, this->fonts, this->unicode};
 
 		// Background always fills, even before a lyric loads.
-		canvas->clear(utils::color::resolve(cfg.container.backgroundColor, kDefaultBackgroundColor));
+		canvas->clear(utils::color::resolve(cfg.container.backgroundColor, config::Default.container.backgroundColor));
 
 		if (this->viewportW <= 0 || this->viewportH <= 0) {
 			return;
@@ -134,7 +124,7 @@ namespace music_lyric_player::render {
 		const float logicalW = static_cast<float>(this->viewportW) / this->dpr;
 		const float logicalH = static_cast<float>(this->viewportH) / this->dpr;
 
-		const float padX         = std::min(static_cast<float>(resolveLength(cfg.container.paddingX, kDefaultPaddingX, logicalW)), logicalW * 0.5f);
+		const float padX         = std::min(static_cast<float>(resolveLength(cfg.container.paddingX, config::Default.container.paddingX, logicalW)), logicalW * 0.5f);
 		const float contentWidth = std::max(logicalW - 2.0f * padX, 1.0f);
 		this->lines.ensureLayout(contentWidth, context);
 
@@ -142,7 +132,7 @@ namespace music_lyric_player::render {
 			return;
 		}
 
-		const float gap = static_cast<float>(resolveLength(cfg.layout.gap, kDefaultGap, logicalH));
+		const float gap = static_cast<float>(resolveLength(cfg.layout.gap, config::Default.layout.gap, logicalH));
 		this->layout.update(this->lines.all(), gap);
 
 		// Centre the focus (primary active) line on the anchor, then ease the scroll towards it.

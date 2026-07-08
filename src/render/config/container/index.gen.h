@@ -27,7 +27,8 @@ namespace music_lyric_player::render::config::container {
 		::std::string backgroundColor = "#101014";
 		/**
 		 * Horizontal padding on each side of the content.
-		 * A bare number or `px` is absolute; `%` is relative to the viewport width.
+		 * A `%` value is relative to the viewport width.
+		 * A bare number or `px` is an absolute length in logical pixels.
 		 *
 		 * @default "48px"
 		 * @example 48
@@ -70,6 +71,11 @@ namespace music_lyric_player::render::config::container {
 		inline constexpr ::std::string_view backgroundColor{"backgroundColor"};
 		inline constexpr ::std::string_view paddingX{"paddingX"};
 	} // namespace RootKeys
+
+	/**
+	 * Built-in defaults (every field at its schema default); the fallback when a config value fails to parse.
+	 */
+	inline const Root Default{};
 
 } // namespace music_lyric_player::render::config::container
 

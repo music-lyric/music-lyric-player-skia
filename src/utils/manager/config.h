@@ -1,38 +1,19 @@
 #ifndef MUSIC_LYRIC_PLAYER_UTILS_MANAGER_CONFIG_H_
 #define MUSIC_LYRIC_PLAYER_UTILS_MANAGER_CONFIG_H_
 
-#include <functional>
-#include <set>
-#include <string>
-#include <string_view>
-
 #include "utils/event/signal.h"
 
 namespace music_lyric_player::utils::config {
-	/**
-	 * Set of changed dot-path keys emitted on a config update.
-	 * Transparent comparator so lookups accept `string_view` / generated key constants.
-	 */
-	using ChangeKeys = std::set<std::string, std::less<>>;
-
-	/**
-	 * Whether an exact dot-path key changed.
-	 */
-	inline bool keyHas(const ChangeKeys& keys, std::string_view path) {
-		return keys.count(path) > 0;
-	}
-
-	template <typename Config, typename Patch>
+	template <typename Config, typename Patch, typename Change>
 	class Manager {
 	private:
 		/**
-		 * Emits `onUpdate` with the paths that differ between `prev` and the current config.
+		 * Diffs `prev` against the current config and emits `onUpdate` when anything changed.
 		 */
 		void emitChangesFrom(const Config& prev) {
-			ChangeKeys changed;
-			diffConfig(prev, this->currentConfig, std::string{}, changed);
-			if (!changed.empty()) {
-				this->onUpdate.emit(changed, this->currentConfig);
+			const Change changes = diff(prev, this->currentConfig);
+			if (changes.any) {
+				this->onUpdate.emit(changes, this->currentConfig);
 			}
 		}
 
@@ -44,7 +25,7 @@ namespace music_lyric_player::utils::config {
 		 */
 		void merge(const Patch& patch) {
 			const Config prev = this->currentConfig;
-			applyConfigPatch(this->currentConfig, patch);
+			apply(this->currentConfig, patch);
 			emitChangesFrom(prev);
 		}
 
@@ -75,8 +56,8 @@ namespace music_lyric_player::utils::config {
 			return this->currentConfig;
 		}
 
-		Signal<const ChangeKeys&, const Config&> onUpdate;
-		Signal<const Config&>                    onReset;
+		Signal<const Change&, const Config&> onUpdate;
+		Signal<const Config&>                onReset;
 	};
 } // namespace music_lyric_player::utils::config
 

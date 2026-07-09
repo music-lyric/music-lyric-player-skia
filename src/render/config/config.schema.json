@@ -1,6 +1,7 @@
 {
   "namespace": "music_lyric_player::render::config",
   "file": "config.gen.h",
+  "defaultInstance": true,
   "imports": [
     { "as": "container", "schema": "container/index.schema.json" },
     { "as": "layout", "schema": "layout/index.schema.json" },

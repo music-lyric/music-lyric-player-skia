@@ -2,15 +2,15 @@
 """Generate C++ config code from JSON schema(s).
 
 Per config in `items[]`, emits (in the schema's `namespace`): the resolved `struct`
-with defaults, its deeply-optional `Patch` mirror, `applyConfigPatch` (deep-merge),
-`diffConfig` (dot-path diff incl. parent paths), and `<Name>Keys` (full-dot-path
-`string_view` constants for IDE completion). A config named `Root` additionally gets an
-`inline const Root Default` instance (all schema defaults) so consumers can fall back to a default
-value on a parse failure. Output goes to the schema's `file`, next to the schema, opened with
-`// clang-format off`.
+with defaults, its deeply-optional `Patch` mirror, its `<Name>Change` mirror (a `bool` per leaf,
+a nested `Change` per child, plus a rolled-up `any`), and the internal ADL machinery `apply`
+(deep-merge) and `diff(prev, next) -> <Name>Change`. A schema with `"defaultInstance": true`
+additionally gets an `inline const Root Default` instance (all schema defaults) for its `Root`, so
+consumers can fall back to a default value on a parse failure. Output goes to the schema's `file`,
+next to the schema, opened with `// clang-format off`.
 
 Schema shape:
-    { "namespace": "a::b", "file": "config.gen.h",
+    { "namespace": "a::b", "file": "config.gen.h", "defaultInstance"?: true,
       "imports"?: [ { "as": "alias", "schema": "other.schema.json" } ],
       "items": [
         { "name": "Sub",  "fields": [ { "name": "x", "type": "double", "default"?: "0.0",
@@ -63,6 +63,7 @@ class Module:
         self.namespace = schema["namespace"]
         self.file = schema["file"]
         self.inline = schema.get("inline", False)
+        self.default_instance = schema.get("defaultInstance", False)
         self.items = schema["items"]
         self.by_name = {c["name"]: c for c in schema["items"]}
         self.imports = {}  # alias -> Module
@@ -107,6 +108,9 @@ def validate_structure(schema):
 
     if "inline" in schema and not isinstance(schema["inline"], bool):
         raise SchemaError("'inline' must be a boolean (fields render as inline `// ...` with no tags)")
+
+    if "defaultInstance" in schema and not isinstance(schema["defaultInstance"], bool):
+        raise SchemaError("'defaultInstance' must be a boolean (emit the `Root` Default instance for this schema)")
 
     imports = schema.get("imports", [])
     if not isinstance(imports, list):
@@ -393,16 +397,16 @@ def gen_patch(cfg, module):
 
 
 def gen_apply(cfg, module):
-    """Emit applyConfigPatch: deep-merge a patch into a config (nested calls resolve via ADL)."""
+    """Emit the internal `apply`: deep-merge a patch into a config (nested calls resolve via ADL)."""
     name = cfg["name"]
     fields = cfg["fields"]
     unused = "" if fields else "[[maybe_unused]] "
-    out = ["\t/**\n\t * Deep-merges a sparse patch into a config.\n\t */"]
-    out.append(f"\tinline void applyConfigPatch({unused}{name}& cfg, {unused}const {name}Patch& patch) {{")
+    out = ["\t/**\n\t * Called by the config Manager and the parent aggregate, not part of the public API.\n\t */"]
+    out.append(f"\tinline void apply({unused}{name}& cfg, {unused}const {name}Patch& patch) {{")
     for field in fields:
         n = field["name"]
         if is_nested(field):
-            out.append(f"\t\tapplyConfigPatch(cfg.{n}, patch.{n});")
+            out.append(f"\t\tapply(cfg.{n}, patch.{n});")
         else:
             out.append(f"\t\tif (patch.{n}.has_value()) {{")
             out.append(f"\t\t\tcfg.{n} = *patch.{n};")
@@ -411,52 +415,42 @@ def gen_apply(cfg, module):
     return "\n".join(out)
 
 
-def gen_diff(cfg, module):
-    """Emit diffConfig: collect changed dot-paths; a changed child also records its parent path."""
-    name = cfg["name"]
-    fields = cfg["fields"]
-    unused = "" if fields else "[[maybe_unused]] "
-    out = ["\t/**\n\t * Diffs two configs into a dot-path key set; a changed child also records its parent path.\n\t */"]
-    out.append(
-        f"\tinline void diffConfig({unused}const {name}& prev, {unused}const {name}& next, "
-        f"{unused}const ::std::string& prefix, {unused}::music_lyric_player::utils::config::ChangeKeys& keys) {{"
-    )
-    for field in fields:
+def gen_change(cfg, module):
+    """Emit `<Name>Change`: a `bool` per leaf, a nested `<Child>Change` per child, plus `bool any` rolling up the subtree."""
+    out = [f"\tstruct {cfg['name']}Change {{"]
+    for field in cfg["fields"]:
         n = field["name"]
         if is_nested(field):
-            out.append("\t\t{")
-            out.append("\t\t\tconst ::std::size_t before = keys.size();")
-            out.append(f'\t\t\tdiffConfig(prev.{n}, next.{n}, prefix + "{n}" + ".", keys);')
-            out.append("\t\t\tif (keys.size() > before) {")
-            out.append(f'\t\t\t\tkeys.insert(prefix + "{n}");')
-            out.append("\t\t\t}")
-            out.append("\t\t}")
+            _, _, type_str, _ = resolve_nested(module, field["nested"])
+            out.append(f"\t\t{type_str}Change {n};")
         else:
-            out.append(f"\t\tif (prev.{n} != next.{n}) {{")
-            out.append(f'\t\t\tkeys.insert(prefix + "{n}");')
-            out.append("\t\t}")
-    out.append("\t}")
+            out.append(f"\t\tbool {n} = false;")
+    out.append("\t\tbool any = false;")
+    out.append("\t};")
     return "\n".join(out)
 
 
-def gen_keys(cfg, module):
-    """Emit `namespace <Name>Keys` of full dot-path string_view constants (nested = sub-namespaces)."""
-    def emit(fields, prefix, indent, mod):
-        lines = []
-        for field in fields:
-            n = field["name"]
-            if is_nested(field):
-                target_mod, target_cfg, _, _ = resolve_nested(mod, field["nested"])
-                lines.append(f"{indent}namespace {n} {{")
-                lines += emit(target_cfg["fields"], prefix + n + ".", indent + "\t", target_mod)
-                lines.append(f"{indent}}} // namespace {n}")
-            else:
-                lines.append(f'{indent}inline constexpr ::std::string_view {n}{{"{prefix + n}"}};')
-        return lines
-
-    out = [f"\tnamespace {cfg['name']}Keys {{"]
-    out += emit(cfg["fields"], "", "\t\t", module)
-    out.append(f"\t}} // namespace {cfg['name']}Keys")
+def gen_diff(cfg, module):
+    """Emit the internal `diff`: returns a `<Name>Change` mirror; each leaf bool (or a child's `any`) marks what differs, rolled up into `any`."""
+    name = cfg["name"]
+    fields = cfg["fields"]
+    unused = "" if fields else "[[maybe_unused]] "
+    out = ["\t/**\n\t * Called by the config Manager and the parent aggregate, not part of the public API.\n\t */"]
+    out.append(f"\tinline {name}Change diff({unused}const {name}& prev, {unused}const {name}& next) {{")
+    out.append(f"\t\t{name}Change change;")
+    rolled = []
+    for field in fields:
+        n = field["name"]
+        if is_nested(field):
+            out.append(f"\t\tchange.{n} = diff(prev.{n}, next.{n});")
+            rolled.append(f"change.{n}.any")
+        else:
+            out.append(f"\t\tchange.{n} = prev.{n} != next.{n};")
+            rolled.append(f"change.{n}")
+    if rolled:
+        out.append(f"\t\tchange.any = {' || '.join(rolled)};")
+    out.append("\t\treturn change;")
+    out.append("\t}")
     return "\n".join(out)
 
 
@@ -486,9 +480,9 @@ def gen_enums(module):
     return blocks
 
 
-def gen_default(cfg):
-    """Emit `inline const Root Default` (every field at its schema default) for a `Root` config, so consumers can fall back to it; empty otherwise."""
-    if cfg["name"] != "Root":
+def gen_default(cfg, module):
+    """Emit `inline const Root Default` (every field at its schema default) for the `Root` of a `defaultInstance` schema, so consumers can fall back to it; empty otherwise."""
+    if not module.default_instance or cfg["name"] != "Root":
         return ""
     return "\n".join([
         "\t/**",
@@ -498,6 +492,16 @@ def gen_default(cfg):
     ])
 
 
+def module_has_leaf(module):
+    """Whether any config in the module has a leaf (non-nested) field — those drive the `::std::optional` patch members."""
+    return any(not is_nested(field) for cfg in module.items for field in cfg["fields"])
+
+
+def module_has_string(module):
+    """Whether any leaf field resolves to `::std::string` (a plain string, or a `kind` color / length / easing)."""
+    return any(not is_nested(field) and leaf_type(field) == "::std::string" for cfg in module.items for field in cfg["fields"])
+
+
 def render(module, schema_name):
     """Render the whole generated header as a string."""
     namespace = module.namespace
@@ -505,37 +509,37 @@ def render(module, schema_name):
     guard = namespace.replace("::", "_").upper() + "_CONFIG_GEN_H_"
     parts = [
         "// clang-format off",
+        "",
         f"// Generated by script/generate-config.py from {schema_name}. DO NOT EDIT.",
         "// To change config, edit the schema and regenerate with script/generate-config.py.",
+        "",
         f"#ifndef {guard}",
         f"#define {guard}",
-        "",
-        "#include <cstddef>",
-        "#include <optional>",
-        "#include <string>",
-        "#include <string_view>",
-        "",
-        '#include "utils/manager/config.h"',
-    ]
-    parts += [f'#include "{path}"' for path in referenced_includes(module)]
-    parts += [
-        "",
-        f"namespace {namespace} {{",
     ]
 
-    # enums first (referenced by the structs below), then structs / patches / merge / diff / key trees / the `Root` default instance
+    stdlib = []
+    if module_has_leaf(module):
+        stdlib.append("#include <optional>")  # every leaf field gets a `::std::optional<...>` patch member
+    if module_has_string(module):
+        stdlib.append("#include <string>")
+    if stdlib:
+        parts += ["", *stdlib]
+    referenced = [f'#include "{path}"' for path in referenced_includes(module)]
+    if referenced:
+        parts += ["", *referenced]
+
+    parts += ["", f"namespace {namespace} {{"]
+
+    # enums first (referenced by the structs below), then structs / patches / change mirrors / apply / diff, then the root Default instance (only when the schema opts in)
     for block in gen_enums(module):
         parts.append(block)
         parts.append("")
-    for stage in (gen_struct, gen_patch, gen_apply, gen_diff):
+    for stage in (gen_struct, gen_patch, gen_change, gen_apply, gen_diff):
         for cfg in items:
             parts.append(stage(cfg, module))
             parts.append("")
     for cfg in items:
-        parts.append(gen_keys(cfg, module))
-        parts.append("")
-    for cfg in items:
-        block = gen_default(cfg)
+        block = gen_default(cfg, module)
         if block:
             parts.append(block)
             parts.append("")
@@ -543,7 +547,6 @@ def render(module, schema_name):
     parts.append(f"}} // namespace {namespace}")
     parts.append("")
     parts.append(f"#endif // {guard}")
-    parts.append("// clang-format on")
     parts.append("")
     return "\n".join(parts)
 

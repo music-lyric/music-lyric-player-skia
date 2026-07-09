@@ -2,6 +2,7 @@
   "namespace": "music_lyric_player::playback::config",
   "file": "config.gen.h",
   "inline": true,
+  "defaultInstance": true,
   "items": [
     {
       "name": "OffsetConfig",

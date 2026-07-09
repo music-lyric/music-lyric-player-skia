@@ -149,7 +149,7 @@ namespace music_lyric_player::playback {
 		/**
 		 * Reacts to a config change by re-deriving offset / merge and resyncing.
 		 */
-		void onConfigUpdate(const config::ChangeKeys& keys);
+		void onConfigUpdate(const config::RootChange& changes);
 
 		const Clock&     clockRef;
 		bool             playing   = false;

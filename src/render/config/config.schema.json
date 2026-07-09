@@ -6,7 +6,8 @@
     { "as": "container", "schema": "container/index.schema.json" },
     { "as": "layout", "schema": "layout/index.schema.json" },
     { "as": "scroll", "schema": "scroll/index.schema.json" },
-    { "as": "line", "schema": "line/index.schema.json" }
+    { "as": "line", "schema": "line/index.schema.json" },
+    { "as": "effect", "schema": "effect/index.schema.json" }
   ],
   "items": [
     {
@@ -32,6 +33,11 @@
           "name": "line",
           "nested": "line.Root",
           "comment": "Font and per-state colors of lyric lines."
+        },
+        {
+          "name": "effect",
+          "nested": "effect.Root",
+          "comment": "Distance-from-focus scale and blur effects."
         }
       ]
     }

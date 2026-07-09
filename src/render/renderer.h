@@ -5,6 +5,7 @@
 
 #include "include/core/SkRefCnt.h"
 #include "render/config/index.h"
+#include "render/core/effect.h"
 #include "render/core/layout.h"
 #include "render/core/line.h"
 #include "render/core/scroll.h"
@@ -102,6 +103,7 @@ namespace music_lyric_player::render {
 		core::LineManager   lines;
 		core::LayoutManager layout;
 		core::ScrollManager scroll;
+		core::EffectManager effect;
 
 		std::size_t lyricListener  = 0;
 		std::size_t linesListener  = 0;

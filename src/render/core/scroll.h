@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <vector>
 
+#include "render/core/transition.h"
 #include "render/utils/animation/tween.h"
 
 namespace music_lyric_player::render::config::scroll {
@@ -37,21 +38,6 @@ namespace music_lyric_player::render::core {
 		}
 
 	private:
-		/**
-		 * Per-line transition timing produced by `lineTransition`.
-		 */
-		struct Transition {
-			double duration;
-			double delay;
-		};
-
-		/**
-		 * Computes one line's transition duration and start delay for the cascade `anim` describes.
-		 * `offset` is the line's signed distance from the active line, `played` whether it precedes it,
-		 * and `direction` the sign of the latest active-line change (`0` when unchanged).
-		 */
-		static Transition lineTransition(const config::scroll::AnimationConfig& anim, int offset, bool played, int direction);
-
 		::std::vector<animation::Tween<float>> offsets;
 		bool                                   initialized = false;
 		int                                    focus       = -1;

@@ -1,0 +1,44 @@
+{
+  "namespace": "music_lyric_player::render::config::effect",
+  "file": "index.gen.h",
+  "items": [
+    {
+      "name": "ScaleConfig",
+      "comment": [
+        "Scale (zoom) effect applied per line.",
+        "",
+        "The active line uses `max`; the farthest lines collapse to `min`."
+      ],
+      "fields": [
+        { "name": "enabled", "type": "bool", "default": "false", "comment": "Whether to enable the scale effect." },
+        { "name": "min", "type": "double", "default": "0.65", "comment": "Scale ratio of the farthest line." },
+        { "name": "max", "type": "double", "default": "1.0", "comment": "Scale ratio of the active line." }
+      ]
+    },
+    {
+      "name": "BlurConfig",
+      "comment": [
+        "Blur effect applied per line.",
+        "",
+        "The active line uses `min` (sharpest); the farthest lines reach `max` (most blurred)."
+      ],
+      "fields": [
+        { "name": "enabled", "type": "bool", "default": "true", "comment": "Whether to enable the blur effect." },
+        { "name": "min", "type": "double", "default": "0.4", "comment": "Blur radius of the active line, in `px` — the sharpest state." },
+        { "name": "max", "type": "double", "default": "4.5", "comment": "Blur radius of the farthest line, in `px` — the most blurred state." }
+      ]
+    },
+    {
+      "name": "Root",
+      "comment": [
+        "Visual effects whose intensity depends on distance from the active line.",
+        "",
+        "Lines closer to the active one keep their natural look; lines farther away progressively shrink and/or blur."
+      ],
+      "fields": [
+        { "name": "scale", "nested": "ScaleConfig", "comment": "Scale (zoom) effect: shrinks lines farther from the active one." },
+        { "name": "blur", "nested": "BlurConfig", "comment": "Blur effect: blurs lines farther from the active one." }
+      ]
+    }
+  ]
+}

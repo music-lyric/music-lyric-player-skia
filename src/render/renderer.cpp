@@ -8,6 +8,10 @@
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColor.h"
 #include "include/core/SkFontMgr.h"
+#include "include/core/SkPaint.h"
+#include "include/core/SkRect.h"
+#include "include/core/SkTileMode.h"
+#include "include/effects/SkImageFilters.h"
 #include "info.pb.h"
 #include "modules/skparagraph/include/FontCollection.h"
 #include "modules/skunicode/include/SkUnicode.h"
@@ -21,6 +25,12 @@
 namespace tl = ::skia::textlayout;
 
 namespace music_lyric_player::render {
+	namespace {
+		// Below these thresholds the scale / blur is imperceptible, so the line paints without the extra transform or layer.
+		constexpr float kScaleEpsilon = 0.001f;
+		constexpr float kBlurEpsilon  = 0.3f;
+	} // namespace
+
 	Renderer::Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const Clock& clock)
 	    : player(player),
 	      fontMgr(std::move(fontMgr)),
@@ -100,8 +110,9 @@ namespace music_lyric_player::render {
 
 	void Renderer::rebuildLines(const ::lyric::Info& info) {
 		this->lines.rebuild(info);
-		// Drop the scroll tween so a freshly loaded lyric snaps into place instead of sliding from the old song.
+		// Drop the scroll and effect tweens so a freshly loaded lyric snaps into place instead of sliding from the old song.
 		this->scroll.reset();
+		this->effect.reset();
 	}
 
 	void Renderer::render(SkCanvas* canvas) {
@@ -144,6 +155,7 @@ namespace music_lyric_player::render {
 
 		const double now = this->clock.now();
 		this->scroll.update(now, targetY, static_cast<int>(focus), this->lines.size(), cfg.scroll.animation);
+		this->effect.update(now, static_cast<int>(focus), this->lines.size(), cfg.effect, cfg.scroll.animation);
 
 		for (std::size_t i = 0; i < this->lines.size(); ++i) {
 			const components::line::base::Element& line = this->lines.at(i);
@@ -153,7 +165,35 @@ namespace music_lyric_player::render {
 				continue;
 			}
 			const bool active = static_cast<int>(i) == this->activeIndex;
+
+			// Focus effect: shrink and/or blur lines away from the active one, both eased per line.
+			const float scale = this->effect.scaleAt(i, now);
+			const float blur  = this->effect.blurAt(i, now);
+			int         saved = 0;
+			if (std::abs(scale - 1.0f) > kScaleEpsilon) {
+				// Scale about the line box centre, matching the web transform-origin.
+				const float cx = padX + contentWidth * 0.5f;
+				const float cy = y + line.height() * 0.5f;
+				canvas->save();
+				canvas->translate(cx, cy);
+				canvas->scale(scale, scale);
+				canvas->translate(-cx, -cy);
+				++saved;
+			}
+			if (blur > kBlurEpsilon) {
+				// A bounded layer blurs the whole line; the outset covers the gaussian spread.
+				SkPaint blurPaint;
+				blurPaint.setImageFilter(SkImageFilters::Blur(blur, blur, SkTileMode::kDecal, nullptr));
+				const SkRect bounds = SkRect::MakeXYWH(padX, y, contentWidth, line.height()).makeOutset(3.0f * blur, 3.0f * blur);
+				canvas->saveLayer(&bounds, &blurPaint);
+				++saved;
+			}
+
 			line.paint(canvas, padX, y, now, active, context);
+
+			for (; saved > 0; --saved) {
+				canvas->restore();
+			}
 		}
 	}
 } // namespace music_lyric_player::render

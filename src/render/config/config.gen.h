@@ -7,6 +7,7 @@
 #define MUSIC_LYRIC_PLAYER_RENDER_CONFIG_CONFIG_GEN_H_
 
 #include "render/config/container/index.gen.h"
+#include "render/config/effect/index.gen.h"
 #include "render/config/layout/index.gen.h"
 #include "render/config/line/index.gen.h"
 #include "render/config/scroll/index.gen.h"
@@ -32,6 +33,10 @@ namespace music_lyric_player::render::config {
 		 * Font and per-state colors of lyric lines.
 		 */
 		::music_lyric_player::render::config::line::Root line;
+		/**
+		 * Distance-from-focus scale and blur effects.
+		 */
+		::music_lyric_player::render::config::effect::Root effect;
 	};
 
 	struct RootPatch {
@@ -39,6 +44,7 @@ namespace music_lyric_player::render::config {
 		::music_lyric_player::render::config::layout::RootPatch layout;
 		::music_lyric_player::render::config::scroll::RootPatch scroll;
 		::music_lyric_player::render::config::line::RootPatch line;
+		::music_lyric_player::render::config::effect::RootPatch effect;
 	};
 
 	struct RootChange {
@@ -46,6 +52,7 @@ namespace music_lyric_player::render::config {
 		::music_lyric_player::render::config::layout::RootChange layout;
 		::music_lyric_player::render::config::scroll::RootChange scroll;
 		::music_lyric_player::render::config::line::RootChange line;
+		::music_lyric_player::render::config::effect::RootChange effect;
 		bool any = false;
 	};
 
@@ -57,6 +64,7 @@ namespace music_lyric_player::render::config {
 		apply(cfg.layout, patch.layout);
 		apply(cfg.scroll, patch.scroll);
 		apply(cfg.line, patch.line);
+		apply(cfg.effect, patch.effect);
 	}
 
 	/**
@@ -68,7 +76,8 @@ namespace music_lyric_player::render::config {
 		change.layout = diff(prev.layout, next.layout);
 		change.scroll = diff(prev.scroll, next.scroll);
 		change.line = diff(prev.line, next.line);
-		change.any = change.container.any || change.layout.any || change.scroll.any || change.line.any;
+		change.effect = diff(prev.effect, next.effect);
+		change.any = change.container.any || change.layout.any || change.scroll.any || change.line.any || change.effect.any;
 		return change;
 	}
 

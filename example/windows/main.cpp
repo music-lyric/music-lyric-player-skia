@@ -33,6 +33,8 @@ int main() {
 		cfg.scroll.animation.stagger.easing   = "ease";
 		cfg.scroll.animation.stagger.step     = 40;
 		cfg.scroll.animation.stagger.range    = 4;
+		cfg.line.normal.main.syllable.word.animation.mask.enabled = true;
+		cfg.line.normal.main.syllable.word.animation.floating.enabled = true;
 	});
 
 	player.updateLyric(example::buildSampleLyric());

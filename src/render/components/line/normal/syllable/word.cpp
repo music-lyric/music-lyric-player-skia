@@ -134,7 +134,7 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		canvas->restore();
 	}
 
-	void Word::paint(SkCanvas* canvas, float lineX, float lineY, double now, bool active, bool maskEnabled, float maskProgress, float maskFeather, const common::RenderContext& context) const {
+	void Word::paint(SkCanvas* canvas, float lineX, float lineY, bool active, bool maskEnabled, float maskProgress, float maskFeather, const common::RenderContext& context) const {
 		if (!this->normalParagraph) {
 			return;
 		}
@@ -146,7 +146,7 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		const double toValue         = std::isfinite(animationConfig.floating.to)
 				? animationConfig.floating.to
 				: config::Default.line.normal.main.syllable.word.animation.floating.to;
-		const float  offset          = this->floating.sample(now, context.currentTime, active, animationConfig.floating.enabled, static_cast<float>(fromValue), static_cast<float>(toValue));
+		const float  offset          = this->floating.sample(context.currentTime, active, animationConfig.floating.enabled, static_cast<float>(fromValue), static_cast<float>(toValue));
 		const float  drawX           = lineX + this->x;
 		const float  drawY           = lineY + this->y + offset;
 

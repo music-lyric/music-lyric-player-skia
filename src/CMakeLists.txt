@@ -15,6 +15,7 @@ target_link_libraries(music_lyric_player_playback PUBLIC
 
 add_library(music_lyric_player_render
 	render/components/line/normal/index.cpp
+	render/components/line/normal/plain/index.cpp
 	render/components/line/interlude/index.cpp
 	render/core/effect.cpp
 	render/core/layout.cpp

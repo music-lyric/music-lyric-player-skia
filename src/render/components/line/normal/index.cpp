@@ -2,109 +2,28 @@
 
 #include <algorithm>
 #include <memory>
-#include <utility>
 
-#include "include/core/SkBlendMode.h"
-#include "include/core/SkCanvas.h"
 #include "include/core/SkColor.h"
-#include "include/core/SkColorFilter.h"
-#include "include/core/SkFontStyle.h"
-#include "include/core/SkPaint.h"
-#include "include/core/SkRect.h"
-#include "include/core/SkScalar.h"
-#include "include/core/SkString.h"
-#include "modules/skparagraph/include/DartTypes.h"
-#include "modules/skparagraph/include/FontCollection.h"
-#include "modules/skparagraph/include/Paragraph.h"
-#include "modules/skparagraph/include/ParagraphBuilder.h"
-#include "modules/skparagraph/include/ParagraphStyle.h"
-#include "modules/skparagraph/include/TextStyle.h"
-#include "modules/skunicode/include/SkUnicode.h"
 #include "render/common/context.h"
+#include "render/components/line/normal/plain/index.h"
 #include "render/utils/color/parse.h"
-#include "render/utils/length.h"
-
-namespace tl = ::skia::textlayout;
 
 namespace music_lyric_player::render::components::line::normal {
-	namespace {
-		// Local alias for the config alignment enum, so the switch below reads without the full path.
-		using Align = config::layout::Align;
-
-		/**
-		 * Maps the config's alignment enum onto SkParagraph's `TextAlign`.
-		 */
-		tl::TextAlign toTextAlign(Align align) {
-			switch (align) {
-			case Align::Center:
-				return tl::TextAlign::kCenter;
-			case Align::Right:
-				return tl::TextAlign::kRight;
-			case Align::Left:
-			default:
-				return tl::TextAlign::kLeft;
-			}
-		}
-	} // namespace
-
-	Element::Element(int index, std::string text)
+	Element::Element(int index, const ::lyric::runtime::Line& info)
 	    : base::Element(index),
-	      text(std::move(text)) {}
+	      plainElement(std::make_unique<plain::Element>(info)) {}
 
 	Element::~Element() = default;
 
 	void Element::layout(float width, const common::RenderContext& context) {
 		this->width = std::max(width, 1.0f);
-
-		if (!context.fonts || !context.unicode) {
-			this->paragraph      = nullptr;
-			this->measuredHeight = 0.0f;
-			return;
-		}
-
-		const config::Root& cfg = context.config;
-
-		tl::TextStyle textStyle;
-		textStyle.setColor(SK_ColorWHITE); // tinted per state at paint time via kModulate
-		textStyle.setFontSize(static_cast<SkScalar>(resolveLength(cfg.line.font.size, config::Default.line.font.size)));
-		if (!cfg.line.font.family.empty()) {
-			textStyle.setFontFamilies({SkString(cfg.line.font.family.c_str())});
-		}
-		textStyle.setFontStyle(SkFontStyle::Normal());
-
-		tl::ParagraphStyle paraStyle;
-		paraStyle.setTextStyle(textStyle);
-		paraStyle.setTextAlign(toTextAlign(cfg.layout.align));
-
-		std::unique_ptr<tl::ParagraphBuilder> builder = tl::ParagraphBuilder::make(paraStyle, context.fonts, context.unicode);
-		if (!builder) {
-			this->paragraph      = nullptr;
-			this->measuredHeight = 0.0f;
-			return;
-		}
-		builder->addText(this->text.c_str());
-		this->paragraph = builder->Build();
-		if (this->paragraph) {
-			this->paragraph->layout(this->width);
-			this->measuredHeight = this->paragraph->getHeight();
-		} else {
-			this->measuredHeight = 0.0f;
-		}
+		this->plainElement->layout(this->width, context);
+		this->measuredHeight = this->plainElement->height();
 	}
 
 	void Element::paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const {
-		if (!this->paragraph) {
-			return;
-		}
 		const config::Root& cfg   = context.config;
 		const SkColor       color = this->stateColor(now, active, utils::color::resolve(cfg.line.normal.color, config::Default.line.normal.color), utils::color::resolve(cfg.line.active.color, config::Default.line.active.color));
-
-		// The paragraph is opaque white; a modulate layer tints it to the state colour without re-shaping.
-		SkPaint layerPaint;
-		layerPaint.setColorFilter(SkColorFilters::Blend(color, SkBlendMode::kModulate));
-		const SkRect bounds = SkRect::MakeXYWH(x, y, this->width, this->measuredHeight);
-		canvas->saveLayer(&bounds, &layerPaint);
-		this->paragraph->paint(canvas, x, y);
-		canvas->restore();
+		this->plainElement->paint(canvas, x, y, color);
 	}
 } // namespace music_lyric_player::render::components::line::normal

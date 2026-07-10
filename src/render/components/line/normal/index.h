@@ -2,42 +2,51 @@
 #define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_INDEX_H_
 
 #include <memory>
-#include <string>
 
 #include "render/components/line/base/index.h"
 
 class SkCanvas;
 
-namespace skia::textlayout {
-	class Paragraph;
-} // namespace skia::textlayout
+namespace lyric::runtime {
+	class Line;
+} // namespace lyric::runtime
 
 namespace music_lyric_player::render::common {
 	struct RenderContext;
 } // namespace music_lyric_player::render::common
 
+namespace music_lyric_player::render::components::line::normal::plain {
+	class Element;
+} // namespace music_lyric_player::render::components::line::normal::plain
+
 namespace music_lyric_player::render::components::line::normal {
 	/**
-	 * A whole-line plain-text component: builds one SkParagraph and paints it tinted by line state.
+	 * A normal lyric-line shell that owns the selected body renderer and applies shared line state.
 	 */
 	class Element : public base::Element {
 	public:
 		/**
-		 * Creates the line for lyric index `index` carrying plain `text`.
+		 * Creates a normal line with its plain body renderer.
 		 */
-		Element(int index, std::string text);
+		Element(int index, const ::lyric::runtime::Line& info);
 
 		/**
-		 * Defined in the .cpp so the incomplete `Paragraph` is complete at the deletion point.
+		 * Destroys the selected body renderer where its concrete type is complete.
 		 */
 		~Element() override;
 
+		/**
+		 * Delegates line layout to the selected body renderer.
+		 */
 		void layout(float width, const common::RenderContext& context) override;
+
+		/**
+		 * Resolves shared line state and delegates painting to the selected body renderer.
+		 */
 		void paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const override;
 
 	private:
-		std::string                                    text;
-		std::unique_ptr<::skia::textlayout::Paragraph> paragraph;
+		std::unique_ptr<plain::Element> plainElement;
 	};
 } // namespace music_lyric_player::render::components::line::normal
 

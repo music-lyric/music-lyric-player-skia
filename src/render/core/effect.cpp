@@ -68,10 +68,9 @@ namespace music_lyric_player::render::core {
 			return;
 		}
 
-		const animation::Easing easing = animation::resolveEasing(anim.easing);
-
 		// First frame of a lyric: snap every line to its intensity so the effect does not ease in from nowhere.
 		if (!this->initialized) {
+			const animation::Easing easing = animation::resolveEasing(transitionTiming(anim).easing);
 			for (::std::size_t i = 0; i < lineCount; ++i) {
 				const int offset = static_cast<int>(i) - focus;
 				this->scales[i].setEasing(easing);
@@ -86,10 +85,11 @@ namespace music_lyric_player::render::core {
 
 		// Active line changed: restart each line's ease with the delay its mode assigns (shared with the scroll cascade).
 		if (focus != this->focus) {
-			const int direction = focus > this->focus ? 1 : (focus < this->focus ? -1 : 0);
+			const animation::Easing easing    = animation::resolveEasing(transitionTiming(anim).easing);
+			const int               direction = focus > this->focus ? 1 : (focus < this->focus ? -1 : 0);
 			for (::std::size_t i = 0; i < lineCount; ++i) {
 				const int        offset     = static_cast<int>(i) - focus;
-				const Transition transition = lineTransition(anim, offset, static_cast<int>(i) < focus, direction);
+				const Transition transition = lineTransition(anim, offset, direction);
 				this->scales[i].setEasing(easing);
 				this->blurs[i].setEasing(easing);
 				this->scales[i].setDuration(transition.duration);

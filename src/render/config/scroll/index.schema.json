@@ -1,11 +1,33 @@
 {
   "namespace": "music_lyric_player::render::config::scroll",
   "file": "index.gen.h",
+  "mix": {
+    "animation": [
+      {
+        "name": "duration",
+        "type": "double",
+        "default": "500.0",
+        "comment": [
+          "Transition duration of each individual line, in `ms`.",
+          "In cascade modes the total visual length is roughly `duration + maxDelay`.",
+          "`0` snaps to the target without easing."
+        ]
+      },
+      {
+        "name": "easing",
+        "kind": "easing",
+        "default": "\"ease\"",
+        "example": ["ease-in-out", "cubic-bezier(0.4, 0, 0.2, 1)"],
+        "comment": "Easing curve for the transition."
+      }
+    ]
+  },
   "items": [
     {
       "name": "SmoothConfig",
       "comment": "Parameters for the Smooth mode: a uniform, non-cascade transition.",
       "fields": [
+        { "include": "animation" },
         {
           "name": "delay",
           "type": "double",
@@ -18,6 +40,7 @@
       "name": "RippleConfig",
       "comment": "Parameters for the Ripple mode: a symmetric cascade radiating outward from the active line.",
       "fields": [
+        { "include": "animation" },
         {
           "name": "range",
           "type": "double",
@@ -39,8 +62,9 @@
     },
     {
       "name": "DirectionalConfig",
-      "comment": "Parameters for the Directional mode: played lines move first, upcoming lines follow.",
+      "comment": "Parameters for the Directional mode: a nonlinear cascade following the latest active-line movement direction.",
       "fields": [
+        { "include": "animation" },
         {
           "name": "range",
           "type": "double",
@@ -59,8 +83,9 @@
     },
     {
       "name": "StaggerConfig",
-      "comment": "Parameters for the Stagger mode: a linear, direction-sensitive stagger cascade (legacy).",
+      "comment": "Parameters for the Stagger mode: a linear cascade following the latest active-line movement direction.",
       "fields": [
+        { "include": "animation" },
         {
           "name": "range",
           "type": "double",
@@ -92,26 +117,9 @@
             "",
             "- `Smooth` — all lines move together, no cascade",
             "- `Ripple` — symmetric cascade outward from the active line",
-            "- `Directional` — played lines move first, upcoming lines follow",
-            "- `Stagger` — legacy linear stagger; delay saturates at `range`"
+            "- `Directional` — nonlinear cascade following the latest active-line movement direction",
+            "- `Stagger` — linear cascade following the latest active-line movement direction"
           ]
-        },
-        {
-          "name": "duration",
-          "type": "double",
-          "default": "500.0",
-          "comment": [
-            "Transition duration of each individual line, in `ms`.",
-            "In cascade modes the total visual length is roughly `duration + maxDelay`.",
-            "`0` snaps to the target without easing."
-          ]
-        },
-        {
-          "name": "easing",
-          "kind": "easing",
-          "default": "\"ease\"",
-          "example": ["ease-in-out", "cubic-bezier(0.4, 0, 0.2, 1)"],
-          "comment": "Easing curve for the transition."
         },
         {
           "name": "smooth",

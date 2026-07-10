@@ -23,7 +23,7 @@ namespace music_lyric_player::render::core {
 
 		// First frame of a lyric: snap every line to the target so it does not slide in from nowhere.
 		if (!this->initialized) {
-			const animation::Easing easing = animation::resolveEasing(anim.easing);
+			const animation::Easing easing = animation::resolveEasing(transitionTiming(anim).easing);
 			for (auto& tween : this->offsets) {
 				tween.setEasing(easing);
 				tween.snap(target);
@@ -36,10 +36,10 @@ namespace music_lyric_player::render::core {
 
 		// Active line changed: restart each line's ease with the delay its mode assigns.
 		if (focus != this->focus) {
-			const animation::Easing easing    = animation::resolveEasing(anim.easing);
+			const animation::Easing easing    = animation::resolveEasing(transitionTiming(anim).easing);
 			const int               direction = focus > this->focus ? 1 : (focus < this->focus ? -1 : 0);
 			for (::std::size_t i = 0; i < this->offsets.size(); ++i) {
-				const Transition transition = lineTransition(anim, static_cast<int>(i) - focus, static_cast<int>(i) < focus, direction);
+				const Transition transition = lineTransition(anim, static_cast<int>(i) - focus, direction);
 				auto&            tween      = this->offsets[i];
 				tween.setEasing(easing);
 				tween.setDuration(transition.duration);

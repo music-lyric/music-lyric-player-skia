@@ -12,11 +12,16 @@ next to the schema, opened with `// clang-format off`.
 Schema shape:
     { "namespace": "a::b", "file": "config.gen.h", "defaultInstance"?: true,
       "imports"?: [ { "as": "alias", "schema": "other.schema.json" } ],
+      "mix"?: { "shared": [ { "name": "duration", "type": "double", "default": "500.0" } ] },
       "items": [
         { "name": "Sub",  "fields": [ { "name": "x", "type": "double", "default"?: "0.0",
                                         "example"?: [1, 2], "min"?: 0, "max"?: 10, "comment"?: "..." } ] },
-        { "name": "Root", "fields": [ { "name": "sub", "nested": "Sub", "defaults"?: { "x": "1.0" } },
+        { "name": "Root", "fields": [ { "include": "shared", "defaults"?: { "duration": "600.0" } },
+                                      { "name": "sub", "nested": "Sub", "defaults"?: { "x": "1.0" } },
                                       { "name": "ext", "nested": "alias.Root" } ] } ] }
+A schema-local `mix` maps reusable names to field arrays. A field entry `{ "include": "name" }`
+expands that mix in place before validation and generation; optional `defaults` replaces selected leaf
+default literals in that inclusion. Mixes cannot include other mixes and every declared mix must be used.
 A leaf field has `type` (+ optional `default`, a C++ literal string), `kind`
 (`"color"` / `"length"` / `"easing"`) which implies `type: ::std::string` and appends a standard
 format note to the doc, or `enum` (+ `values`, + optional `enumComment`) which emits an `enum class`
@@ -35,6 +40,7 @@ Usage: `python script/generate-config.py [<schema.json> ...]`. With no args, eve
 *.schema.json under the project (excluding build / vendored dirs) is generated.
 """
 
+import copy
 import json
 import os
 import sys
@@ -91,6 +97,84 @@ def leaf_default(field):
 def is_valid_comment(value):
     """Whether a `comment` is a string or a list of strings."""
     return isinstance(value, str) or (isinstance(value, list) and all(isinstance(line, str) for line in value))
+
+
+def expand_mix(schema):
+    """Expand schema-local `{ "include": "..." }` field entries from `mix`, applying optional leaf-default overrides."""
+    if not isinstance(schema, dict):
+        return schema
+
+    mixes = schema.get("mix", {})
+    if not isinstance(mixes, dict):
+        raise SchemaError("'mix' must be an object mapping names to field arrays")
+
+    mix_fields = {}
+    for name, fields in mixes.items():
+        if not isinstance(name, str) or not name:
+            raise SchemaError("every 'mix' key must be a non-empty string")
+        if not isinstance(fields, list) or not fields:
+            raise SchemaError(f"mix '{name}' must be a non-empty field array")
+
+        seen = set()
+        for index, field in enumerate(fields):
+            at = f"mix '{name}'[{index}]"
+            if not isinstance(field, dict):
+                raise SchemaError(f"{at} must be an object")
+            if "include" in field:
+                raise SchemaError(f"{at} must not include another mix")
+            field_name = field.get("name")
+            if not isinstance(field_name, str) or not field_name:
+                raise SchemaError(f"{at}.name must be a non-empty string")
+            if field_name in seen:
+                raise SchemaError(f"duplicate field '{field_name}' in mix '{name}'")
+            seen.add(field_name)
+        mix_fields[name] = fields
+
+    normalized = copy.deepcopy(schema)
+    used = set()
+    items = normalized.get("items")
+    if isinstance(items, list):
+        for item_index, item in enumerate(items):
+            if not isinstance(item, dict) or not isinstance(item.get("fields"), list):
+                continue
+            expanded = []
+            for field_index, field in enumerate(item["fields"]):
+                if not isinstance(field, dict) or "include" not in field:
+                    expanded.append(field)
+                    continue
+
+                at = f"items[{item_index}].fields[{field_index}]"
+                extra = set(field) - {"include", "defaults"}
+                if extra:
+                    raise SchemaError(f"{at} includes a mix and must not also set {sorted(extra)}")
+                name = field["include"]
+                if not isinstance(name, str) or not name:
+                    raise SchemaError(f"{at}.include must be a non-empty string")
+                if name not in mix_fields:
+                    raise SchemaError(f"{at} includes unknown mix '{name}'")
+
+                defaults = field.get("defaults", {})
+                if not isinstance(defaults, dict) or ("defaults" in field and not defaults) or not all(isinstance(k, str) and isinstance(v, str) for k, v in defaults.items()):
+                    raise SchemaError(f"{at}.defaults must be a non-empty object of field -> C++ literal string")
+                available = {mixed["name"] for mixed in mix_fields[name]}
+                unknown = set(defaults) - available
+                if unknown:
+                    raise SchemaError(f"{at}.defaults overrides unknown fields {sorted(unknown)} in mix '{name}'")
+
+                for mixed in mix_fields[name]:
+                    clone = copy.deepcopy(mixed)
+                    if clone["name"] in defaults:
+                        if is_nested(clone):
+                            raise SchemaError(f"{at}.defaults cannot override nested mix field '{clone['name']}'")
+                        clone["default"] = defaults[clone["name"]]
+                    expanded.append(clone)
+                used.add(name)
+            item["fields"] = expanded
+
+    unused = set(mix_fields) - used
+    if unused:
+        raise SchemaError(f"unused mix definitions: {sorted(unused)}")
+    return normalized
 
 
 def validate_structure(schema):
@@ -256,6 +340,7 @@ def load_module(path, cache, loading=None):
     except json.JSONDecodeError as error:
         raise SchemaError(f"invalid JSON in {path}: {error}")
 
+    schema = expand_mix(schema)
     validate_structure(schema)
     module = Module(path, schema)
 

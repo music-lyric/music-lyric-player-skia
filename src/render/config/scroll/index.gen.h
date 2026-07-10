@@ -25,6 +25,23 @@ namespace music_lyric_player::render::config::scroll {
 	 */
 	struct SmoothConfig {
 		/**
+		 * Transition duration of each individual line, in `ms`.
+		 * In cascade modes the total visual length is roughly `duration + maxDelay`.
+		 * `0` snaps to the target without easing.
+		 *
+		 * @default 500.0
+		 */
+		double duration = 500.0;
+		/**
+		 * Easing curve for the transition.
+		 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.
+		 *
+		 * @default "ease"
+		 * @example "ease-in-out"
+		 * @example "cubic-bezier(0.4, 0, 0.2, 1)"
+		 */
+		::std::string easing = "ease";
+		/**
 		 * Fixed delay before the transition starts, in `ms`.
 		 *
 		 * @default 0.0
@@ -36,6 +53,23 @@ namespace music_lyric_player::render::config::scroll {
 	 * Parameters for the Ripple mode: a symmetric cascade radiating outward from the active line.
 	 */
 	struct RippleConfig {
+		/**
+		 * Transition duration of each individual line, in `ms`.
+		 * In cascade modes the total visual length is roughly `duration + maxDelay`.
+		 * `0` snaps to the target without easing.
+		 *
+		 * @default 500.0
+		 */
+		double duration = 500.0;
+		/**
+		 * Easing curve for the transition.
+		 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.
+		 *
+		 * @default "ease"
+		 * @example "ease-in-out"
+		 * @example "cubic-bezier(0.4, 0, 0.2, 1)"
+		 */
+		::std::string easing = "ease";
 		/**
 		 * Offset (in line units) at which the per-line delay saturates.
 		 * Lines with `|offset| >= range` all receive the maximum delay.
@@ -54,9 +88,26 @@ namespace music_lyric_player::render::config::scroll {
 	};
 
 	/**
-	 * Parameters for the Directional mode: played lines move first, upcoming lines follow.
+	 * Parameters for the Directional mode: a nonlinear cascade following the latest active-line movement direction.
 	 */
 	struct DirectionalConfig {
+		/**
+		 * Transition duration of each individual line, in `ms`.
+		 * In cascade modes the total visual length is roughly `duration + maxDelay`.
+		 * `0` snaps to the target without easing.
+		 *
+		 * @default 500.0
+		 */
+		double duration = 500.0;
+		/**
+		 * Easing curve for the transition.
+		 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.
+		 *
+		 * @default "ease"
+		 * @example "ease-in-out"
+		 * @example "cubic-bezier(0.4, 0, 0.2, 1)"
+		 */
+		::std::string easing = "ease";
 		/**
 		 * Offset (in line units) at which the per-line delay saturates.
 		 *
@@ -74,9 +125,26 @@ namespace music_lyric_player::render::config::scroll {
 	};
 
 	/**
-	 * Parameters for the Stagger mode: a linear, direction-sensitive stagger cascade (legacy).
+	 * Parameters for the Stagger mode: a linear cascade following the latest active-line movement direction.
 	 */
 	struct StaggerConfig {
+		/**
+		 * Transition duration of each individual line, in `ms`.
+		 * In cascade modes the total visual length is roughly `duration + maxDelay`.
+		 * `0` snaps to the target without easing.
+		 *
+		 * @default 500.0
+		 */
+		double duration = 500.0;
+		/**
+		 * Easing curve for the transition.
+		 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.
+		 *
+		 * @default "ease"
+		 * @example "ease-in-out"
+		 * @example "cubic-bezier(0.4, 0, 0.2, 1)"
+		 */
+		::std::string easing = "ease";
 		/**
 		 * Offset (in line units) at which the delay saturates.
 		 *
@@ -102,29 +170,12 @@ namespace music_lyric_player::render::config::scroll {
 		 *
 		 * - `Smooth` — all lines move together, no cascade
 		 * - `Ripple` — symmetric cascade outward from the active line
-		 * - `Directional` — played lines move first, upcoming lines follow
-		 * - `Stagger` — legacy linear stagger; delay saturates at `range`
+		 * - `Directional` — nonlinear cascade following the latest active-line movement direction
+		 * - `Stagger` — linear cascade following the latest active-line movement direction
 		 *
 		 * @default Mode::Smooth
 		 */
 		Mode mode = Mode::Smooth;
-		/**
-		 * Transition duration of each individual line, in `ms`.
-		 * In cascade modes the total visual length is roughly `duration + maxDelay`.
-		 * `0` snaps to the target without easing.
-		 *
-		 * @default 500.0
-		 */
-		double duration = 500.0;
-		/**
-		 * Easing curve for the transition.
-		 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.
-		 *
-		 * @default "ease"
-		 * @example "ease-in-out"
-		 * @example "cubic-bezier(0.4, 0, 0.2, 1)"
-		 */
-		::std::string easing = "ease";
 		/**
 		 * Smooth mode parameters.
 		 */
@@ -165,28 +216,34 @@ namespace music_lyric_player::render::config::scroll {
 	};
 
 	struct SmoothConfigPatch {
+		::std::optional<double> duration;
+		::std::optional<::std::string> easing;
 		::std::optional<double> delay;
 	};
 
 	struct RippleConfigPatch {
+		::std::optional<double> duration;
+		::std::optional<::std::string> easing;
 		::std::optional<double> range;
 		::std::optional<double> step;
 	};
 
 	struct DirectionalConfigPatch {
+		::std::optional<double> duration;
+		::std::optional<::std::string> easing;
 		::std::optional<double> range;
 		::std::optional<double> step;
 	};
 
 	struct StaggerConfigPatch {
+		::std::optional<double> duration;
+		::std::optional<::std::string> easing;
 		::std::optional<double> range;
 		::std::optional<double> step;
 	};
 
 	struct AnimationConfigPatch {
 		::std::optional<Mode> mode;
-		::std::optional<double> duration;
-		::std::optional<::std::string> easing;
 		SmoothConfigPatch smooth;
 		RippleConfigPatch ripple;
 		DirectionalConfigPatch directional;
@@ -199,23 +256,31 @@ namespace music_lyric_player::render::config::scroll {
 	};
 
 	struct SmoothConfigChange {
+		bool duration = false;
+		bool easing = false;
 		bool delay = false;
 		bool any = false;
 	};
 
 	struct RippleConfigChange {
+		bool duration = false;
+		bool easing = false;
 		bool range = false;
 		bool step = false;
 		bool any = false;
 	};
 
 	struct DirectionalConfigChange {
+		bool duration = false;
+		bool easing = false;
 		bool range = false;
 		bool step = false;
 		bool any = false;
 	};
 
 	struct StaggerConfigChange {
+		bool duration = false;
+		bool easing = false;
 		bool range = false;
 		bool step = false;
 		bool any = false;
@@ -223,8 +288,6 @@ namespace music_lyric_player::render::config::scroll {
 
 	struct AnimationConfigChange {
 		bool mode = false;
-		bool duration = false;
-		bool easing = false;
 		SmoothConfigChange smooth;
 		RippleConfigChange ripple;
 		DirectionalConfigChange directional;
@@ -242,6 +305,12 @@ namespace music_lyric_player::render::config::scroll {
 	 * Called by the config Manager and the parent aggregate, not part of the public API.
 	 */
 	inline void apply(SmoothConfig& cfg, const SmoothConfigPatch& patch) {
+		if (patch.duration.has_value()) {
+			cfg.duration = *patch.duration;
+		}
+		if (patch.easing.has_value()) {
+			cfg.easing = *patch.easing;
+		}
 		if (patch.delay.has_value()) {
 			cfg.delay = *patch.delay;
 		}
@@ -251,6 +320,12 @@ namespace music_lyric_player::render::config::scroll {
 	 * Called by the config Manager and the parent aggregate, not part of the public API.
 	 */
 	inline void apply(RippleConfig& cfg, const RippleConfigPatch& patch) {
+		if (patch.duration.has_value()) {
+			cfg.duration = *patch.duration;
+		}
+		if (patch.easing.has_value()) {
+			cfg.easing = *patch.easing;
+		}
 		if (patch.range.has_value()) {
 			cfg.range = *patch.range;
 		}
@@ -263,6 +338,12 @@ namespace music_lyric_player::render::config::scroll {
 	 * Called by the config Manager and the parent aggregate, not part of the public API.
 	 */
 	inline void apply(DirectionalConfig& cfg, const DirectionalConfigPatch& patch) {
+		if (patch.duration.has_value()) {
+			cfg.duration = *patch.duration;
+		}
+		if (patch.easing.has_value()) {
+			cfg.easing = *patch.easing;
+		}
 		if (patch.range.has_value()) {
 			cfg.range = *patch.range;
 		}
@@ -275,6 +356,12 @@ namespace music_lyric_player::render::config::scroll {
 	 * Called by the config Manager and the parent aggregate, not part of the public API.
 	 */
 	inline void apply(StaggerConfig& cfg, const StaggerConfigPatch& patch) {
+		if (patch.duration.has_value()) {
+			cfg.duration = *patch.duration;
+		}
+		if (patch.easing.has_value()) {
+			cfg.easing = *patch.easing;
+		}
 		if (patch.range.has_value()) {
 			cfg.range = *patch.range;
 		}
@@ -289,12 +376,6 @@ namespace music_lyric_player::render::config::scroll {
 	inline void apply(AnimationConfig& cfg, const AnimationConfigPatch& patch) {
 		if (patch.mode.has_value()) {
 			cfg.mode = *patch.mode;
-		}
-		if (patch.duration.has_value()) {
-			cfg.duration = *patch.duration;
-		}
-		if (patch.easing.has_value()) {
-			cfg.easing = *patch.easing;
 		}
 		apply(cfg.smooth, patch.smooth);
 		apply(cfg.ripple, patch.ripple);
@@ -317,8 +398,10 @@ namespace music_lyric_player::render::config::scroll {
 	 */
 	inline SmoothConfigChange diff(const SmoothConfig& prev, const SmoothConfig& next) {
 		SmoothConfigChange change;
+		change.duration = prev.duration != next.duration;
+		change.easing = prev.easing != next.easing;
 		change.delay = prev.delay != next.delay;
-		change.any = change.delay;
+		change.any = change.duration || change.easing || change.delay;
 		return change;
 	}
 
@@ -327,9 +410,11 @@ namespace music_lyric_player::render::config::scroll {
 	 */
 	inline RippleConfigChange diff(const RippleConfig& prev, const RippleConfig& next) {
 		RippleConfigChange change;
+		change.duration = prev.duration != next.duration;
+		change.easing = prev.easing != next.easing;
 		change.range = prev.range != next.range;
 		change.step = prev.step != next.step;
-		change.any = change.range || change.step;
+		change.any = change.duration || change.easing || change.range || change.step;
 		return change;
 	}
 
@@ -338,9 +423,11 @@ namespace music_lyric_player::render::config::scroll {
 	 */
 	inline DirectionalConfigChange diff(const DirectionalConfig& prev, const DirectionalConfig& next) {
 		DirectionalConfigChange change;
+		change.duration = prev.duration != next.duration;
+		change.easing = prev.easing != next.easing;
 		change.range = prev.range != next.range;
 		change.step = prev.step != next.step;
-		change.any = change.range || change.step;
+		change.any = change.duration || change.easing || change.range || change.step;
 		return change;
 	}
 
@@ -349,9 +436,11 @@ namespace music_lyric_player::render::config::scroll {
 	 */
 	inline StaggerConfigChange diff(const StaggerConfig& prev, const StaggerConfig& next) {
 		StaggerConfigChange change;
+		change.duration = prev.duration != next.duration;
+		change.easing = prev.easing != next.easing;
 		change.range = prev.range != next.range;
 		change.step = prev.step != next.step;
-		change.any = change.range || change.step;
+		change.any = change.duration || change.easing || change.range || change.step;
 		return change;
 	}
 
@@ -361,13 +450,11 @@ namespace music_lyric_player::render::config::scroll {
 	inline AnimationConfigChange diff(const AnimationConfig& prev, const AnimationConfig& next) {
 		AnimationConfigChange change;
 		change.mode = prev.mode != next.mode;
-		change.duration = prev.duration != next.duration;
-		change.easing = prev.easing != next.easing;
 		change.smooth = diff(prev.smooth, next.smooth);
 		change.ripple = diff(prev.ripple, next.ripple);
 		change.directional = diff(prev.directional, next.directional);
 		change.stagger = diff(prev.stagger, next.stagger);
-		change.any = change.mode || change.duration || change.easing || change.smooth.any || change.ripple.any || change.directional.any || change.stagger.any;
+		change.any = change.mode || change.smooth.any || change.ripple.any || change.directional.any || change.stagger.any;
 		return change;
 	}
 

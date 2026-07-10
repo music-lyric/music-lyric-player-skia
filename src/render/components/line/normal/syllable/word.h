@@ -90,9 +90,9 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		void paintParagraph(SkCanvas* canvas, ::skia::textlayout::Paragraph& paragraph, float x, float y) const;
 
 		/**
-		 * Paints the active-state paragraph through a feathered progress mask.
+		 * Paints one rasterized paragraph through the final two-color reveal gradient.
 		 */
-		void paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather) const;
+		void paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor normalColor, SkColor activeColor) const;
 
 		std::string text;
 		double      start;

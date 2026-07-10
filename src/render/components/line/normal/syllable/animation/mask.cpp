@@ -101,21 +101,40 @@ namespace music_lyric_player::render::components::line::normal::syllable::animat
 		return index < this->frames.size() ? this->frames[index].feather : 0.0f;
 	}
 
-	void Mask::apply(SkCanvas* canvas, const SkRect& bounds, float progress, float feather) {
-		const float   edge = bounds.left() + bounds.width() * progress;
-		const SkPoint points[2]{
-			{edge - feather, bounds.top()},
-			{edge + feather, bounds.top()}
-                };
-		const SkColor4f colors[2]{SkColors::kWhite, SkColors::kTransparent};
+	void Mask::apply(SkCanvas* canvas, const SkRect& drawBounds, const SkRect& textBounds, float progress, float feather, SkColor normalColor, SkColor activeColor) {
+		progress = std::clamp(progress, 0.0f, 1.0f);
+		feather  = std::max(feather, 0.0f);
 
 		SkPaint paint;
-		paint.setBlendMode(SkBlendMode::kDstIn);
-		paint.setShader(SkShaders::LinearGradient(points, {
-									  {colors, SkTileMode::kClamp},
-									  {}
-                },
-			nullptr));
-		canvas->drawRect(bounds, paint);
+		paint.setBlendMode(SkBlendMode::kSrcIn);
+		if (feather <= 0.0f) {
+			paint.setColor(normalColor);
+			canvas->drawRect(drawBounds, paint);
+
+			canvas->save();
+			canvas->clipRect(SkRect::MakeLTRB(
+				drawBounds.left(),
+				drawBounds.top(),
+				textBounds.left() + textBounds.width() * progress,
+				drawBounds.bottom()));
+			paint.setColor(activeColor);
+			canvas->drawRect(drawBounds, paint);
+			canvas->restore();
+			return;
+		}
+
+		const float transitionStart = textBounds.left() - 2.0f * feather + progress * (textBounds.width() + 2.0f * feather);
+		const SkPoint points[2]{
+			{transitionStart, textBounds.top()},
+			{transitionStart + 2.0f * feather, textBounds.top()}
+		};
+		const SkColor4f colors[2]{SkColor4f::FromColor(activeColor), SkColor4f::FromColor(normalColor)};
+		const SkGradient::Interpolation interpolation{
+			SkGradient::Interpolation::InPremul::kNo,
+			SkGradient::Interpolation::ColorSpace::kSRGB,
+			SkGradient::Interpolation::HueMethod::kShorter
+		};
+		paint.setShader(SkShaders::LinearGradient(points, {{colors, SkTileMode::kClamp}, interpolation}, nullptr));
+		canvas->drawRect(drawBounds, paint);
 	}
 } // namespace music_lyric_player::render::components::line::normal::syllable::animation

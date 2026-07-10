@@ -25,6 +25,7 @@ namespace tl = ::skia::textlayout;
 
 namespace music_lyric_player::render::components::line::normal::syllable {
 	namespace {
+		constexpr float kGlyphOutset    = 2.0f;
 		constexpr float kUnboundedWidth = 1'000'000.0f;
 		constexpr float kWidthEpsilon   = 0.01f;
 
@@ -120,27 +121,16 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		paragraph.paint(canvas, x, y);
 	}
 
-	void Word::paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather) const {
-		if (!this->activeParagraph || progress <= 0.0f) {
-			return;
-		}
-		if (progress >= 1.0f || feather <= 0.0f) {
-			if (progress >= 1.0f) {
-				this->paintParagraph(canvas, *this->activeParagraph, x, y);
-				return;
-			}
-			canvas->save();
-			canvas->clipRect(SkRect::MakeXYWH(x, y, this->measuredWidth * progress, this->measuredHeight), true);
-			this->paintParagraph(canvas, *this->activeParagraph, x, y);
-			canvas->restore();
+	void Word::paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor normalColor, SkColor activeColor) const {
+		if (!this->normalParagraph) {
 			return;
 		}
 
-		const SkRect bounds = SkRect::MakeXYWH(x, y, this->measuredWidth, this->measuredHeight);
-		canvas->saveLayer(&bounds, nullptr);
-		this->paintParagraph(canvas, *this->activeParagraph, x, y);
-
-		animation::Mask::apply(canvas, bounds, progress, feather);
+		const SkRect textBounds = SkRect::MakeXYWH(x, y, this->measuredWidth, this->measuredHeight);
+		const SkRect drawBounds = textBounds.makeOutset(kGlyphOutset, kGlyphOutset);
+		canvas->saveLayer(&drawBounds, nullptr);
+		this->paintParagraph(canvas, *this->normalParagraph, x, y);
+		animation::Mask::apply(canvas, drawBounds, textBounds, progress, feather, normalColor, activeColor);
 		canvas->restore();
 	}
 
@@ -160,16 +150,23 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		const float  drawX           = lineX + this->x;
 		const float  drawY           = lineY + this->y + offset;
 
-		this->paintParagraph(canvas, *this->normalParagraph, drawX, drawY);
-		if (active) {
-			if (!maskEnabled) {
-				if (this->activeParagraph) {
-					this->paintParagraph(canvas, *this->activeParagraph, drawX, drawY);
-				}
-			} else {
-				this->paintReveal(canvas, drawX, drawY, maskProgress, maskFeather);
-			}
+		if (!active || (maskEnabled && maskProgress <= 0.0f)) {
+			this->paintParagraph(canvas, *this->normalParagraph, drawX, drawY);
+			return;
 		}
+		if (!maskEnabled || maskProgress >= 1.0f) {
+			if (this->activeParagraph) {
+				this->paintParagraph(canvas, *this->activeParagraph, drawX, drawY);
+			} else {
+				this->paintParagraph(canvas, *this->normalParagraph, drawX, drawY);
+			}
+			return;
+		}
+
+		const config::Root& cfg         = context.config;
+		const SkColor       normalColor = utils::color::resolve(cfg.line.style.normal.color, config::Default.line.style.normal.color);
+		const SkColor       activeColor = utils::color::resolve(cfg.line.style.active.color, config::Default.line.style.active.color);
+		this->paintReveal(canvas, drawX, drawY, maskProgress, maskFeather, normalColor, activeColor);
 	}
 
 	animation::Mask::Input Word::maskInput() const {

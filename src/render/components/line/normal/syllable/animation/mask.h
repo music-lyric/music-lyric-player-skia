@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <vector>
 
+#include "include/core/SkColor.h"
 #include "include/core/SkRect.h"
 
 class SkCanvas;
@@ -50,9 +51,9 @@ namespace music_lyric_player::render::components::line::normal::syllable::animat
 		float feather(std::size_t index) const;
 
 		/**
-		 * Multiplies the current layer by the sampled soft left-to-right reveal gradient.
+		 * Colors the current glyph layer with a complete left-to-right reveal gradient.
 		 */
-		static void apply(SkCanvas* canvas, const SkRect& bounds, float progress, float feather);
+		static void apply(SkCanvas* canvas, const SkRect& drawBounds, const SkRect& textBounds, float progress, float feather, SkColor normalColor, SkColor activeColor);
 
 	private:
 		struct Segment {

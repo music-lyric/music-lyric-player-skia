@@ -1,0 +1,69 @@
+{
+  "namespace": "music_lyric_player::render::config::line::interlude",
+  "file": "index.gen.h",
+  "items": [
+    {
+      "name": "StyleConfig",
+      "comment": "Visual style for one playback state of an interlude indicator.",
+      "fields": [
+        {
+          "name": "color",
+          "kind": "color",
+          "default": "\"#ffffff\"",
+          "example": ["#fff", "rgba(255, 255, 255, 0.8)"],
+          "comment": "Dot color for this playback state."
+        },
+        {
+          "name": "opacity",
+          "type": "double",
+          "default": "1.0",
+          "min": 0,
+          "max": 1,
+          "comment": "Dot opacity for this playback state."
+        }
+      ]
+    },
+    {
+      "name": "StateConfig",
+      "comment": "Inactive and active styles of an interlude indicator.",
+      "fields": [
+        {
+          "name": "normal",
+          "nested": "StyleConfig",
+          "defaults": {
+            "color": "\"#ffffff\"",
+            "opacity": "0.2"
+          },
+          "comment": "Style before and after the interlude is active."
+        },
+        {
+          "name": "active",
+          "nested": "StyleConfig",
+          "defaults": {
+            "color": "\"#ffffff\"",
+            "opacity": "0.8"
+          },
+          "comment": "Style progressively filled while the interlude is active."
+        }
+      ]
+    },
+    {
+      "name": "Root",
+      "comment": "Geometry and state styles of instrumental-gap indicators.",
+      "fields": [
+        {
+          "name": "size",
+          "kind": "length",
+          "default": "\"16px\"",
+          "example": [16, "16px"],
+          "comment": "Diameter of each indicator dot."
+        },
+        {
+          "name": "style",
+          "nested": "StateConfig",
+          "comment": "Inactive and active dot styles."
+        }
+      ]
+    }
+  ]
+}

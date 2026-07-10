@@ -14,11 +14,13 @@ namespace music_lyric_player::render::common {
 	/**
 	 * Non-owning bundle of shared resources handed to line components each frame for layout and paint.
 	 * Carries the resolved config plus the font and unicode backends so a component builds its own paragraph.
+	 * Carries playback time so content-timed animations remain stable across pause and seek.
 	 */
 	struct RenderContext {
 		const config::Root&                              config;
 		const sk_sp<::skia::textlayout::FontCollection>& fonts;
 		const sk_sp<SkUnicode>&                          unicode;
+		double                                           currentTime;
 	};
 } // namespace music_lyric_player::render::common
 

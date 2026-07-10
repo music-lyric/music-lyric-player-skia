@@ -14,7 +14,7 @@ namespace music_lyric_player::render::core {
 		for (int i = 0; i < info.lines_size(); ++i) {
 			const ::lyric::runtime::Line& line = info.lines(i);
 			if (::music_lyric_model::runtime::isLineInterlude(line)) {
-				this->lines.push_back(std::make_unique<components::line::interlude::Element>(i));
+				this->lines.push_back(std::make_unique<components::line::interlude::Element>(i, line));
 			} else {
 				this->lines.push_back(std::make_unique<components::line::normal::Element>(i, ::music_lyric_model::runtime::getLineText(line)));
 			}

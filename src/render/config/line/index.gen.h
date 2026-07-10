@@ -7,10 +7,11 @@
 #define MUSIC_LYRIC_PLAYER_RENDER_CONFIG_LINE_CONFIG_GEN_H_
 
 #include "render/config/common/index.gen.h"
+#include "render/config/line/interlude/index.gen.h"
 
 namespace music_lyric_player::render::config::line {
 	/**
-	 * Font and per-state colors of lyric lines.
+	 * Font, state colors, and instrumental-gap indicators of lyric lines.
 	 */
 	struct Root {
 		/**
@@ -25,18 +26,24 @@ namespace music_lyric_player::render::config::line {
 		 * Style of the active line (default color `#ffffff`).
 		 */
 		::music_lyric_player::render::config::common::StyleConfig active = ::music_lyric_player::render::config::common::StyleConfig{ .color = "#ffffff" };
+		/**
+		 * Instrumental-gap indicator geometry and animation styles.
+		 */
+		::music_lyric_player::render::config::line::interlude::Root interlude;
 	};
 
 	struct RootPatch {
 		::music_lyric_player::render::config::common::FontConfigPatch font;
 		::music_lyric_player::render::config::common::StyleConfigPatch normal;
 		::music_lyric_player::render::config::common::StyleConfigPatch active;
+		::music_lyric_player::render::config::line::interlude::RootPatch interlude;
 	};
 
 	struct RootChange {
 		::music_lyric_player::render::config::common::FontConfigChange font;
 		::music_lyric_player::render::config::common::StyleConfigChange normal;
 		::music_lyric_player::render::config::common::StyleConfigChange active;
+		::music_lyric_player::render::config::line::interlude::RootChange interlude;
 		bool any = false;
 	};
 
@@ -47,6 +54,7 @@ namespace music_lyric_player::render::config::line {
 		apply(cfg.font, patch.font);
 		apply(cfg.normal, patch.normal);
 		apply(cfg.active, patch.active);
+		apply(cfg.interlude, patch.interlude);
 	}
 
 	/**
@@ -57,7 +65,8 @@ namespace music_lyric_player::render::config::line {
 		change.font = diff(prev.font, next.font);
 		change.normal = diff(prev.normal, next.normal);
 		change.active = diff(prev.active, next.active);
-		change.any = change.font.any || change.normal.any || change.active.any;
+		change.interlude = diff(prev.interlude, next.interlude);
+		change.any = change.font.any || change.normal.any || change.active.any || change.interlude.any;
 		return change;
 	}
 

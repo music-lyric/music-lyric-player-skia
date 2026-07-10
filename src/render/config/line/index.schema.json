@@ -2,12 +2,13 @@
   "namespace": "music_lyric_player::render::config::line",
   "file": "index.gen.h",
   "imports": [
-    { "as": "common", "schema": "../common/index.schema.json" }
+    { "as": "common", "schema": "../common/index.schema.json" },
+    { "as": "interlude", "schema": "interlude/index.schema.json" }
   ],
   "items": [
     {
       "name": "Root",
-      "comment": "Font and per-state colors of lyric lines.",
+      "comment": "Font, state colors, and instrumental-gap indicators of lyric lines.",
       "fields": [
         {
           "name": "font",
@@ -29,6 +30,11 @@
             "color": "\"#ffffff\""
           },
           "comment": "Style of the active line (default color `#ffffff`)."
+        },
+        {
+          "name": "interlude",
+          "nested": "interlude.Root",
+          "comment": "Instrumental-gap indicator geometry and animation styles."
         }
       ]
     }

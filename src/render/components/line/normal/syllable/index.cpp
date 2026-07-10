@@ -13,6 +13,21 @@
 
 namespace music_lyric_player::render::components::line::normal::syllable {
 	namespace {
+		/**
+		 * Returns the line's absolute start time, or zero when timing is absent.
+		 */
+		double lineStart(const ::lyric::runtime::Line& info) {
+			const ::lyric::common::Time* time = ::music_lyric_model::runtime::getLineTime(info);
+			return time ? static_cast<double>(time->start()) : 0.0;
+		}
+
+		/**
+		 * Returns the line's non-negative duration.
+		 */
+		double lineDuration(const ::lyric::runtime::Line& info) {
+			return std::max(static_cast<double>(::music_lyric_model::runtime::getLineDuration(info)), 0.0);
+		}
+
 		struct RowEntry {
 			Word* word = nullptr;
 			float x    = 0.0f;
@@ -26,18 +41,11 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		};
 	} // namespace
 
-	Element::Element(const ::lyric::runtime::Line& info) {
+	Element::Element(const ::lyric::runtime::Line& info)
+	    : mask(lineStart(info), lineDuration(info)) {
 		const auto& source = ::music_lyric_model::runtime::getLineWords(info);
-		std::size_t count  = 0;
-		for (const ::lyric::runtime::Word& item : source) {
-			if (::music_lyric_model::runtime::isWordNormal(item)) {
-				++count;
-			}
-		}
-
-		this->words.reserve(count);
-		bool        hasSpace = false;
-		std::size_t index    = 0;
+		this->words.reserve(static_cast<std::size_t>(source.size()));
+		bool hasSpace = false;
 		for (const ::lyric::runtime::Word& item : source) {
 			if (::music_lyric_model::runtime::isWordSpace(item)) {
 				hasSpace = true;
@@ -47,9 +55,8 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 			if (normal == nullptr) {
 				continue;
 			}
-			this->words.push_back(std::make_unique<Word>(*normal, index, count, hasSpace));
+			this->words.push_back(std::make_unique<Word>(*normal, hasSpace));
 			hasSpace = false;
-			++index;
 		}
 	}
 
@@ -62,9 +69,13 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 			return;
 		}
 
+		std::vector<animation::Mask::Input> maskInputs;
+		maskInputs.reserve(this->words.size());
 		for (const std::unique_ptr<Word>& item : this->words) {
 			item->layout(context);
+			maskInputs.push_back(item->maskInput());
 		}
+		this->mask.update(maskInputs);
 
 		const float      fontSize   = static_cast<float>(std::max(resolveLength(context.config.line.font.size, config::Default.line.font.size), 0.0));
 		const float      spaceWidth = fontSize * 0.3f;
@@ -111,8 +122,13 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 	}
 
 	void Element::paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const {
-		for (const std::unique_ptr<Word>& item : this->words) {
-			item->paint(canvas, x, y, now, active, context);
+		const auto& maskConfig = context.config.line.normal.main.syllable.word.animation.mask;
+		if (active && maskConfig.enabled) {
+			this->mask.sample(context.currentTime, maskConfig.feather.normal, maskConfig.feather.first, maskConfig.feather.last);
+		}
+
+		for (std::size_t i = 0; i < this->words.size(); ++i) {
+			this->words[i]->paint(canvas, x, y, now, active, maskConfig.enabled, this->mask.progress(i), this->mask.feather(i), context);
 		}
 	}
 

@@ -31,7 +31,7 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		/**
 		 * Copies the word text and timing needed for frame-independent animation sampling.
 		 */
-		Word(const ::lyric::runtime::WordNormal& info, std::size_t index, std::size_t count, bool hasSpaceBefore);
+		Word(const ::lyric::runtime::WordNormal& info, bool hasSpaceBefore);
 
 		/**
 		 * Destroys the cached paragraph where its concrete type is complete.
@@ -51,7 +51,12 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		/**
 		 * Paints the inactive word, its timed active-color reveal, and its float transform.
 		 */
-		void paint(SkCanvas* canvas, float lineX, float lineY, double now, bool active, const common::RenderContext& context) const;
+		void paint(SkCanvas* canvas, float lineX, float lineY, double now, bool active, bool maskEnabled, float maskProgress, float maskFeather, const common::RenderContext& context) const;
+
+		/**
+		 * Returns the timing and measured geometry consumed by the line-wide mask host.
+		 */
+		animation::Mask::Input maskInput() const;
 
 		/**
 		 * Returns whether an explicit lyric space precedes this word.
@@ -90,10 +95,11 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		void paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather) const;
 
 		std::string text;
+		double      start;
+		double      duration;
 		bool        spaceBefore;
 
 		animation::Float floating;
-		animation::Mask  mask;
 
 		std::unique_ptr<::skia::textlayout::Paragraph> normalParagraph;
 		std::unique_ptr<::skia::textlayout::Paragraph> activeParagraph;

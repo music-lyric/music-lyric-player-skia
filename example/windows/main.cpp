@@ -23,8 +23,9 @@ int main() {
 	// DirectWrite cannot resolve SkParagraph's default "sans-serif" family, so pick a concrete
 	// system family (covers CJK and latin); also centre-align the lyrics for the demo.
 	renderer.config.modify([](music_lyric_player::render::config::Root& cfg) {
-		cfg.line.font.family                  = "MiSans";
 		cfg.layout.align                      = music_lyric_player::render::config::layout::Align::Left;
+		cfg.line.font.size                    = "42px";	
+		cfg.line.font.family                  = "MiSans";
 		cfg.line.style.normal.color           = "rgb(255, 255, 61)";
 		cfg.line.style.active.color           = "#ffffff";
 		cfg.scroll.animation.mode             = music_lyric_player::render::config::scroll::Mode::Stagger;

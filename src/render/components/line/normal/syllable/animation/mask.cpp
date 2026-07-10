@@ -12,35 +12,96 @@
 #include "include/effects/SkGradient.h"
 
 namespace music_lyric_player::render::components::line::normal::syllable::animation {
-	Mask::Mask(double start, double duration, std::size_t index, std::size_t count)
-	    : start(start),
-	      duration(std::max(duration, 0.0)),
-	      wordIndex(index),
-	      wordCount(count) {}
+	Mask::Mask(double lineStart, double lineDuration)
+	    : lineStart(lineStart),
+	      lineDuration(std::max(lineDuration, 0.0)) {}
 
-	float Mask::progress(double currentTime) const {
-		if (this->duration <= 0.0) {
-			return currentTime >= this->start ? 1.0f : 0.0f;
+	void Mask::update(const std::vector<Input>& inputs) {
+		this->segments.clear();
+		this->segments.reserve(inputs.size());
+		this->phases.assign(inputs.size(), 0.0f);
+		this->frames.assign(inputs.size(), Frame{});
+		if (this->lineDuration <= 0.0) {
+			for (Frame& frame : this->frames) {
+				frame.progress = 1.0f;
+			}
+			return;
 		}
-		return static_cast<float>(std::clamp((currentTime - this->start) / this->duration, 0.0, 1.0));
+
+		double timeline = 0.0;
+		double offset   = this->lineStart;
+		float  prefix   = 0.0f;
+		for (const Input& source : inputs) {
+			Input input    = source;
+			input.start    = std::isfinite(input.start) ? input.start : this->lineStart;
+			input.duration = std::isfinite(input.duration) ? std::max(input.duration, 0.0) : 0.0;
+			input.width    = std::isfinite(input.width) ? std::max(input.width, 0.0f) : 0.0f;
+			input.height   = std::isfinite(input.height) ? std::max(input.height, 0.0f) : 0.0f;
+
+			const double gap = input.start - offset;
+			if (gap > 0.0) {
+				timeline += gap;
+			}
+			const double moveStart = std::min(timeline, this->lineDuration);
+			timeline += input.duration;
+			const double moveEnd = std::min(timeline, this->lineDuration);
+			this->segments.push_back(Segment{input, moveStart, std::max(moveEnd - moveStart, 0.0), prefix});
+			offset = input.start + input.duration;
+			prefix += input.width;
+		}
 	}
 
-	float Mask::feather(float height, double normal, double first, double last) const {
-		normal = std::isfinite(normal) ? std::clamp(normal, 0.0, 2.0) : 0.5;
-		first  = std::isfinite(first) ? std::clamp(first, 0.0, 5.0) : 1.5;
-		last   = std::isfinite(last) ? std::clamp(last, 0.0, 5.0) : 0.5;
+	void Mask::sample(double currentTime, double normal, double first, double last) const {
+		if (this->segments.empty()) {
+			return;
+		}
 
-		double multiplier = 1.0;
-		if (this->wordIndex == 0) {
-			multiplier = first;
+		normal                    = std::isfinite(normal) ? std::clamp(normal, 0.0, 2.0) : 0.5;
+		first                     = std::isfinite(first) ? std::clamp(first, 0.0, 5.0) : 1.5;
+		last                      = std::isfinite(last) ? std::clamp(last, 0.0, 5.0) : 0.5;
+		const double relativeTime = currentTime - this->lineStart;
+
+		float advance = 0.0f;
+		for (std::size_t i = 0; i < this->segments.size(); ++i) {
+			const Segment& segment  = this->segments[i];
+			float          progress = 0.0f;
+			if (segment.moveDuration <= 0.0) {
+				progress = relativeTime >= segment.moveStart ? 1.0f : 0.0f;
+			} else {
+				progress = static_cast<float>(std::clamp((relativeTime - segment.moveStart) / segment.moveDuration, 0.0, 1.0));
+			}
+			this->phases[i] = progress;
+			advance += segment.input.width * progress;
 		}
-		if (this->wordIndex + 1 == this->wordCount) {
-			multiplier = std::max(multiplier, last);
+
+		const float firstProgress = this->phases.front();
+		const float lastProgress  = this->phases.back();
+		for (std::size_t i = 0; i < this->segments.size(); ++i) {
+			const Segment& segment = this->segments[i];
+			Frame&         frame   = this->frames[i];
+			if (segment.input.width <= 0.0f) {
+				frame = Frame{};
+				continue;
+			}
+
+			const float feather     = segment.input.height * static_cast<float>(normal);
+			const float positionMin = -(segment.input.width + feather);
+			const float cursor      = -segment.prefix - segment.input.width - 2.0f * feather + advance + feather * static_cast<float>(first) * firstProgress + feather * static_cast<float>(last) * lastProgress;
+			const float position    = std::clamp(cursor, positionMin, 0.0f);
+			frame.progress          = (position - positionMin) / -positionMin;
+			frame.feather           = feather;
 		}
-		return static_cast<float>(std::max(height, 0.0f) * normal * multiplier);
 	}
 
-	void Mask::apply(SkCanvas* canvas, const SkRect& bounds, float progress, float feather) const {
+	float Mask::progress(std::size_t index) const {
+		return index < this->frames.size() ? this->frames[index].progress : 0.0f;
+	}
+
+	float Mask::feather(std::size_t index) const {
+		return index < this->frames.size() ? this->frames[index].feather : 0.0f;
+	}
+
+	void Mask::apply(SkCanvas* canvas, const SkRect& bounds, float progress, float feather) {
 		const float   edge = bounds.left() + bounds.width() * progress;
 		const SkPoint points[2]{
 			{edge - feather, bounds.top()},

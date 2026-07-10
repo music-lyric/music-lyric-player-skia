@@ -4,6 +4,8 @@
 #include <memory>
 #include <vector>
 
+#include "render/components/line/normal/syllable/animation/mask.h"
+
 class SkCanvas;
 
 namespace lyric::runtime {
@@ -49,6 +51,7 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 
 	private:
 		std::vector<std::unique_ptr<Word>> words;
+		mutable animation::Mask            mask;
 		float                              width          = 0.0f;
 		float                              measuredHeight = 0.0f;
 	};

@@ -2,6 +2,7 @@
 #define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_SYLLABLE_ANIMATION_MASK_H_
 
 #include <cstddef>
+#include <vector>
 
 #include "include/core/SkRect.h"
 
@@ -9,35 +10,68 @@ class SkCanvas;
 
 namespace music_lyric_player::render::components::line::normal::syllable::animation {
 	/**
-	 * Word-local karaoke reveal timing and soft-edge sizing.
+	 * Line-wide karaoke mask timeline that converts word timing and geometry into per-word reveal frames.
 	 */
 	class Mask {
 	public:
 		/**
-		 * Caches the word timing and its position within the line.
+		 * Timing and measured geometry of one normal word.
 		 */
-		Mask(double start, double duration, std::size_t index, std::size_t count);
+		struct Input {
+			double start    = 0.0;
+			double duration = 0.0;
+			float  width    = 0.0f;
+			float  height   = 0.0f;
+		};
 
 		/**
-		 * Returns normalized reveal progress at the raw playback time.
+		 * Creates an empty mask timeline relative to the line's absolute start.
 		 */
-		float progress(double currentTime) const;
+		Mask(double lineStart, double lineDuration);
 
 		/**
-		 * Returns a clamped feather width derived from word height and config values.
+		 * Rebuilds timing segments and prefix widths after word layout changes.
 		 */
-		float feather(float height, double normal, double first, double last) const;
+		void update(const std::vector<Input>& inputs);
 
 		/**
-		 * Multiplies the current layer by the soft left-to-right reveal gradient.
+		 * Samples all per-word reveal frames at the raw playback time.
 		 */
-		void apply(SkCanvas* canvas, const SkRect& bounds, float progress, float feather) const;
+		void sample(double currentTime, double normal, double first, double last) const;
+
+		/**
+		 * Returns one word's sampled normalized reveal progress.
+		 */
+		float progress(std::size_t index) const;
+
+		/**
+		 * Returns one word's sampled feather width.
+		 */
+		float feather(std::size_t index) const;
+
+		/**
+		 * Multiplies the current layer by the sampled soft left-to-right reveal gradient.
+		 */
+		static void apply(SkCanvas* canvas, const SkRect& bounds, float progress, float feather);
 
 	private:
-		double      start;
-		double      duration;
-		std::size_t wordIndex;
-		std::size_t wordCount;
+		struct Segment {
+			Input  input;
+			double moveStart    = 0.0;
+			double moveDuration = 0.0;
+			float  prefix       = 0.0f;
+		};
+
+		struct Frame {
+			float progress = 0.0f;
+			float feather  = 0.0f;
+		};
+
+		double                     lineStart;
+		double                     lineDuration;
+		std::vector<Segment>       segments;
+		mutable std::vector<float> phases;
+		mutable std::vector<Frame> frames;
 	};
 } // namespace music_lyric_player::render::components::line::normal::syllable::animation
 

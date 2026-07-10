@@ -44,11 +44,12 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		}
 	} // namespace
 
-	Word::Word(const ::lyric::runtime::WordNormal& info, std::size_t index, std::size_t count, bool hasSpaceBefore)
+	Word::Word(const ::lyric::runtime::WordNormal& info, bool hasSpaceBefore)
 	    : text(info.content()),
+	      start(wordStart(info)),
+	      duration(wordDuration(info)),
 	      spaceBefore(hasSpaceBefore),
-	      floating(wordStart(info), wordDuration(info)),
-	      mask(wordStart(info), wordDuration(info), index, count) {}
+	      floating(this->start, this->duration) {}
 
 	Word::~Word() = default;
 
@@ -139,11 +140,11 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		canvas->saveLayer(&bounds, nullptr);
 		this->paintParagraph(canvas, *this->activeParagraph, x, y);
 
-		this->mask.apply(canvas, bounds, progress, feather);
+		animation::Mask::apply(canvas, bounds, progress, feather);
 		canvas->restore();
 	}
 
-	void Word::paint(SkCanvas* canvas, float lineX, float lineY, double now, bool active, const common::RenderContext& context) const {
+	void Word::paint(SkCanvas* canvas, float lineX, float lineY, double now, bool active, bool maskEnabled, float maskProgress, float maskFeather, const common::RenderContext& context) const {
 		if (!this->normalParagraph) {
 			return;
 		}
@@ -161,16 +162,18 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 
 		this->paintParagraph(canvas, *this->normalParagraph, drawX, drawY);
 		if (active) {
-			if (!animationConfig.mask.enabled) {
+			if (!maskEnabled) {
 				if (this->activeParagraph) {
 					this->paintParagraph(canvas, *this->activeParagraph, drawX, drawY);
 				}
 			} else {
-				const auto& featherConfig = animationConfig.mask.feather;
-				const float feather       = this->mask.feather(this->measuredHeight, featherConfig.normal, featherConfig.first, featherConfig.last);
-				this->paintReveal(canvas, drawX, drawY, this->mask.progress(context.currentTime), feather);
+				this->paintReveal(canvas, drawX, drawY, maskProgress, maskFeather);
 			}
 		}
+	}
+
+	animation::Mask::Input Word::maskInput() const {
+		return animation::Mask::Input{this->start, this->duration, this->measuredWidth, this->measuredHeight};
 	}
 
 	bool Word::hasSpaceBefore() const {

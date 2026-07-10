@@ -8,10 +8,25 @@
 
 #include "render/config/common/index.gen.h"
 #include "render/config/line/interlude/index.gen.h"
+#include "render/config/line/normal/index.gen.h"
 
 namespace music_lyric_player::render::config::line {
 	/**
-	 * Font, state colors, and instrumental-gap indicators of lyric lines.
+	 * Inactive and active styles shared by normal lyric lines.
+	 */
+	struct StateConfig {
+		/**
+		 * Style of inactive lines.
+		 */
+		::music_lyric_player::render::config::common::StyleConfig normal = ::music_lyric_player::render::config::common::StyleConfig{ .color = "rgba(255, 255, 255, 0.4)" };
+		/**
+		 * Style of active lines.
+		 */
+		::music_lyric_player::render::config::common::StyleConfig active = ::music_lyric_player::render::config::common::StyleConfig{ .color = "#ffffff" };
+	};
+
+	/**
+	 * Font, normal-line rendering, and instrumental-gap indicators.
 	 */
 	struct Root {
 		/**
@@ -19,30 +34,41 @@ namespace music_lyric_player::render::config::line {
 		 */
 		::music_lyric_player::render::config::common::FontConfig font;
 		/**
-		 * Style of inactive lines (default color `rgba(255, 255, 255, 0.4)`).
+		 * Inactive and active styles shared by normal lyric lines.
 		 */
-		::music_lyric_player::render::config::common::StyleConfig normal = ::music_lyric_player::render::config::common::StyleConfig{ .color = "rgba(255, 255, 255, 0.4)" };
+		StateConfig style;
 		/**
-		 * Style of the active line (default color `#ffffff`).
+		 * Rendering settings of vocal lyric lines.
 		 */
-		::music_lyric_player::render::config::common::StyleConfig active = ::music_lyric_player::render::config::common::StyleConfig{ .color = "#ffffff" };
+		::music_lyric_player::render::config::line::normal::Root normal;
 		/**
 		 * Instrumental-gap indicator geometry and animation styles.
 		 */
 		::music_lyric_player::render::config::line::interlude::Root interlude;
 	};
 
-	struct RootPatch {
-		::music_lyric_player::render::config::common::FontConfigPatch font;
+	struct StateConfigPatch {
 		::music_lyric_player::render::config::common::StyleConfigPatch normal;
 		::music_lyric_player::render::config::common::StyleConfigPatch active;
+	};
+
+	struct RootPatch {
+		::music_lyric_player::render::config::common::FontConfigPatch font;
+		StateConfigPatch style;
+		::music_lyric_player::render::config::line::normal::RootPatch normal;
 		::music_lyric_player::render::config::line::interlude::RootPatch interlude;
+	};
+
+	struct StateConfigChange {
+		::music_lyric_player::render::config::common::StyleConfigChange normal;
+		::music_lyric_player::render::config::common::StyleConfigChange active;
+		bool any = false;
 	};
 
 	struct RootChange {
 		::music_lyric_player::render::config::common::FontConfigChange font;
-		::music_lyric_player::render::config::common::StyleConfigChange normal;
-		::music_lyric_player::render::config::common::StyleConfigChange active;
+		StateConfigChange style;
+		::music_lyric_player::render::config::line::normal::RootChange normal;
 		::music_lyric_player::render::config::line::interlude::RootChange interlude;
 		bool any = false;
 	};
@@ -50,11 +76,30 @@ namespace music_lyric_player::render::config::line {
 	/**
 	 * Called by the config Manager and the parent aggregate, not part of the public API.
 	 */
-	inline void apply(Root& cfg, const RootPatch& patch) {
-		apply(cfg.font, patch.font);
+	inline void apply(StateConfig& cfg, const StateConfigPatch& patch) {
 		apply(cfg.normal, patch.normal);
 		apply(cfg.active, patch.active);
+	}
+
+	/**
+	 * Called by the config Manager and the parent aggregate, not part of the public API.
+	 */
+	inline void apply(Root& cfg, const RootPatch& patch) {
+		apply(cfg.font, patch.font);
+		apply(cfg.style, patch.style);
+		apply(cfg.normal, patch.normal);
 		apply(cfg.interlude, patch.interlude);
+	}
+
+	/**
+	 * Called by the config Manager and the parent aggregate, not part of the public API.
+	 */
+	inline StateConfigChange diff(const StateConfig& prev, const StateConfig& next) {
+		StateConfigChange change;
+		change.normal = diff(prev.normal, next.normal);
+		change.active = diff(prev.active, next.active);
+		change.any = change.normal.any || change.active.any;
+		return change;
 	}
 
 	/**
@@ -63,10 +108,10 @@ namespace music_lyric_player::render::config::line {
 	inline RootChange diff(const Root& prev, const Root& next) {
 		RootChange change;
 		change.font = diff(prev.font, next.font);
+		change.style = diff(prev.style, next.style);
 		change.normal = diff(prev.normal, next.normal);
-		change.active = diff(prev.active, next.active);
 		change.interlude = diff(prev.interlude, next.interlude);
-		change.any = change.font.any || change.normal.any || change.active.any || change.interlude.any;
+		change.any = change.font.any || change.style.any || change.normal.any || change.interlude.any;
 		return change;
 	}
 

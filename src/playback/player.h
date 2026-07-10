@@ -5,10 +5,10 @@
 #include <optional>
 #include <vector>
 
-#include "runtime/info.pb.h"
 #include "playback/config/index.h"
 #include "playback/merger.h"
 #include "playback/offset.h"
+#include "runtime/info.pb.h"
 #include "utils/clock/clock.h"
 #include "utils/event/signal.h"
 
@@ -35,9 +35,9 @@ namespace music_lyric_player::playback {
 		void updateLyric(const ::lyric::runtime::Info& info);
 
 		/**
-		 * Starts or resumes playback, optionally seeking to `seekMs` first.
+		 * Starts or resumes playback, optionally seeking to `seek` first.
 		 */
-		void play(std::optional<double> seekMs = std::nullopt);
+		void play(std::optional<double> seek = std::nullopt);
 
 		/**
 		 * Pauses playback, emitting `onPause` only on a real playing-to-paused transition.
@@ -106,10 +106,10 @@ namespace music_lyric_player::playback {
 
 		config::Manager config;
 
-		Signal<double>                                    onPlay;
-		Signal<double>                                    onPause;
-		Signal<const ::lyric::runtime::Info&>             onLyricUpdate;
-		Signal<const std::vector<int>&, int, bool>         onLinesUpdate;
+		Signal<double>                             onPlay;
+		Signal<double>                             onPause;
+		Signal<const ::lyric::runtime::Info&>      onLyricUpdate;
+		Signal<const std::vector<int>&, int, bool> onLinesUpdate;
 
 	private:
 		/**
@@ -151,16 +151,16 @@ namespace music_lyric_player::playback {
 		 */
 		void onConfigUpdate(const config::RootChange& changes);
 
-		const Clock&          clockRef;
-		bool                  playing   = false;
-		int                   scanIndex = 0;
-		std::vector<int>      activeIndex;
-		double                startMs = 0.0;
-		double                seekMs  = 0.0;
+		const Clock&           clockRef;
+		bool                   playing   = false;
+		int                    scanIndex = 0;
+		std::vector<int>       activeIndex;
+		double                 start = 0.0;
+		double                 seek  = 0.0;
 		::lyric::runtime::Info info;
-		Merger                merger;
-		Offset                offset;
-		std::size_t           configListenerId = 0;
+		Merger                 merger;
+		Offset                 offset;
+		std::size_t            configListenerId = 0;
 	};
 } // namespace music_lyric_player::playback
 

@@ -78,7 +78,7 @@ namespace music_lyric_player::render::components::line::base {
 				this->active     = active;
 				this->colorReady = true;
 			} else if (active != this->active) {
-				this->colorTween.setDuration(kStateColorDurationMs);
+				this->colorTween.setDuration(kStateColorDuration);
 				this->colorTween.retarget(now, target);
 				this->active = active;
 			} else {
@@ -93,7 +93,7 @@ namespace music_lyric_player::render::components::line::base {
 
 	private:
 		// Line colour transition; a dedicated config (duration / easing) is not ported yet (M2.3+).
-		static constexpr double kStateColorDurationMs = 300.0;
+		static constexpr double kStateColorDuration = 300.0;
 
 		mutable animation::Tween<SkColor> colorTween;
 		mutable bool                      active     = false; // last state the tint was resolved for

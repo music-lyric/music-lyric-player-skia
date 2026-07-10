@@ -3,25 +3,21 @@
   "file": "index.gen.h",
   "imports": [
     { "as": "common", "schema": "../common/index.schema.json" },
-    { "as": "interlude", "schema": "interlude/index.schema.json" }
+    { "as": "interlude", "schema": "interlude/index.schema.json" },
+    { "as": "normal", "schema": "normal/index.schema.json" }
   ],
   "items": [
     {
-      "name": "Root",
-      "comment": "Font, state colors, and instrumental-gap indicators of lyric lines.",
+      "name": "StateConfig",
+      "comment": "Inactive and active styles shared by normal lyric lines.",
       "fields": [
-        {
-          "name": "font",
-          "nested": "common.FontConfig",
-          "comment": "Font shared by every line."
-        },
         {
           "name": "normal",
           "nested": "common.StyleConfig",
           "defaults": {
             "color": "\"rgba(255, 255, 255, 0.4)\""
           },
-          "comment": "Style of inactive lines (default color `rgba(255, 255, 255, 0.4)`)."
+          "comment": "Style of inactive lines."
         },
         {
           "name": "active",
@@ -29,7 +25,28 @@
           "defaults": {
             "color": "\"#ffffff\""
           },
-          "comment": "Style of the active line (default color `#ffffff`)."
+          "comment": "Style of active lines."
+        }
+      ]
+    },
+    {
+      "name": "Root",
+      "comment": "Font, normal-line rendering, and instrumental-gap indicators.",
+      "fields": [
+        {
+          "name": "font",
+          "nested": "common.FontConfig",
+          "comment": "Font shared by every line."
+        },
+        {
+          "name": "style",
+          "nested": "StateConfig",
+          "comment": "Inactive and active styles shared by normal lyric lines."
+        },
+        {
+          "name": "normal",
+          "nested": "normal.Root",
+          "comment": "Rendering settings of vocal lyric lines."
         },
         {
           "name": "interlude",

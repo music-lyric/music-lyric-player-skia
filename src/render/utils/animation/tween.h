@@ -8,7 +8,7 @@
 
 namespace music_lyric_player::render::animation {
 	/**
-	 * A single value that eases from `from` to `to` over `durationMs`, beginning at `startMs`.
+	 * A single value that eases from `from` to `to` over `duration`, beginning at `start`.
 	 * Holds no clock: the caller samples it each frame with the current time.
 	 * It is the imperative stand-in for one CSS `transition`, which the browser interpolated for free but immediate-mode Skia must sample.
 	 */
@@ -32,18 +32,18 @@ namespace music_lyric_player::render::animation {
 		/**
 		 * Sets the animation length in milliseconds; a value <= 0 disables easing (samples snap to `to`).
 		 */
-		void setDuration(double durationMs) {
-			this->durationMs = durationMs;
+		void setDuration(double duration) {
+			this->duration = duration;
 		}
 
 		/**
-		 * Starts a fresh animation from the current sampled value towards `target`, beginning at `now` plus `delayMs`.
-		 * A positive `delayMs` holds the current value until the delay elapses, mirroring a CSS `transition-delay`.
+		 * Starts a fresh animation from the current sampled value towards `target`, beginning at `now` plus `delay`.
+		 * A positive `delay` holds the current value until the delay elapses, mirroring a CSS `transition-delay`.
 		 */
-		void retarget(double now, const T& target, double delayMs = 0.0) {
-			this->from    = sample(now);
-			this->to      = target;
-			this->startMs = now + (delayMs > 0.0 ? delayMs : 0.0);
+		void retarget(double now, const T& target, double delay = 0.0) {
+			this->from  = sample(now);
+			this->to    = target;
+			this->start = now + (delay > 0.0 ? delay : 0.0);
 		}
 
 		/**
@@ -62,24 +62,24 @@ namespace music_lyric_player::render::animation {
 		}
 
 		/**
-		 * Whether the animation has run past its duration at `now`, or is disabled (`durationMs` <= 0).
+		 * Whether the animation has run past its duration at `now`, or is disabled (`duration` <= 0).
 		 */
 		bool finished(double now) const {
-			return this->durationMs <= 0.0 || now - this->startMs >= this->durationMs;
+			return this->duration <= 0.0 || now - this->start >= this->duration;
 		}
 
 		/**
 		 * Samples the eased value at `now`; returns `to` once finished or when easing is unset / disabled.
 		 */
 		T sample(double now) const {
-			if (this->durationMs <= 0.0 || !this->easing) {
+			if (this->duration <= 0.0 || !this->easing) {
 				return this->to;
 			}
-			const double elapsed = now - this->startMs;
-			if (elapsed >= this->durationMs) {
+			const double elapsed = now - this->start;
+			if (elapsed >= this->duration) {
 				return this->to;
 			}
-			const float t = this->easing(static_cast<float>(elapsed / this->durationMs));
+			const float t = this->easing(static_cast<float>(elapsed / this->duration));
 			return lerp(this->from, this->to, t);
 		}
 
@@ -93,8 +93,8 @@ namespace music_lyric_player::render::animation {
 	private:
 		T      from;
 		T      to;
-		double startMs    = 0.0;
-		double durationMs = 0.0;
+		double start    = 0.0;
+		double duration = 0.0;
 		Easing easing;
 	};
 } // namespace music_lyric_player::render::animation

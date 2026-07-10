@@ -1,0 +1,28 @@
+{
+  "namespace": "music_lyric_player::render::config::line::normal::main",
+  "file": "index.gen.h",
+  "imports": [
+    { "as": "syllable", "schema": "syllable/index.schema.json" }
+  ],
+  "items": [
+    {
+      "name": "Root",
+      "comment": "Rendering mode and settings of a normal line's main content.",
+      "fields": [
+        {
+          "name": "use",
+          "enum": "Use",
+          "values": ["Plain", "Syllable"],
+          "default": "Syllable",
+          "enumComment": "Main normal-line rendering mode.",
+          "comment": "Preferred renderer; lyrics without word timing still fall back to plain text."
+        },
+        {
+          "name": "syllable",
+          "nested": "syllable.Root",
+          "comment": "Word-timed karaoke rendering settings."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "namespace": "music_lyric_player::render::config::line::normal::main::syllable::word::animation",
+  "file": "index.gen.h",
+  "items": [
+    {
+      "name": "FloatConfig",
+      "comment": "Vertical motion applied to each timed word.",
+      "fields": [
+        {
+          "name": "enabled",
+          "type": "bool",
+          "default": "true",
+          "comment": "Whether timed words float while they are sung."
+        },
+        {
+          "name": "from",
+          "type": "double",
+          "default": "0.0",
+          "comment": "Starting vertical offset in logical pixels."
+        },
+        {
+          "name": "to",
+          "type": "double",
+          "default": "-2.0",
+          "comment": "Ending vertical offset in logical pixels."
+        }
+      ]
+    },
+    {
+      "name": "MaskFeatherConfig",
+      "comment": "Soft-edge sizing of the karaoke reveal mask.",
+      "fields": [
+        {
+          "name": "normal",
+          "type": "double",
+          "default": "0.5",
+          "min": 0,
+          "max": 2,
+          "comment": "Base feather width as a multiple of word height."
+        },
+        {
+          "name": "first",
+          "type": "double",
+          "default": "1.5",
+          "min": 0,
+          "max": 5,
+          "comment": "Feather multiplier for the first word."
+        },
+        {
+          "name": "last",
+          "type": "double",
+          "default": "0.5",
+          "min": 0,
+          "max": 5,
+          "comment": "Feather multiplier for the last word."
+        }
+      ]
+    },
+    {
+      "name": "MaskConfig",
+      "comment": "Left-to-right karaoke reveal mask.",
+      "fields": [
+        {
+          "name": "enabled",
+          "type": "bool",
+          "default": "true",
+          "comment": "Whether active words reveal progressively instead of switching immediately."
+        },
+        {
+          "name": "feather",
+          "nested": "MaskFeatherConfig",
+          "comment": "Soft-edge sizing of the reveal boundary."
+        }
+      ]
+    },
+    {
+      "name": "Root",
+      "comment": "Animation settings of timed words.",
+      "fields": [
+        {
+          "name": "floating",
+          "nested": "FloatConfig",
+          "comment": "Vertical word motion."
+        },
+        {
+          "name": "mask",
+          "nested": "MaskConfig",
+          "comment": "Karaoke color reveal mask."
+        }
+      ]
+    }
+  ]
+}

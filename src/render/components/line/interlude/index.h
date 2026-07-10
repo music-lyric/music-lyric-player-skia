@@ -49,15 +49,15 @@ namespace music_lyric_player::render::components::line::interlude {
 		 */
 		float dotOpacity(std::size_t index, double now, double currentTime, bool active, bool deactivating, float normalOpacity, float activeOpacity) const;
 
-		static constexpr std::size_t kDotCount               = 3;
-		static constexpr double      kOpacityFadeMs          = 300.0;
-		static constexpr double      kScaleDurationMs        = 600.0;
-		static constexpr double      kScaleActivationDelayMs = 100.0;
-		static constexpr float       kInactiveScale          = 0.8f;
-		static constexpr float       kActiveScale            = 1.0f;
+		static constexpr std::size_t kDotCount             = 3;
+		static constexpr double      kOpacityFadeDuration  = 300.0;
+		static constexpr double      kScaleDuration        = 600.0;
+		static constexpr double      kScaleActivationDelay = 100.0;
+		static constexpr float       kInactiveScale        = 0.8f;
+		static constexpr float       kActiveScale          = 1.0f;
 
-		double startMs = 0.0;
-		double sliceMs = 0.0;
+		double start   = 0.0;
+		double slice   = 0.0;
 		float  dotSize = 0.0f;
 
 		mutable std::array<animation::Tween<float>, kDotCount> opacityTweens;

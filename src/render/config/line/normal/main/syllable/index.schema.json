@@ -1,0 +1,20 @@
+{
+  "namespace": "music_lyric_player::render::config::line::normal::main::syllable",
+  "file": "index.gen.h",
+  "imports": [
+    { "as": "word", "schema": "word/index.schema.json" }
+  ],
+  "items": [
+    {
+      "name": "Root",
+      "comment": "Word-timed karaoke rendering settings.",
+      "fields": [
+        {
+          "name": "word",
+          "nested": "word.Root",
+          "comment": "Timed word rendering and animation settings."
+        }
+      ]
+    }
+  ]
+}

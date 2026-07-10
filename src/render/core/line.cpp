@@ -11,12 +11,13 @@ namespace music_lyric_player::render::core {
 	void LineManager::rebuild(const ::lyric::runtime::Info& info) {
 		this->lines.clear();
 		this->lines.reserve(static_cast<std::size_t>(std::max(info.lines_size(), 0)));
+		const bool isSyllable = info.timing() == ::lyric::common::TIMING_WORD;
 		for (int i = 0; i < info.lines_size(); ++i) {
 			const ::lyric::runtime::Line& line = info.lines(i);
 			if (::music_lyric_model::runtime::isLineInterlude(line)) {
 				this->lines.push_back(std::make_unique<components::line::interlude::Element>(i, line));
 			} else {
-				this->lines.push_back(std::make_unique<components::line::normal::Element>(i, line));
+				this->lines.push_back(std::make_unique<components::line::normal::Element>(i, line, isSyllable));
 			}
 		}
 		this->layoutDirty = true;

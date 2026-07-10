@@ -1,0 +1,20 @@
+{
+  "namespace": "music_lyric_player::render::config::line::normal",
+  "file": "index.gen.h",
+  "imports": [
+    { "as": "main", "schema": "main/index.schema.json" }
+  ],
+  "items": [
+    {
+      "name": "Root",
+      "comment": "Rendering settings of vocal lyric lines.",
+      "fields": [
+        {
+          "name": "main",
+          "nested": "main.Root",
+          "comment": "Rendering mode and settings of the main vocal content."
+        }
+      ]
+    }
+  ]
+}

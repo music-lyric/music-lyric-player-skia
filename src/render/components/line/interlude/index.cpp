@@ -23,14 +23,14 @@ namespace music_lyric_player::render::components::line::interlude {
 	Element::Element(int index, const ::lyric::runtime::Line& info)
 	    : base::Element(index) {
 		const ::lyric::common::Time* time = ::music_lyric_model::runtime::getLineTime(info);
-		this->startMs                     = time ? static_cast<double>(time->start()) : 0.0;
+		this->start                       = time ? static_cast<double>(time->start()) : 0.0;
 		const double duration             = static_cast<double>(::music_lyric_model::runtime::getLineDuration(info));
-		this->sliceMs                     = std::floor(std::max(duration, 0.0) / static_cast<double>(kDotCount));
+		this->slice                       = std::floor(std::max(duration, 0.0) / static_cast<double>(kDotCount));
 
-		this->scaleTween.setDuration(kScaleDurationMs);
+		this->scaleTween.setDuration(kScaleDuration);
 		this->scaleTween.setEasing(animation::CubicBezier(0.0f, 0.0f, 0.58f, 1.0f));
 		for (animation::Tween<float>& tween : this->opacityTweens) {
-			tween.setDuration(kOpacityFadeMs);
+			tween.setDuration(kOpacityFadeDuration);
 			tween.setEasing(animation::linear);
 		}
 	}
@@ -43,8 +43,8 @@ namespace music_lyric_player::render::components::line::interlude {
 
 	float Element::stateScale(double now, bool active) const {
 		if (active != this->animationActive) {
-			this->scaleTween.setDuration(kScaleDurationMs);
-			this->scaleTween.retarget(now, active ? kActiveScale : kInactiveScale, active ? kScaleActivationDelayMs : 0.0);
+			this->scaleTween.setDuration(kScaleDuration);
+			this->scaleTween.retarget(now, active ? kActiveScale : kInactiveScale, active ? kScaleActivationDelay : 0.0);
 		}
 		return this->scaleTween.sample(now);
 	}
@@ -56,10 +56,10 @@ namespace music_lyric_player::render::components::line::interlude {
 		animation::Tween<float>& tween = this->opacityTweens[index];
 		if (active) {
 			float value = activeOpacity;
-			if (this->sliceMs > 0.0) {
-				const double delay    = this->sliceMs * static_cast<double>(index);
-				const double elapsed  = currentTime - this->startMs - delay;
-				const float  progress = static_cast<float>(std::clamp(elapsed / this->sliceMs, 0.0, 1.0));
+			if (this->slice > 0.0) {
+				const double delay    = this->slice * static_cast<double>(index);
+				const double elapsed  = currentTime - this->start - delay;
+				const float  progress = static_cast<float>(std::clamp(elapsed / this->slice, 0.0, 1.0));
 				value                 = animation::lerp(normalOpacity, activeOpacity, progress);
 			}
 			tween.snap(value);
@@ -69,7 +69,7 @@ namespace music_lyric_player::render::components::line::interlude {
 		if (!this->opacityReady) {
 			tween.snap(normalOpacity);
 		} else if (deactivating) {
-			tween.setDuration(kOpacityFadeMs);
+			tween.setDuration(kOpacityFadeDuration);
 			tween.retarget(now, normalOpacity);
 		} else {
 			tween.setTarget(normalOpacity);

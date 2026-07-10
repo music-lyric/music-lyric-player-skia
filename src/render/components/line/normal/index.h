@@ -19,16 +19,20 @@ namespace music_lyric_player::render::components::line::normal::plain {
 	class Element;
 } // namespace music_lyric_player::render::components::line::normal::plain
 
+namespace music_lyric_player::render::components::line::normal::syllable {
+	class Element;
+} // namespace music_lyric_player::render::components::line::normal::syllable
+
 namespace music_lyric_player::render::components::line::normal {
 	/**
-	 * A normal lyric-line shell that owns the selected body renderer and applies shared line state.
+	 * A normal lyric-line shell that selects plain or word-timed content and applies shared line state.
 	 */
 	class Element : public base::Element {
 	public:
 		/**
-		 * Creates a normal line with its plain body renderer.
+		 * Creates a normal line backed by the source runtime line and timing mode.
 		 */
-		Element(int index, const ::lyric::runtime::Line& info);
+		Element(int index, const ::lyric::runtime::Line& info, bool isSyllable);
 
 		/**
 		 * Destroys the selected body renderer where its concrete type is complete.
@@ -36,17 +40,26 @@ namespace music_lyric_player::render::components::line::normal {
 		~Element() override;
 
 		/**
-		 * Delegates line layout to the selected body renderer.
+		 * Selects the configured body renderer and delegates layout to it.
 		 */
 		void layout(float width, const common::RenderContext& context) override;
 
 		/**
-		 * Resolves shared line state and delegates painting to the selected body renderer.
+		 * Resolves shared colors and delegates painting to the selected body renderer.
 		 */
 		void paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const override;
 
 	private:
-		std::unique_ptr<plain::Element> plainElement;
+		/**
+		 * Rebuilds the body renderer only when the resolved rendering mode changes.
+		 */
+		void selectBody(bool useSyllable);
+
+		const ::lyric::runtime::Line&      info;
+		bool                               syllableEnable;
+		bool                               syllableMode = false;
+		std::unique_ptr<plain::Element>    plainElement;
+		std::unique_ptr<syllable::Element> syllableElement;
 	};
 } // namespace music_lyric_player::render::components::line::normal
 

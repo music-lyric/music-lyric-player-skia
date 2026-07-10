@@ -115,21 +115,21 @@ namespace music_lyric_player::playback {
 
 		this->activeIndex.clear();
 		this->scanIndex = 0;
-		this->seekMs    = 0.0;
+		this->seek      = 0.0;
 
 		this->onLyricUpdate.emit(this->info);
 		this->onLinesUpdate.emit(std::vector<int>{}, -1, false);
 	}
 
-	void Player::play(std::optional<double> seekMs) {
+	void Player::play(std::optional<double> seek) {
 		pause();
 
-		if (seekMs.has_value() && std::isfinite(*seekMs)) {
-			this->seekMs = *seekMs;
+		if (seek.has_value() && std::isfinite(*seek)) {
+			this->seek = *seek;
 			syncTime();
 		}
 
-		this->startMs = this->clockRef.now();
+		this->start   = this->clockRef.now();
 		this->playing = true;
 		// Run one immediate pass so the active set is correct the instant playback starts.
 		updateActiveLines(getEffectiveTime());
@@ -139,9 +139,9 @@ namespace music_lyric_player::playback {
 
 	void Player::pause() {
 		if (this->playing) {
-			this->seekMs  = getCurrentTime();
+			this->seek    = getCurrentTime();
 			this->playing = false;
-			this->onPause.emit(this->seekMs);
+			this->onPause.emit(this->seek);
 		}
 	}
 
@@ -219,9 +219,9 @@ namespace music_lyric_player::playback {
 
 	double Player::getCurrentTime() const {
 		if (!this->playing) {
-			return this->seekMs;
+			return this->seek;
 		}
-		return this->seekMs + (this->clockRef.now() - this->startMs);
+		return this->seek + (this->clockRef.now() - this->start);
 	}
 
 	double Player::getEffectiveTime() const {

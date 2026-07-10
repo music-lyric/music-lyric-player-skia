@@ -1,7 +1,8 @@
-[submodule "third-party/lyric-model"]
-	path = third-party/lyric-model
-	url = git@github.com:music-lyric/music-lyric-model-cpp.git
+[submodule "third-party/lyric"]
+	path = third-party/lyric
+	url = https://github.com/music-lyric/music-lyric-model-cpp.git
 	shallow = true
+	branch = main
 [submodule "third-party/skia"]
 	path = third-party/skia
 	url = https://github.com/google/skia.git

@@ -19,9 +19,9 @@ namespace skia::textlayout {
 	class FontCollection;
 } // namespace skia::textlayout
 
-namespace lyric {
+namespace lyric::runtime {
 	class Info;
-} // namespace lyric
+} // namespace lyric::runtime
 
 namespace music_lyric_player::playback {
 	class Player;
@@ -71,7 +71,7 @@ namespace music_lyric_player::render {
 		/**
 		 * Rebuilds the line list from a freshly loaded lyric.
 		 */
-		void handleLyricUpdate(const ::lyric::Info& info);
+		void handleLyricUpdate(const ::lyric::runtime::Info& info);
 
 		/**
 		 * Records the new focus (primary active) line index used to centre scrolling.
@@ -86,7 +86,7 @@ namespace music_lyric_player::render {
 		/**
 		 * Rebuilds the line list from a freshly loaded lyric and resets scrolling.
 		 */
-		void rebuildLines(const ::lyric::Info& info);
+		void rebuildLines(const ::lyric::runtime::Info& info);
 
 		playback::Player&                         player;
 		sk_sp<SkFontMgr>                          fontMgr;

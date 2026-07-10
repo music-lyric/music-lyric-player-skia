@@ -1,14 +1,13 @@
 #ifndef MUSIC_LYRIC_PLAYER_EXAMPLE_SAMPLE_LYRIC_H_
 #define MUSIC_LYRIC_PLAYER_EXAMPLE_SAMPLE_LYRIC_H_
 
-#include "info.pb.h"
+#include "runtime/info.pb.h"
 
 namespace example {
 	/**
-	 * Builds a small hand-authored, line-timed lyric for the demo, including interludes, CJK text and
-	 * a deliberately long line to exercise wrapping.
+	 * Decodes the embedded v3 protobuf lyric used by the demo.
 	 */
-	::lyric::Info buildSampleLyric();
+	::lyric::runtime::Info buildSampleLyric();
 } // namespace example
 
 #endif

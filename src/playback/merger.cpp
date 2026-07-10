@@ -5,10 +5,10 @@
 #include <cstddef>
 #include <limits>
 
-#include "line/content.h"
+#include "music_lyric_model.h"
 
 namespace music_lyric_player::playback {
-	void Merger::build(const ::lyric::Info& info, double mergeWindow, int mergeLimit) {
+	void Merger::build(const ::lyric::runtime::Info& info, double mergeWindow, int mergeLimit) {
 		this->info = &info;
 
 		const int count = info.lines_size();
@@ -52,8 +52,8 @@ namespace music_lyric_player::playback {
 		if (index == this->info->lines_size() - 1) {
 			return std::numeric_limits<double>::infinity();
 		}
-		const ::lyric::Time* end   = music_lyric_model::getLineTime(this->info->lines(index));
-		const ::lyric::Time* start = music_lyric_model::getLineTime(this->info->lines(index + 1));
+		const ::lyric::common::Time* end   = music_lyric_model::runtime::getLineTime(this->info->lines(index));
+		const ::lyric::common::Time* start = music_lyric_model::runtime::getLineTime(this->info->lines(index + 1));
 		return std::max(end ? static_cast<double>(end->end()) : 0.0, start ? static_cast<double>(start->start()) : 0.0);
 	}
 } // namespace music_lyric_player::playback

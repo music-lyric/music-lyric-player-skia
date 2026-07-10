@@ -12,7 +12,7 @@
 #include "include/core/SkRect.h"
 #include "include/core/SkTileMode.h"
 #include "include/effects/SkImageFilters.h"
-#include "info.pb.h"
+#include "runtime/info.pb.h"
 #include "modules/skparagraph/include/FontCollection.h"
 #include "modules/skunicode/include/SkUnicode.h"
 #include "modules/skunicode/include/SkUnicode_icu.h"
@@ -43,7 +43,7 @@ namespace music_lyric_player::render {
 		// Unicode backend drives SkParagraph's word / grapheme / line-break boundaries.
 		this->unicode = SkUnicodes::ICU::Make();
 
-		this->lyricListener  = this->player.onLyricUpdate.add([this](const ::lyric::Info& info) {
+		this->lyricListener  = this->player.onLyricUpdate.add([this](const ::lyric::runtime::Info& info) {
 			handleLyricUpdate(info);
 		});
 		this->linesListener  = this->player.onLinesUpdate.add([this](const std::vector<int>&, int firstIndex, bool) {
@@ -95,7 +95,7 @@ namespace music_lyric_player::render {
 		this->dpr       = dpr;
 	}
 
-	void Renderer::handleLyricUpdate(const ::lyric::Info& info) {
+	void Renderer::handleLyricUpdate(const ::lyric::runtime::Info& info) {
 		rebuildLines(info);
 		this->activeIndex = -1;
 	}
@@ -108,7 +108,7 @@ namespace music_lyric_player::render {
 		this->lines.invalidateLayout();
 	}
 
-	void Renderer::rebuildLines(const ::lyric::Info& info) {
+	void Renderer::rebuildLines(const ::lyric::runtime::Info& info) {
 		this->lines.rebuild(info);
 		// Drop the scroll and effect tweens so a freshly loaded lyric snaps into place instead of sliding from the old song.
 		this->scroll.reset();

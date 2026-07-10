@@ -11,7 +11,7 @@ namespace music_lyric_player::playback {
 		this->temp = 0.0;
 	}
 
-	void Offset::refreshFromMeta(const ::lyric::Info& info, bool useMeta) {
+	void Offset::refreshFromMeta(const ::lyric::runtime::Info& info, bool useMeta) {
 		if (!useMeta) {
 			this->meta = 0.0;
 			return;

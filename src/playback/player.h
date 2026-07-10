@@ -5,7 +5,7 @@
 #include <optional>
 #include <vector>
 
-#include "info.pb.h"
+#include "runtime/info.pb.h"
 #include "playback/config/index.h"
 #include "playback/merger.h"
 #include "playback/offset.h"
@@ -32,7 +32,7 @@ namespace music_lyric_player::playback {
 		/**
 		 * Loads a parsed lyric, rejecting versions outside the supported caret range.
 		 */
-		void updateLyric(const ::lyric::Info& info);
+		void updateLyric(const ::lyric::runtime::Info& info);
 
 		/**
 		 * Starts or resumes playback, optionally seeking to `seekMs` first.
@@ -87,7 +87,7 @@ namespace music_lyric_player::playback {
 		/**
 		 * The current lyric info.
 		 */
-		const ::lyric::Info& currentInfo() const;
+		const ::lyric::runtime::Info& currentInfo() const;
 
 		/**
 		 * The current playback time in ms.
@@ -106,10 +106,10 @@ namespace music_lyric_player::playback {
 
 		config::Manager config;
 
-		Signal<double>                             onPlay;
-		Signal<double>                             onPause;
-		Signal<const ::lyric::Info&>               onLyricUpdate;
-		Signal<const std::vector<int>&, int, bool> onLinesUpdate;
+		Signal<double>                                    onPlay;
+		Signal<double>                                    onPause;
+		Signal<const ::lyric::runtime::Info&>             onLyricUpdate;
+		Signal<const std::vector<int>&, int, bool>         onLinesUpdate;
 
 	private:
 		/**
@@ -151,16 +151,16 @@ namespace music_lyric_player::playback {
 		 */
 		void onConfigUpdate(const config::RootChange& changes);
 
-		const Clock&     clockRef;
-		bool             playing   = false;
-		int              scanIndex = 0;
-		std::vector<int> activeIndex;
-		double           startMs = 0.0;
-		double           seekMs  = 0.0;
-		::lyric::Info    info;
-		Merger           merger;
-		Offset           offset;
-		std::size_t      configListenerId = 0;
+		const Clock&          clockRef;
+		bool                  playing   = false;
+		int                   scanIndex = 0;
+		std::vector<int>      activeIndex;
+		double                startMs = 0.0;
+		double                seekMs  = 0.0;
+		::lyric::runtime::Info info;
+		Merger                merger;
+		Offset                offset;
+		std::size_t           configListenerId = 0;
 	};
 } // namespace music_lyric_player::playback
 

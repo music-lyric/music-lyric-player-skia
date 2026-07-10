@@ -11,7 +11,7 @@ target_compile_features(music_lyric_player_playback PUBLIC cxx_std_20)
 target_include_directories(music_lyric_player_playback PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
 target_link_libraries(music_lyric_player_playback PUBLIC
-	music_lyric_model::music_lyric_model)
+	music_lyric::model)
 
 add_library(music_lyric_player_render
 	render/components/line/normal/index.cpp
@@ -31,5 +31,5 @@ target_include_directories(music_lyric_player_render PUBLIC "${CMAKE_CURRENT_SOU
 
 target_link_libraries(music_lyric_player_render PUBLIC
 	music_lyric_player::playback
-	music_lyric_model::music_lyric_model
+	music_lyric::model
 	skia::skia)

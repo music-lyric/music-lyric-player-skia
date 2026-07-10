@@ -76,3 +76,6 @@ Testing/
 
 # Cache
 .cache/
+
+# Temp
+.temp

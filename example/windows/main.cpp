@@ -38,7 +38,7 @@ int main() {
 	});
 
 	player.updateLyric(example::buildSampleLyric());
-	player.play(0.0);
+	player.play(30000.0);
 
 	while (!window.shouldClose()) {
 		window.pollEvents();

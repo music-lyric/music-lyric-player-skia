@@ -51,7 +51,7 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		/**
 		 * Paints the inactive word, its timed active-color reveal, and its float transform.
 		 */
-		void paint(SkCanvas* canvas, float lineX, float lineY, bool active, bool maskEnabled, float maskProgress, float maskFeather, const common::RenderContext& context) const;
+		void paint(SkCanvas* canvas, float lineX, float lineY, double now, bool active, bool maskEnabled, float maskProgress, float maskFeather, const common::RenderContext& context) const;
 
 		/**
 		 * Returns the timing and measured geometry consumed by the line-wide mask host.

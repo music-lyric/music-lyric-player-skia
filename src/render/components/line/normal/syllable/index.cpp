@@ -121,14 +121,14 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		this->measuredHeight = rowY;
 	}
 
-	void Element::paint(SkCanvas* canvas, float x, float y, double, bool active, const common::RenderContext& context) const {
+	void Element::paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const {
 		const auto& maskConfig = context.config.line.normal.main.syllable.word.animation.mask;
 		if (active && maskConfig.enabled) {
 			this->mask.sample(context.currentTime, maskConfig.feather.normal, maskConfig.feather.first, maskConfig.feather.last);
 		}
 
 		for (std::size_t i = 0; i < this->words.size(); ++i) {
-			this->words[i]->paint(canvas, x, y, active, maskConfig.enabled, this->mask.progress(i), this->mask.feather(i), context);
+			this->words[i]->paint(canvas, x, y, now, active, maskConfig.enabled, this->mask.progress(i), this->mask.feather(i), context);
 		}
 	}
 

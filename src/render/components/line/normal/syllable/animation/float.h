@@ -15,15 +15,21 @@ namespace music_lyric_player::render::components::line::normal::syllable::animat
 		Float(double start, double duration);
 
 		/**
-		 * Samples the configured offset for the current playback and active state.
+		 * Samples the vertical offset for the current playback and active state.
+		 * The rise follows playback content time; a line going inactive replays the same curve backward on wall-clock `now` so the whole line settles smoothly instead of snapping to rest.
 		 */
-		float sample(double currentTime, bool active, bool enabled, float from, float to) const;
+		float sample(double currentTime, double now, bool active, bool enabled, float from, float to) const;
 
 	private:
 		double start;
 		double duration;
 
 		::music_lyric_player::render::animation::CubicBezier easing{0.25f, 0.1f, 0.25f, 1.0f};
+
+		mutable bool   lastActive = false;
+		mutable bool   exiting    = false;
+		mutable float  phase      = 0.0f;
+		mutable double exitStart  = 0.0;
 	};
 } // namespace music_lyric_player::render::components::line::normal::syllable::animation
 

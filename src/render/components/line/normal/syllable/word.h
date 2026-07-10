@@ -39,9 +39,9 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		~Word();
 
 		/**
-		 * Shapes the word once and resolves its intrinsic metrics within `maxWidth`.
+		 * Shapes the word as one unbreakable line and resolves its intrinsic metrics.
 		 */
-		void layout(float maxWidth, const common::RenderContext& context);
+		void layout(const common::RenderContext& context);
 
 		/**
 		 * Sets the word's line-relative layout position.

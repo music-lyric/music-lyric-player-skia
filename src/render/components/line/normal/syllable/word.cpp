@@ -25,6 +25,9 @@ namespace tl = ::skia::textlayout;
 
 namespace music_lyric_player::render::components::line::normal::syllable {
 	namespace {
+		constexpr float kUnboundedWidth = 1'000'000.0f;
+		constexpr float kWidthEpsilon   = 0.01f;
+
 		/**
 		 * Returns the word's absolute start time, or zero when timing is absent.
 		 */
@@ -49,7 +52,7 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 
 	Word::~Word() = default;
 
-	void Word::layout(float maxWidth, const common::RenderContext& context) {
+	void Word::layout(const common::RenderContext& context) {
 		this->measuredWidth    = 0.0f;
 		this->measuredHeight   = 0.0f;
 		this->measuredBaseline = 0.0f;
@@ -63,15 +66,16 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		const config::Root& cfg         = context.config;
 		const SkColor       normalColor = utils::color::resolve(cfg.line.style.normal.color, config::Default.line.style.normal.color);
 		const SkColor       activeColor = utils::color::resolve(cfg.line.style.active.color, config::Default.line.style.active.color);
-		const float         available   = std::max(maxWidth, 1.0f);
 
-		this->normalParagraph = this->buildParagraph(available, context, normalColor);
+		this->normalParagraph = this->buildParagraph(kUnboundedWidth, context, normalColor);
 		if (!this->normalParagraph) {
 			return;
 		}
 
-		const float intrinsic = std::max(static_cast<float>(this->normalParagraph->getMaxIntrinsicWidth()), 1.0f);
-		this->measuredWidth   = std::min(intrinsic, available);
+		const float intrinsic = std::max(
+			static_cast<float>(this->normalParagraph->getMaxIntrinsicWidth()),
+			static_cast<float>(this->normalParagraph->getLongestLine()));
+		this->measuredWidth = std::ceil(std::max(intrinsic, 1.0f) + kWidthEpsilon);
 		this->normalParagraph->layout(this->measuredWidth);
 		this->activeParagraph  = this->buildParagraph(this->measuredWidth, context, activeColor);
 		this->measuredHeight   = static_cast<float>(this->normalParagraph->getHeight());
@@ -97,6 +101,7 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		tl::ParagraphStyle paragraphStyle;
 		paragraphStyle.setTextStyle(textStyle);
 		paragraphStyle.setTextAlign(tl::TextAlign::kLeft);
+		paragraphStyle.setMaxLines(1);
 
 		std::unique_ptr<tl::ParagraphBuilder> builder = tl::ParagraphBuilder::make(paragraphStyle, context.fonts, context.unicode);
 		if (!builder) {

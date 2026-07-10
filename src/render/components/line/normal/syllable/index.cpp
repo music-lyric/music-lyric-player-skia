@@ -63,7 +63,7 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		}
 
 		for (const std::unique_ptr<Word>& item : this->words) {
-			item->layout(this->width, context);
+			item->layout(context);
 		}
 
 		const float      fontSize   = static_cast<float>(std::max(resolveLength(context.config.line.font.size, config::Default.line.font.size), 0.0));

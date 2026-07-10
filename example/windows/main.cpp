@@ -24,9 +24,9 @@ int main() {
 	// system family (covers CJK and latin); also centre-align the lyrics for the demo.
 	renderer.config.modify([](music_lyric_player::render::config::Root& cfg) {
 		cfg.line.font.family                  = "MiSans";
-		cfg.layout.align                      = music_lyric_player::render::config::layout::Align::Center;
-		cfg.line.normal.color                 = "rgb(255, 255, 61)";
-		cfg.line.active.color                 = "#ffffff";
+		cfg.layout.align                      = music_lyric_player::render::config::layout::Align::Left;
+		cfg.line.style.normal.color           = "rgb(255, 255, 61)";
+		cfg.line.style.active.color           = "#ffffff";
 		cfg.scroll.animation.mode             = music_lyric_player::render::config::scroll::Mode::Stagger;
 		cfg.scroll.animation.stagger.duration = 500;
 		cfg.scroll.animation.stagger.easing   = "ease";

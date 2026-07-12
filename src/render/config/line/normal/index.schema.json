@@ -7,30 +7,6 @@
   ],
   "items": [
     {
-      "name": "StateConfig",
-      "comment": "Inactive and active styles shared by normal lyric lines.",
-      "fields": [
-        {
-          "name": "normal",
-          "nested": "common.StyleConfig",
-          "defaults": {
-            "color": "\"#ffffff\"",
-            "opacity": "0.6"
-          },
-          "comment": "Style of inactive lines."
-        },
-        {
-          "name": "active",
-          "nested": "common.StyleConfig",
-          "defaults": {
-            "color": "\"#ffffff\"",
-            "opacity": "1.0"
-          },
-          "comment": "Style of active lines."
-        }
-      ]
-    },
-    {
       "name": "Base",
       "comment": "Appearance shared by the main vocal line and its annotation sub-lines.",
       "fields": [
@@ -41,7 +17,7 @@
         },
         {
           "name": "style",
-          "nested": "StateConfig",
+          "nested": "common.StateStyleConfig",
           "comment": "Inactive and active styles shared by normal lyric lines."
         }
       ]

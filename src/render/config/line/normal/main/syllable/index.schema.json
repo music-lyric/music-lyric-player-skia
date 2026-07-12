@@ -2,6 +2,7 @@
   "namespace": "music_lyric_player::render::config::line::normal::main::syllable",
   "file": "index.gen.h",
   "imports": [
+    { "as": "common", "schema": "../../../../common/index.schema.json" },
     { "as": "word", "schema": "word/index.schema.json" }
   ],
   "items": [
@@ -9,6 +10,16 @@
       "name": "Root",
       "comment": "Word-timed karaoke rendering settings.",
       "fields": [
+        {
+          "name": "font",
+          "nested": "common.FontConfig",
+          "comment": "Font of the karaoke main content."
+        },
+        {
+          "name": "style",
+          "nested": "common.StateStyleConfig",
+          "comment": "Inactive and active styles of the karaoke main content."
+        },
         {
           "name": "word",
           "nested": "word.Root",

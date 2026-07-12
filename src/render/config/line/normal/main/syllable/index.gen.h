@@ -6,6 +6,7 @@
 #ifndef MUSIC_LYRIC_PLAYER_RENDER_CONFIG_LINE_NORMAL_MAIN_SYLLABLE_CONFIG_GEN_H_
 #define MUSIC_LYRIC_PLAYER_RENDER_CONFIG_LINE_NORMAL_MAIN_SYLLABLE_CONFIG_GEN_H_
 
+#include "render/config/common/index.gen.h"
 #include "render/config/line/normal/main/syllable/word/index.gen.h"
 
 namespace music_lyric_player::render::config::line::normal::main::syllable {
@@ -14,16 +15,28 @@ namespace music_lyric_player::render::config::line::normal::main::syllable {
 	 */
 	struct Root {
 		/**
+		 * Font of the karaoke main content.
+		 */
+		::music_lyric_player::render::config::common::FontConfig font;
+		/**
+		 * Inactive and active styles of the karaoke main content.
+		 */
+		::music_lyric_player::render::config::common::StateStyleConfig style;
+		/**
 		 * Timed word rendering and animation settings.
 		 */
 		::music_lyric_player::render::config::line::normal::main::syllable::word::Root word;
 	};
 
 	struct RootPatch {
+		::music_lyric_player::render::config::common::FontConfigPatch font;
+		::music_lyric_player::render::config::common::StateStyleConfigPatch style;
 		::music_lyric_player::render::config::line::normal::main::syllable::word::RootPatch word;
 	};
 
 	struct RootChange {
+		::music_lyric_player::render::config::common::FontConfigChange font;
+		::music_lyric_player::render::config::common::StateStyleConfigChange style;
 		::music_lyric_player::render::config::line::normal::main::syllable::word::RootChange word;
 		bool any = false;
 	};
@@ -32,6 +45,8 @@ namespace music_lyric_player::render::config::line::normal::main::syllable {
 	 * Called by the config Manager and the parent aggregate, not part of the public API.
 	 */
 	inline void apply(Root& cfg, const RootPatch& patch) {
+		apply(cfg.font, patch.font);
+		apply(cfg.style, patch.style);
 		apply(cfg.word, patch.word);
 	}
 
@@ -40,8 +55,10 @@ namespace music_lyric_player::render::config::line::normal::main::syllable {
 	 */
 	inline RootChange diff(const Root& prev, const Root& next) {
 		RootChange change;
+		change.font = diff(prev.font, next.font);
+		change.style = diff(prev.style, next.style);
 		change.word = diff(prev.word, next.word);
-		change.any = change.word.any;
+		change.any = change.font.any || change.style.any || change.word.any;
 		return change;
 	}
 

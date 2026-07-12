@@ -23,17 +23,17 @@ int main() {
 	// DirectWrite cannot resolve SkParagraph's default "sans-serif" family, so pick a concrete
 	// system family (covers CJK and latin); also centre-align the lyrics for the demo.
 	renderer.config.modify([](music_lyric_player::render::config::Root& cfg) {
-		cfg.layout.align                      = music_lyric_player::render::config::layout::Align::Left;
-		cfg.line.normal.base.font.size        = "42px";
-		cfg.line.normal.base.font.family      = "MiSans";
-		cfg.line.normal.base.style.normal.color = "rgb(255, 255, 61)";
-		cfg.line.normal.base.style.active.color = "#ffffff";
-		cfg.scroll.animation.mode             = music_lyric_player::render::config::scroll::Mode::Stagger;
-		cfg.scroll.animation.stagger.duration = 500;
-		cfg.scroll.animation.stagger.easing   = "ease";
-		cfg.scroll.animation.stagger.step     = 40;
-		cfg.scroll.animation.stagger.range    = 4;
-		cfg.line.normal.main.syllable.word.animation.mask.enabled = true;
+		cfg.layout.align                                              = music_lyric_player::render::config::layout::Align::Left;
+		cfg.line.normal.main.syllable.font.size                       = "42px";
+		cfg.line.normal.main.syllable.font.family                     = "MiSans";
+		cfg.line.normal.main.syllable.style.normal.color              = "rgb(255, 255, 61)";
+		cfg.line.normal.main.syllable.style.active.color              = "#ffffff";
+		cfg.scroll.animation.mode                                     = music_lyric_player::render::config::scroll::Mode::Stagger;
+		cfg.scroll.animation.stagger.duration                         = 500;
+		cfg.scroll.animation.stagger.easing                           = "ease";
+		cfg.scroll.animation.stagger.step                             = 40;
+		cfg.scroll.animation.stagger.range                            = 4;
+		cfg.line.normal.main.syllable.word.animation.mask.enabled     = true;
 		cfg.line.normal.main.syllable.word.animation.floating.enabled = true;
 	});
 

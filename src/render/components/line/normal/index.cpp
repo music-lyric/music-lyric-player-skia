@@ -50,14 +50,14 @@ namespace music_lyric_player::render::components::line::normal {
 
 	void Element::paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const {
 		const config::Root& cfg         = context.config;
-		const SkColor       normalColor = utils::color::resolve(cfg.line.normal.base.style.normal.color, config::Default.line.normal.base.style.normal.color);
-		const SkColor       activeColor = utils::color::resolve(cfg.line.normal.base.style.active.color, config::Default.line.normal.base.style.active.color);
+		const SkColor       normalColor = utils::color::resolve(cfg.line.normal.main.syllable.style.normal.color, config::Default.line.normal.main.syllable.style.normal.color);
+		const SkColor       activeColor = utils::color::resolve(cfg.line.normal.main.syllable.style.active.color, config::Default.line.normal.main.syllable.style.active.color);
 
 		if (this->syllableElement) {
 			this->syllableElement->paint(canvas, x, y, now, active, context);
 		} else if (this->plainElement) {
-			const SkColor normalStyle = utils::color::withOpacity(normalColor, cfg.line.normal.base.style.normal.opacity);
-			const SkColor activeStyle = utils::color::withOpacity(activeColor, cfg.line.normal.base.style.active.opacity);
+			const SkColor normalStyle = utils::color::withOpacity(normalColor, cfg.line.normal.main.syllable.style.normal.opacity);
+			const SkColor activeStyle = utils::color::withOpacity(activeColor, cfg.line.normal.main.syllable.style.active.opacity);
 			this->plainElement->paint(canvas, x, y, this->stateColor(now, active, normalStyle, activeStyle));
 		}
 	}

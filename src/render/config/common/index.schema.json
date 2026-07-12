@@ -44,6 +44,30 @@
           "comment": "Opacity of the render state in the [0, 1] range; 1 is fully opaque."
         }
       ]
+    },
+    {
+      "name": "StateStyleConfig",
+      "comment": "Inactive and active styles shared by normal lyric lines and their annotation sub-lines.",
+      "fields": [
+        {
+          "name": "normal",
+          "nested": "StyleConfig",
+          "defaults": {
+            "color": "\"#ffffff\"",
+            "opacity": "0.6"
+          },
+          "comment": "Style of inactive lines."
+        },
+        {
+          "name": "active",
+          "nested": "StyleConfig",
+          "defaults": {
+            "color": "\"#ffffff\"",
+            "opacity": "1.0"
+          },
+          "comment": "Style of active lines."
+        }
+      ]
     }
   ]
 }

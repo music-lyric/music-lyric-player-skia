@@ -56,6 +56,20 @@ namespace music_lyric_player::render::config::common {
 		double opacity = 1.0;
 	};
 
+	/**
+	 * Inactive and active styles shared by normal lyric lines and their annotation sub-lines.
+	 */
+	struct StateStyleConfig {
+		/**
+		 * Style of inactive lines.
+		 */
+		StyleConfig normal = StyleConfig{ .color = "#ffffff", .opacity = 0.6 };
+		/**
+		 * Style of active lines.
+		 */
+		StyleConfig active = StyleConfig{ .color = "#ffffff", .opacity = 1.0 };
+	};
+
 	struct FontConfigPatch {
 		::std::optional<::std::string> family;
 		::std::optional<::std::string> size;
@@ -64,6 +78,11 @@ namespace music_lyric_player::render::config::common {
 	struct StyleConfigPatch {
 		::std::optional<::std::string> color;
 		::std::optional<double> opacity;
+	};
+
+	struct StateStyleConfigPatch {
+		StyleConfigPatch normal;
+		StyleConfigPatch active;
 	};
 
 	struct FontConfigChange {
@@ -75,6 +94,12 @@ namespace music_lyric_player::render::config::common {
 	struct StyleConfigChange {
 		bool color = false;
 		bool opacity = false;
+		bool any = false;
+	};
+
+	struct StateStyleConfigChange {
+		StyleConfigChange normal;
+		StyleConfigChange active;
 		bool any = false;
 	};
 
@@ -105,6 +130,14 @@ namespace music_lyric_player::render::config::common {
 	/**
 	 * Called by the config Manager and the parent aggregate, not part of the public API.
 	 */
+	inline void apply(StateStyleConfig& cfg, const StateStyleConfigPatch& patch) {
+		apply(cfg.normal, patch.normal);
+		apply(cfg.active, patch.active);
+	}
+
+	/**
+	 * Called by the config Manager and the parent aggregate, not part of the public API.
+	 */
 	inline FontConfigChange diff(const FontConfig& prev, const FontConfig& next) {
 		FontConfigChange change;
 		change.family = prev.family != next.family;
@@ -121,6 +154,17 @@ namespace music_lyric_player::render::config::common {
 		change.color = prev.color != next.color;
 		change.opacity = prev.opacity != next.opacity;
 		change.any = change.color || change.opacity;
+		return change;
+	}
+
+	/**
+	 * Called by the config Manager and the parent aggregate, not part of the public API.
+	 */
+	inline StateStyleConfigChange diff(const StateStyleConfig& prev, const StateStyleConfig& next) {
+		StateStyleConfigChange change;
+		change.normal = diff(prev.normal, next.normal);
+		change.active = diff(prev.active, next.active);
+		change.any = change.normal.any || change.active.any;
 		return change;
 	}
 

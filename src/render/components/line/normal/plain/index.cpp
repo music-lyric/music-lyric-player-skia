@@ -62,9 +62,9 @@ namespace music_lyric_player::render::components::line::normal::plain {
 
 		tl::TextStyle textStyle;
 		textStyle.setColor(SK_ColorWHITE);
-		textStyle.setFontSize(static_cast<SkScalar>(resolveLength(cfg.line.normal.base.font.size, config::Default.line.normal.base.font.size)));
-		if (!cfg.line.normal.base.font.family.empty()) {
-			textStyle.setFontFamilies({SkString(cfg.line.normal.base.font.family.c_str())});
+		textStyle.setFontSize(static_cast<SkScalar>(resolveLength(cfg.line.normal.main.syllable.font.size, config::Default.line.normal.main.syllable.font.size)));
+		if (!cfg.line.normal.main.syllable.font.family.empty()) {
+			textStyle.setFontFamilies({SkString(cfg.line.normal.main.syllable.font.family.c_str())});
 		}
 		textStyle.setFontStyle(SkFontStyle::Normal());
 

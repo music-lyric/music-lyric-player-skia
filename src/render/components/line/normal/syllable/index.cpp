@@ -77,7 +77,7 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		}
 		this->mask.update(maskInputs);
 
-		const float      fontSize   = static_cast<float>(std::max(resolveLength(context.config.line.font.size, config::Default.line.font.size), 0.0));
+		const float      fontSize   = static_cast<float>(std::max(resolveLength(context.config.line.normal.base.font.size, config::Default.line.normal.base.font.size), 0.0));
 		const float      spaceWidth = fontSize * 0.3f;
 		std::vector<Row> rows;
 		Row              row;

@@ -151,8 +151,8 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 			const config::Root& cfg = context.config;
 
 			sk_sp<SkTypeface> typeface;
-			if (!cfg.line.font.family.empty()) {
-				typeface = context.fontMgr->matchFamilyStyle(cfg.line.font.family.c_str(), SkFontStyle::Normal());
+			if (!cfg.line.normal.base.font.family.empty()) {
+				typeface = context.fontMgr->matchFamilyStyle(cfg.line.normal.base.font.family.c_str(), SkFontStyle::Normal());
 			}
 			if (!typeface) {
 				typeface = context.fontMgr->matchFamilyStyle(nullptr, SkFontStyle::Normal());
@@ -187,7 +187,7 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		}
 
 		const config::Root& cfg  = context.config;
-		const float         size = static_cast<float>(std::max(resolveLength(cfg.line.font.size, config::Default.line.font.size), 1.0));
+		const float         size = static_cast<float>(std::max(resolveLength(cfg.line.normal.base.font.size, config::Default.line.normal.base.font.size), 1.0));
 		const SkFont        font = buildWordFont(context, size);
 
 		const char*       utf8  = this->text.c_str();
@@ -256,10 +256,10 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		const float         drawX           = lineX + this->x;
 		const float         drawY           = lineY + this->y + offset;
 
-		const SkColor normalColor    = utils::color::resolve(cfg.line.style.normal.color, config::Default.line.style.normal.color);
-		const SkColor activeColor    = utils::color::resolve(cfg.line.style.active.color, config::Default.line.style.active.color);
-		const double  normalOpacity  = cfg.line.style.normal.opacity;
-		const double  activeOpacity  = cfg.line.style.active.opacity;
+		const SkColor normalColor    = utils::color::resolve(cfg.line.normal.base.style.normal.color, config::Default.line.normal.base.style.normal.color);
+		const SkColor activeColor    = utils::color::resolve(cfg.line.normal.base.style.active.color, config::Default.line.normal.base.style.active.color);
+		const double  normalOpacity  = cfg.line.normal.base.style.normal.opacity;
+		const double  activeOpacity  = cfg.line.normal.base.style.active.opacity;
 
 		// Inactive lines paint the whole word in the normal state color and opacity.
 		if (!active) {

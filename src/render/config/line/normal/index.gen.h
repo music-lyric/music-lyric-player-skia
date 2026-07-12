@@ -6,24 +6,81 @@
 #ifndef MUSIC_LYRIC_PLAYER_RENDER_CONFIG_LINE_NORMAL_CONFIG_GEN_H_
 #define MUSIC_LYRIC_PLAYER_RENDER_CONFIG_LINE_NORMAL_CONFIG_GEN_H_
 
+#include "render/config/common/index.gen.h"
 #include "render/config/line/normal/main/index.gen.h"
 
 namespace music_lyric_player::render::config::line::normal {
 	/**
+	 * Inactive and active styles shared by normal lyric lines.
+	 */
+	struct StateConfig {
+		/**
+		 * Style of inactive lines.
+		 */
+		::music_lyric_player::render::config::common::StyleConfig normal = ::music_lyric_player::render::config::common::StyleConfig{ .color = "#ffffff", .opacity = 0.6 };
+		/**
+		 * Style of active lines.
+		 */
+		::music_lyric_player::render::config::common::StyleConfig active = ::music_lyric_player::render::config::common::StyleConfig{ .color = "#ffffff", .opacity = 1.0 };
+	};
+
+	/**
+	 * Appearance shared by the main vocal line and its annotation sub-lines.
+	 */
+	struct Base {
+		/**
+		 * Font shared by every line.
+		 */
+		::music_lyric_player::render::config::common::FontConfig font;
+		/**
+		 * Inactive and active styles shared by normal lyric lines.
+		 */
+		StateConfig style;
+	};
+
+	/**
 	 * Rendering settings of vocal lyric lines.
 	 */
 	struct Root {
+		/**
+		 * Appearance shared by the main vocal line and its annotation sub-lines.
+		 */
+		Base base;
 		/**
 		 * Rendering mode and settings of the main vocal content.
 		 */
 		::music_lyric_player::render::config::line::normal::main::Root main;
 	};
 
+	struct StateConfigPatch {
+		::music_lyric_player::render::config::common::StyleConfigPatch normal;
+		::music_lyric_player::render::config::common::StyleConfigPatch active;
+	};
+
+	struct BasePatch {
+		::music_lyric_player::render::config::common::FontConfigPatch font;
+		StateConfigPatch style;
+	};
+
 	struct RootPatch {
+		BasePatch base;
 		::music_lyric_player::render::config::line::normal::main::RootPatch main;
 	};
 
+	struct StateConfigChange {
+		::music_lyric_player::render::config::common::StyleConfigChange normal;
+		::music_lyric_player::render::config::common::StyleConfigChange active;
+		bool any = false;
+	};
+
+	struct BaseChange {
+		::music_lyric_player::render::config::common::FontConfigChange font;
+		StateConfigChange style;
+		bool any = false;
+	};
+
 	struct RootChange {
+		BaseChange base;
 		::music_lyric_player::render::config::line::normal::main::RootChange main;
 		bool any = false;
 	};
@@ -31,8 +88,47 @@ namespace music_lyric_player::render::config::line::normal {
 	/**
 	 * Called by the config Manager and the parent aggregate, not part of the public API.
 	 */
+	inline void apply(StateConfig& cfg, const StateConfigPatch& patch) {
+		apply(cfg.normal, patch.normal);
+		apply(cfg.active, patch.active);
+	}
+
+	/**
+	 * Called by the config Manager and the parent aggregate, not part of the public API.
+	 */
+	inline void apply(Base& cfg, const BasePatch& patch) {
+		apply(cfg.font, patch.font);
+		apply(cfg.style, patch.style);
+	}
+
+	/**
+	 * Called by the config Manager and the parent aggregate, not part of the public API.
+	 */
 	inline void apply(Root& cfg, const RootPatch& patch) {
+		apply(cfg.base, patch.base);
 		apply(cfg.main, patch.main);
+	}
+
+	/**
+	 * Called by the config Manager and the parent aggregate, not part of the public API.
+	 */
+	inline StateConfigChange diff(const StateConfig& prev, const StateConfig& next) {
+		StateConfigChange change;
+		change.normal = diff(prev.normal, next.normal);
+		change.active = diff(prev.active, next.active);
+		change.any = change.normal.any || change.active.any;
+		return change;
+	}
+
+	/**
+	 * Called by the config Manager and the parent aggregate, not part of the public API.
+	 */
+	inline BaseChange diff(const Base& prev, const Base& next) {
+		BaseChange change;
+		change.font = diff(prev.font, next.font);
+		change.style = diff(prev.style, next.style);
+		change.any = change.font.any || change.style.any;
+		return change;
 	}
 
 	/**
@@ -40,8 +136,9 @@ namespace music_lyric_player::render::config::line::normal {
 	 */
 	inline RootChange diff(const Root& prev, const Root& next) {
 		RootChange change;
+		change.base = diff(prev.base, next.base);
 		change.main = diff(prev.main, next.main);
-		change.any = change.main.any;
+		change.any = change.base.any || change.main.any;
 		return change;
 	}
 

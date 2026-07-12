@@ -13,9 +13,9 @@
 #include "include/core/SkTileMode.h"
 #include "include/effects/SkImageFilters.h"
 #include "modules/skparagraph/include/FontCollection.h"
+#include "modules/skshaper/include/SkShaper.h"
 #include "modules/skunicode/include/SkUnicode.h"
 #include "modules/skunicode/include/SkUnicode_icu.h"
-#include "modules/skshaper/include/SkShaper.h"
 #include "playback/player.h"
 #include "render/common/context.h"
 #include "render/components/line/base/index.h"
@@ -48,11 +48,11 @@ namespace music_lyric_player::render {
 		this->shaper = SkShaper::Make(this->fontMgr);
 
 		this->lyricListener  = this->player.onLyricUpdate.add([this](const ::lyric::runtime::Info& info) {
-                        handleLyricUpdate(info);
-                });
+			handleLyricUpdate(info);
+		});
 		this->linesListener  = this->player.onLinesUpdate.add([this](const std::vector<int>&, int firstIndex, bool) {
-                        handleLinesUpdate(firstIndex);
-                });
+			handleLinesUpdate(firstIndex);
+		});
 		this->configListener = this->config.onUpdate.add([this](const config::RootChange&, const config::Root&) {
 			handleConfigUpdate();
 		});
@@ -152,8 +152,8 @@ namespace music_lyric_player::render {
 
 		// Centre the focus (primary active) line on the anchor, then ease the scroll towards it.
 		const std::size_t focus   = (this->activeIndex >= 0 && this->activeIndex < static_cast<int>(this->lines.size()))
-			  ? static_cast<std::size_t>(this->activeIndex)
-			  : 0;
+			? static_cast<std::size_t>(this->activeIndex)
+			: 0;
 		const float       anchorY = logicalH * static_cast<float>(cfg.scroll.anchor);
 		const float       targetY = this->layout.top(focus) + this->lines.at(focus).height() * 0.5f - anchorY;
 

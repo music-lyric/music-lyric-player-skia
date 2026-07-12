@@ -2,49 +2,14 @@
   "namespace": "music_lyric_player::render::config::line",
   "file": "index.gen.h",
   "imports": [
-    { "as": "common", "schema": "../common/index.schema.json" },
     { "as": "interlude", "schema": "interlude/index.schema.json" },
     { "as": "normal", "schema": "normal/index.schema.json" }
   ],
   "items": [
     {
-      "name": "StateConfig",
-      "comment": "Inactive and active styles shared by normal lyric lines.",
-      "fields": [
-        {
-          "name": "normal",
-          "nested": "common.StyleConfig",
-          "defaults": {
-            "color": "\"#ffffff\"",
-            "opacity": "0.6"
-          },
-          "comment": "Style of inactive lines."
-        },
-        {
-          "name": "active",
-          "nested": "common.StyleConfig",
-          "defaults": {
-            "color": "\"#ffffff\"",
-            "opacity": "1.0"
-          },
-          "comment": "Style of active lines."
-        }
-      ]
-    },
-    {
       "name": "Root",
-      "comment": "Font, normal-line rendering, and instrumental-gap indicators.",
+      "comment": "Normal-line rendering and instrumental-gap indicators.",
       "fields": [
-        {
-          "name": "font",
-          "nested": "common.FontConfig",
-          "comment": "Font shared by every line."
-        },
-        {
-          "name": "style",
-          "nested": "StateConfig",
-          "comment": "Inactive and active styles shared by normal lyric lines."
-        },
         {
           "name": "normal",
           "nested": "normal.Root",

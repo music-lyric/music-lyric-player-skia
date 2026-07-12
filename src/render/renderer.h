@@ -2,6 +2,7 @@
 #define MUSIC_LYRIC_PLAYER_RENDER_RENDERER_H_
 
 #include <cstddef>
+#include <memory>
 
 #include "include/core/SkRefCnt.h"
 #include "render/config/index.h"
@@ -13,6 +14,7 @@
 
 class SkCanvas;
 class SkFontMgr;
+class SkShaper;
 class SkUnicode;
 
 namespace skia::textlayout {
@@ -93,6 +95,7 @@ namespace music_lyric_player::render {
 		const Clock&                              clock;
 		sk_sp<::skia::textlayout::FontCollection> fonts;
 		sk_sp<SkUnicode>                          unicode;
+		std::unique_ptr<SkShaper>                 shaper;
 
 		int activeIndex = -1;
 

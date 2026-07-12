@@ -5,6 +5,8 @@
 #include "render/config/index.h"
 
 class SkUnicode;
+class SkFontMgr;
+class SkShaper;
 
 namespace skia::textlayout {
 	class FontCollection;
@@ -20,6 +22,8 @@ namespace music_lyric_player::render::common {
 		const config::Root&                              config;
 		const sk_sp<::skia::textlayout::FontCollection>& fonts;
 		const sk_sp<SkUnicode>&                          unicode;
+		const sk_sp<SkFontMgr>&                          fontMgr;
+		SkShaper*                                        shaper;
 		double                                           currentTime;
 	};
 } // namespace music_lyric_player::render::common

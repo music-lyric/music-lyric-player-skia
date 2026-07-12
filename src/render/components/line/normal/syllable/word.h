@@ -2,21 +2,18 @@
 #define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_SYLLABLE_WORD_H_
 
 #include <cstddef>
-#include <memory>
 #include <string>
 
 #include "include/core/SkColor.h"
+#include "include/core/SkRefCnt.h"
 #include "render/components/line/normal/syllable/animation/index.h"
 
 class SkCanvas;
+class SkTextBlob;
 
 namespace lyric::runtime {
 	class WordNormal;
 } // namespace lyric::runtime
-
-namespace skia::textlayout {
-	class Paragraph;
-} // namespace skia::textlayout
 
 namespace music_lyric_player::render::common {
 	struct RenderContext;
@@ -80,17 +77,12 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 
 	private:
 		/**
-		 * Builds one cached paragraph in the supplied state color.
+		 * Paints the cached word blob at the word position in the supplied state color.
 		 */
-		std::unique_ptr<::skia::textlayout::Paragraph> buildParagraph(float width, const common::RenderContext& context, SkColor color) const;
+		void paintBlob(SkCanvas* canvas, float x, float y, SkColor color) const;
 
 		/**
-		 * Paints one cached paragraph at the word position.
-		 */
-		void paintParagraph(SkCanvas* canvas, ::skia::textlayout::Paragraph& paragraph, float x, float y) const;
-
-		/**
-		 * Paints one rasterized paragraph through the final two-color reveal gradient.
+		 * Paints the word coverage through the final two-color reveal gradient.
 		 */
 		void paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor normalColor, SkColor activeColor) const;
 
@@ -101,13 +93,12 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 
 		animation::Float floating;
 
-		std::unique_ptr<::skia::textlayout::Paragraph> normalParagraph;
-		std::unique_ptr<::skia::textlayout::Paragraph> activeParagraph;
-		float                                          measuredWidth    = 0.0f;
-		float                                          measuredHeight   = 0.0f;
-		float                                          measuredBaseline = 0.0f;
-		float                                          x                = 0.0f;
-		float                                          y                = 0.0f;
+		sk_sp<SkTextBlob> blob;
+		float             measuredWidth    = 0.0f;
+		float             measuredHeight   = 0.0f;
+		float             measuredBaseline = 0.0f;
+		float             x                = 0.0f;
+		float             y                = 0.0f;
 	};
 } // namespace music_lyric_player::render::components::line::normal::syllable
 

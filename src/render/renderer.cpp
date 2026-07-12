@@ -15,6 +15,7 @@
 #include "modules/skparagraph/include/FontCollection.h"
 #include "modules/skunicode/include/SkUnicode.h"
 #include "modules/skunicode/include/SkUnicode_icu.h"
+#include "modules/skshaper/include/SkShaper.h"
 #include "playback/player.h"
 #include "render/common/context.h"
 #include "render/components/line/base/index.h"
@@ -42,6 +43,9 @@ namespace music_lyric_player::render {
 
 		// Unicode backend drives SkParagraph's word / grapheme / line-break boundaries.
 		this->unicode = SkUnicodes::ICU::Make();
+
+		// Shared HarfBuzz shaper drives the self-laid-out timed words; it keeps the ICU backend for BiDi / script so minority scripts survive.
+		this->shaper = SkShaper::Make(this->fontMgr);
 
 		this->lyricListener  = this->player.onLyricUpdate.add([this](const ::lyric::runtime::Info& info) {
                         handleLyricUpdate(info);
@@ -120,7 +124,7 @@ namespace music_lyric_player::render {
 			return;
 		}
 		const config::Root&         cfg = this->config.current();
-		const common::RenderContext context{cfg, this->fonts, this->unicode, this->player.currentTime()};
+		const common::RenderContext context{cfg, this->fonts, this->unicode, this->fontMgr, this->shaper.get(), this->player.currentTime()};
 
 		// Background always fills, even before a lyric loads.
 		canvas->clear(utils::color::resolve(cfg.container.backgroundColor, config::Default.container.backgroundColor));

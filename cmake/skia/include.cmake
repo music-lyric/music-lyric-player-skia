@@ -23,7 +23,7 @@ if(DEFINED SKIA_OUT_DIR)
 	set(SKIA_OUT "${SKIA_OUT_DIR}")
 else()
 	string(TOLOWER "${SKIA_BUILD_CONFIG}" _cfg)
-	set(SKIA_OUT "${SKIA_SRC}/out/skia-${_cfg}")
+	set(SKIA_OUT "${SKIA_SRC}/out/${_cfg}")
 endif()
 
 # Resolve module libs under SKIA_OUT into SKIA_LIBRARIES; leftover names go to _missing.

@@ -23,7 +23,7 @@ endif()
 get_filename_component(_repo_root "${CMAKE_CURRENT_LIST_DIR}/../.." ABSOLUTE)
 set(SKIA_SRC "${_repo_root}/third-party/skia")
 string(TOLOWER "${SKIA_BUILD_CONFIG}" _cfg)
-set(SKIA_OUT "${SKIA_SRC}/out/skia-${_cfg}")
+set(SKIA_OUT "${SKIA_SRC}/out/${_cfg}")
 
 message(STATUS "[Skia] Start Skia Build...")
 message(STATUS "[Skia] Source : ${SKIA_SRC}")

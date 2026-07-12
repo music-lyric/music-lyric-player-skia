@@ -22,6 +22,10 @@ Schema shape:
 A schema-local `mix` maps reusable names to field arrays. A field entry `{ "include": "name" }`
 expands that mix in place before validation and generation; optional `defaults` replaces selected leaf
 default literals in that inclusion. Mixes cannot include other mixes and every declared mix must be used.
+A top-level `"root": { "comment"?: ..., "modules": [ { "name": "x", "schema": "x.schema.json", "comment"?: ... } ] }`
+expands (before validation) into one import per module plus a generated `Root` config nesting each module's
+own `Root`, so a pure aggregate layer declares its composition once instead of hand-writing the parallel
+`imports` + `Root` item; a schema using `root` must not also define its own `Root` item.
 A leaf field has `type` (+ optional `default`, a C++ literal string), `kind`
 (`"color"` / `"length"` / `"easing"`) which implies `type: ::std::string` and appends a standard
 format note to the doc, or `enum` (+ `values`, + optional `enumComment`) which emits an `enum class`
@@ -174,6 +178,68 @@ def expand_mix(schema):
     unused = set(mix_fields) - used
     if unused:
         raise SchemaError(f"unused mix definitions: {sorted(unused)}")
+    return normalized
+
+
+def expand_root(schema):
+    """Expand a top-level `root` entry (an ordered module list) into imports plus a generated `Root`.
+
+    Each module `{ "name": n, "schema": path, "comment"?: ... }` becomes an import aliased `n` and a
+    `Root` field nesting that schema's own `Root`, so a pure aggregate layer declares its composition
+    once instead of hand-writing the parallel `imports` + `Root` item.
+    """
+    if not isinstance(schema, dict) or "root" not in schema:
+        return schema
+
+    root = schema["root"]
+    if not isinstance(root, dict):
+        raise SchemaError("'root' must be an object with a 'modules' array")
+    modules = root.get("modules")
+    if not isinstance(modules, list) or not modules:
+        raise SchemaError("'root.modules' must be a non-empty array")
+
+    normalized = copy.deepcopy(schema)
+    imports = normalized.get("imports")
+    if not isinstance(imports, list):
+        imports = []
+    aliases = {imp["as"] for imp in imports if isinstance(imp, dict) and isinstance(imp.get("as"), str)}
+
+    fields = []
+    seen = set()
+    for index, module in enumerate(modules):
+        at = f"root.modules[{index}]"
+        if not isinstance(module, dict):
+            raise SchemaError(f"{at} must be an object")
+        name = module.get("name")
+        if not isinstance(name, str) or not name:
+            raise SchemaError(f"{at}.name must be a non-empty string")
+        if name in seen:
+            raise SchemaError(f"duplicate root module '{name}'")
+        seen.add(name)
+        target = module.get("schema")
+        if not isinstance(target, str) or not target:
+            raise SchemaError(f"{at}.schema must be a non-empty string (a *.schema.json path)")
+        if name in aliases:
+            raise SchemaError(f"root module '{name}' clashes with an existing import alias '{name}'")
+        imports.append({"as": name, "schema": target})
+        field = {"name": name, "nested": f"{name}.Root"}
+        if "comment" in module:
+            field["comment"] = module["comment"]
+        fields.append(field)
+
+    items = normalized.get("items")
+    if not isinstance(items, list):
+        items = []
+    if any(isinstance(item, dict) and item.get("name") == "Root" for item in items):
+        raise SchemaError("a schema with 'root' must not also define a 'Root' item")
+    root_item = {"name": "Root", "fields": fields}
+    if "comment" in root:
+        root_item["comment"] = root["comment"]
+    items.append(root_item)
+
+    normalized["imports"] = imports
+    normalized["items"] = items
+    del normalized["root"]
     return normalized
 
 
@@ -341,6 +407,7 @@ def load_module(path, cache, loading=None):
         raise SchemaError(f"invalid JSON in {path}: {error}")
 
     schema = expand_mix(schema)
+    schema = expand_root(schema)
     validate_structure(schema)
     module = Module(path, schema)
 

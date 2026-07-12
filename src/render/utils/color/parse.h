@@ -70,6 +70,16 @@ namespace music_lyric_player::render::utils::color {
 		}
 		return SK_ColorTRANSPARENT;
 	}
+
+	/**
+	 * Scales a color's alpha channel by an opacity in `[0, 1]`, mirroring the CSS color-times-opacity model.
+	 * An opacity of `1` leaves the color unchanged; `0` makes it fully transparent.
+	 */
+	inline SkColor withOpacity(SkColor color, double opacity) {
+		const double scale = opacity < 0.0 ? 0.0 : opacity > 1.0 ? 1.0 : opacity;
+		const U8CPU  alpha = static_cast<U8CPU>(SkColorGetA(color) * scale + 0.5);
+		return SkColorSetA(color, alpha);
+	}
 } // namespace music_lyric_player::render::utils::color
 
 #endif // MUSIC_LYRIC_PLAYER_RENDER_UTILS_COLOR_PARSE_H_

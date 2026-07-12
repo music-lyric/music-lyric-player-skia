@@ -101,14 +101,14 @@ namespace music_lyric_player::render::components::line::normal::syllable::animat
 		return index < this->frames.size() ? this->frames[index].feather : 0.0f;
 	}
 
-	void Mask::apply(SkCanvas* canvas, const SkRect& drawBounds, const SkRect& textBounds, float progress, float feather, SkColor normalColor, SkColor activeColor) {
+	void Mask::apply(SkCanvas* canvas, const SkRect& drawBounds, const SkRect& textBounds, float progress, float feather, SkColor unsungColor, SkColor sungColor) {
 		progress = std::clamp(progress, 0.0f, 1.0f);
 		feather  = std::max(feather, 0.0f);
 
 		SkPaint paint;
 		paint.setBlendMode(SkBlendMode::kSrcIn);
 		if (feather <= 0.0f) {
-			paint.setColor(normalColor);
+			paint.setColor(unsungColor);
 			canvas->drawRect(drawBounds, paint);
 
 			canvas->save();
@@ -117,18 +117,19 @@ namespace music_lyric_player::render::components::line::normal::syllable::animat
 				drawBounds.top(),
 				textBounds.left() + textBounds.width() * progress,
 				drawBounds.bottom()));
-			paint.setColor(activeColor);
+			paint.setColor(sungColor);
 			canvas->drawRect(drawBounds, paint);
 			canvas->restore();
 			return;
 		}
 
-		const float transitionStart = textBounds.left() - 2.0f * feather + progress * (textBounds.width() + 2.0f * feather);
+		// The transition band is exactly one feather wide and slides so its edges meet the word box, matching the web mask geometry.
+		const float transitionStart = textBounds.left() - feather + progress * (textBounds.width() + feather);
 		const SkPoint points[2]{
 			{transitionStart, textBounds.top()},
-			{transitionStart + 2.0f * feather, textBounds.top()}
+			{transitionStart + feather, textBounds.top()}
 		};
-		const SkColor4f colors[2]{SkColor4f::FromColor(activeColor), SkColor4f::FromColor(normalColor)};
+		const SkColor4f colors[2]{SkColor4f::FromColor(sungColor), SkColor4f::FromColor(unsungColor)};
 		const SkGradient::Interpolation interpolation{
 			SkGradient::Interpolation::InPremul::kNo,
 			SkGradient::Interpolation::ColorSpace::kSRGB,

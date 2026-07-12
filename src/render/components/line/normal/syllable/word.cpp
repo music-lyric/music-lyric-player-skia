@@ -8,6 +8,7 @@
 #include <memory>
 
 #include "include/core/SkCanvas.h"
+#include "include/core/SkColor.h"
 #include "include/core/SkFont.h"
 #include "include/core/SkFontMetrics.h"
 #include "include/core/SkFontMgr.h"
@@ -224,7 +225,7 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		canvas->drawTextBlob(this->blob, x, y, paint);
 	}
 
-	void Word::paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor normalColor, SkColor activeColor) const {
+	void Word::paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor unsungColor, SkColor sungColor) const {
 		if (!this->blob) {
 			return;
 		}
@@ -232,9 +233,9 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		const SkRect textBounds = SkRect::MakeXYWH(x, y, this->measuredWidth, this->measuredHeight);
 		const SkRect drawBounds = textBounds.makeOutset(kGlyphOutset, kGlyphOutset);
 		canvas->saveLayer(&drawBounds, nullptr);
-		// Opaque coverage: the reveal gradient supplies both color and alpha, so the layer must not pre-dim the glyphs.
+		// Opaque coverage: the mask supplies the alpha, so the base glyph layer stays fully opaque here.
 		this->paintBlob(canvas, x, y, SK_ColorWHITE);
-		animation::Mask::apply(canvas, drawBounds, textBounds, progress, feather, normalColor, activeColor);
+		animation::Mask::apply(canvas, drawBounds, textBounds, progress, feather, unsungColor, sungColor);
 		canvas->restore();
 	}
 
@@ -255,18 +256,30 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		const float         drawX           = lineX + this->x;
 		const float         drawY           = lineY + this->y + offset;
 
-		const SkColor normalColor = utils::color::resolve(cfg.line.style.normal.color, config::Default.line.style.normal.color);
-		const SkColor activeColor = utils::color::resolve(cfg.line.style.active.color, config::Default.line.style.active.color);
+		const SkColor normalColor    = utils::color::resolve(cfg.line.style.normal.color, config::Default.line.style.normal.color);
+		const SkColor activeColor    = utils::color::resolve(cfg.line.style.active.color, config::Default.line.style.active.color);
+		const double  normalOpacity  = cfg.line.style.normal.opacity;
+		const double  activeOpacity  = cfg.line.style.active.opacity;
 
-		if (!active || (maskEnabled && maskProgress <= 0.0f)) {
-			this->paintBlob(canvas, drawX, drawY, normalColor);
+		// Inactive lines paint the whole word in the normal state color and opacity.
+		if (!active) {
+			this->paintBlob(canvas, drawX, drawY, utils::color::withOpacity(normalColor, normalOpacity));
 			return;
 		}
+
+		// The active line switches the rgb to the active color at once; the mask only wipes alpha, from the normal opacity (unsung) up to the active opacity (sung), so the hue never changes.
+		const SkColor sungColor   = utils::color::withOpacity(activeColor, activeOpacity);
+		const SkColor unsungColor = utils::color::withOpacity(activeColor, normalOpacity);
+
 		if (!maskEnabled || maskProgress >= 1.0f) {
-			this->paintBlob(canvas, drawX, drawY, activeColor);
+			this->paintBlob(canvas, drawX, drawY, sungColor);
 			return;
 		}
-		this->paintReveal(canvas, drawX, drawY, maskProgress, maskFeather, normalColor, activeColor);
+		if (maskProgress <= 0.0f) {
+			this->paintBlob(canvas, drawX, drawY, unsungColor);
+			return;
+		}
+		this->paintReveal(canvas, drawX, drawY, maskProgress, maskFeather, unsungColor, sungColor);
 	}
 
 	animation::Mask::Input Word::maskInput() const {

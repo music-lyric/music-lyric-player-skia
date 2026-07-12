@@ -82,9 +82,9 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		void paintBlob(SkCanvas* canvas, float x, float y, SkColor color) const;
 
 		/**
-		 * Paints the word coverage through the final two-color reveal gradient.
+		 * Reveals the word by wiping alpha from the unsung color to the sung color across its width.
 		 */
-		void paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor normalColor, SkColor activeColor) const;
+		void paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor unsungColor, SkColor sungColor) const;
 
 		std::string text;
 		double      start;

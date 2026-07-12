@@ -56,7 +56,9 @@ namespace music_lyric_player::render::components::line::normal {
 		if (this->syllableElement) {
 			this->syllableElement->paint(canvas, x, y, now, active, context);
 		} else if (this->plainElement) {
-			this->plainElement->paint(canvas, x, y, this->stateColor(now, active, normalColor, activeColor));
+			const SkColor normalStyle = utils::color::withOpacity(normalColor, cfg.line.style.normal.opacity);
+			const SkColor activeStyle = utils::color::withOpacity(activeColor, cfg.line.style.active.opacity);
+			this->plainElement->paint(canvas, x, y, this->stateColor(now, active, normalStyle, activeStyle));
 		}
 	}
 } // namespace music_lyric_player::render::components::line::normal

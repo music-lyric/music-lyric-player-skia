@@ -18,11 +18,11 @@ namespace music_lyric_player::render::config::line {
 		/**
 		 * Style of inactive lines.
 		 */
-		::music_lyric_player::render::config::common::StyleConfig normal = ::music_lyric_player::render::config::common::StyleConfig{ .color = "rgba(255, 255, 255, 0.4)" };
+		::music_lyric_player::render::config::common::StyleConfig normal = ::music_lyric_player::render::config::common::StyleConfig{ .color = "#ffffff", .opacity = 0.6 };
 		/**
 		 * Style of active lines.
 		 */
-		::music_lyric_player::render::config::common::StyleConfig active = ::music_lyric_player::render::config::common::StyleConfig{ .color = "#ffffff" };
+		::music_lyric_player::render::config::common::StyleConfig active = ::music_lyric_player::render::config::common::StyleConfig{ .color = "#ffffff", .opacity = 1.0 };
 	};
 
 	/**

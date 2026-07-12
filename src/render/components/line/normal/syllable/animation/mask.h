@@ -51,9 +51,9 @@ namespace music_lyric_player::render::components::line::normal::syllable::animat
 		float feather(std::size_t index) const;
 
 		/**
-		 * Colors the current glyph layer with a complete left-to-right reveal gradient.
+		 * Wipes the current glyph layer's alpha from the unsung color to the sung color, left to right.
 		 */
-		static void apply(SkCanvas* canvas, const SkRect& drawBounds, const SkRect& textBounds, float progress, float feather, SkColor normalColor, SkColor activeColor);
+		static void apply(SkCanvas* canvas, const SkRect& drawBounds, const SkRect& textBounds, float progress, float feather, SkColor unsungColor, SkColor sungColor);
 
 	private:
 		struct Segment {

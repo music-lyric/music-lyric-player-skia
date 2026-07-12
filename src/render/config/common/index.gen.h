@@ -46,6 +46,14 @@ namespace music_lyric_player::render::config::common {
 		 * @example "rgba(255, 255, 255, 0.8)"
 		 */
 		::std::string color = "#000000";
+		/**
+		 * Opacity of the render state in the [0, 1] range; 1 is fully opaque.
+		 *
+		 * @default 1.0
+		 * @minimum 0
+		 * @maximum 1
+		 */
+		double opacity = 1.0;
 	};
 
 	struct FontConfigPatch {
@@ -55,6 +63,7 @@ namespace music_lyric_player::render::config::common {
 
 	struct StyleConfigPatch {
 		::std::optional<::std::string> color;
+		::std::optional<double> opacity;
 	};
 
 	struct FontConfigChange {
@@ -65,6 +74,7 @@ namespace music_lyric_player::render::config::common {
 
 	struct StyleConfigChange {
 		bool color = false;
+		bool opacity = false;
 		bool any = false;
 	};
 
@@ -87,6 +97,9 @@ namespace music_lyric_player::render::config::common {
 		if (patch.color.has_value()) {
 			cfg.color = *patch.color;
 		}
+		if (patch.opacity.has_value()) {
+			cfg.opacity = *patch.opacity;
+		}
 	}
 
 	/**
@@ -106,7 +119,8 @@ namespace music_lyric_player::render::config::common {
 	inline StyleConfigChange diff(const StyleConfig& prev, const StyleConfig& next) {
 		StyleConfigChange change;
 		change.color = prev.color != next.color;
-		change.any = change.color;
+		change.opacity = prev.opacity != next.opacity;
+		change.any = change.color || change.opacity;
 		return change;
 	}
 

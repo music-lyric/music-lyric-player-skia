@@ -15,7 +15,8 @@
           "name": "normal",
           "nested": "common.StyleConfig",
           "defaults": {
-            "color": "\"rgba(255, 255, 255, 0.4)\""
+            "color": "\"#ffffff\"",
+            "opacity": "0.6"
           },
           "comment": "Style of inactive lines."
         },
@@ -23,7 +24,8 @@
           "name": "active",
           "nested": "common.StyleConfig",
           "defaults": {
-            "color": "\"#ffffff\""
+            "color": "\"#ffffff\"",
+            "opacity": "1.0"
           },
           "comment": "Style of active lines."
         }

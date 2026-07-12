@@ -1,0 +1,128 @@
+{
+  "namespace": "music_lyric_player::render::config::line::normal::main::syllable",
+  "file": "syllable.gen.h",
+  "imports": [
+    { "as": "common", "schema": "../../../common/index.schema.json" }
+  ],
+  "items": [
+    {
+      "name": "FloatConfig",
+      "comment": "Vertical motion applied to each timed word.",
+      "fields": [
+        {
+          "name": "enabled",
+          "type": "bool",
+          "default": "true",
+          "comment": "Whether timed words float while they are sung."
+        },
+        {
+          "name": "from",
+          "type": "double",
+          "default": "0.0",
+          "comment": "Starting vertical offset in logical pixels."
+        },
+        {
+          "name": "to",
+          "type": "double",
+          "default": "-2.0",
+          "comment": "Ending vertical offset in logical pixels."
+        }
+      ]
+    },
+    {
+      "name": "MaskFeatherConfig",
+      "comment": "Soft-edge sizing of the karaoke reveal mask.",
+      "fields": [
+        {
+          "name": "normal",
+          "type": "double",
+          "default": "0.5",
+          "min": 0,
+          "max": 2,
+          "comment": "Base feather width as a multiple of word height."
+        },
+        {
+          "name": "first",
+          "type": "double",
+          "default": "1.5",
+          "min": 0,
+          "max": 5,
+          "comment": "Feather multiplier for the first word."
+        },
+        {
+          "name": "last",
+          "type": "double",
+          "default": "0.5",
+          "min": 0,
+          "max": 5,
+          "comment": "Feather multiplier for the last word."
+        }
+      ]
+    },
+    {
+      "name": "MaskConfig",
+      "comment": "Left-to-right karaoke reveal mask.",
+      "fields": [
+        {
+          "name": "enabled",
+          "type": "bool",
+          "default": "true",
+          "comment": "Whether active words reveal progressively instead of switching immediately."
+        },
+        {
+          "name": "feather",
+          "nested": "MaskFeatherConfig",
+          "comment": "Soft-edge sizing of the reveal boundary."
+        }
+      ]
+    },
+    {
+      "name": "WordAnimationConfig",
+      "comment": "Animation settings of timed words.",
+      "fields": [
+        {
+          "name": "floating",
+          "nested": "FloatConfig",
+          "comment": "Vertical word motion."
+        },
+        {
+          "name": "mask",
+          "nested": "MaskConfig",
+          "comment": "Karaoke color reveal mask."
+        }
+      ]
+    },
+    {
+      "name": "WordConfig",
+      "comment": "Rendering settings of each timed word.",
+      "fields": [
+        {
+          "name": "animation",
+          "nested": "WordAnimationConfig",
+          "comment": "Float and reveal animations of the word."
+        }
+      ]
+    },
+    {
+      "name": "Root",
+      "comment": "Word-timed karaoke rendering settings.",
+      "fields": [
+        {
+          "name": "font",
+          "nested": "common.FontConfig",
+          "comment": "Font of the karaoke main content."
+        },
+        {
+          "name": "style",
+          "nested": "common.StateStyleConfig",
+          "comment": "Inactive and active styles of the karaoke main content."
+        },
+        {
+          "name": "word",
+          "nested": "WordConfig",
+          "comment": "Timed word rendering and animation settings."
+        }
+      ]
+    }
+  ]
+}

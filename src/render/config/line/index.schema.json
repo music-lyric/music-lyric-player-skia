@@ -1,26 +1,11 @@
 {
   "namespace": "music_lyric_player::render::config::line",
   "file": "index.gen.h",
-  "imports": [
-    { "as": "interlude", "schema": "interlude/index.schema.json" },
-    { "as": "normal", "schema": "normal/index.schema.json" }
-  ],
-  "items": [
-    {
-      "name": "Root",
-      "comment": "Normal-line rendering and instrumental-gap indicators.",
-      "fields": [
-        {
-          "name": "normal",
-          "nested": "normal.Root",
-          "comment": "Rendering settings of vocal lyric lines."
-        },
-        {
-          "name": "interlude",
-          "nested": "interlude.Root",
-          "comment": "Instrumental-gap indicator geometry and animation styles."
-        }
-      ]
-    }
-  ]
+  "root": {
+    "comment": "Normal-line rendering and instrumental-gap indicators.",
+    "modules": [
+      { "name": "normal", "schema": "normal/index.schema.json", "comment": "Rendering settings of vocal lyric lines." },
+      { "name": "interlude", "schema": "interlude/index.schema.json", "comment": "Instrumental-gap indicator geometry and animation styles." }
+    ]
+  }
 }

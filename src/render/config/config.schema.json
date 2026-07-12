@@ -2,44 +2,14 @@
   "namespace": "music_lyric_player::render::config",
   "file": "config.gen.h",
   "defaultInstance": true,
-  "imports": [
-    { "as": "container", "schema": "container/index.schema.json" },
-    { "as": "layout", "schema": "layout/index.schema.json" },
-    { "as": "scroll", "schema": "scroll/index.schema.json" },
-    { "as": "line", "schema": "line/index.schema.json" },
-    { "as": "effect", "schema": "effect/index.schema.json" }
-  ],
-  "items": [
-    {
-      "name": "Root",
-      "comment": "Renderer configuration.",
-      "fields": [
-        {
-          "name": "container",
-          "nested": "container.Root",
-          "comment": "Background fill and padding of the player."
-        },
-        {
-          "name": "layout",
-          "nested": "layout.Root",
-          "comment": "Alignment and spacing between lyric lines."
-        },
-        {
-          "name": "scroll",
-          "nested": "scroll.Root",
-          "comment": "Viewport scrolling and its transition animation."
-        },
-        {
-          "name": "line",
-          "nested": "line.Root",
-          "comment": "Font and per-state colors of lyric lines."
-        },
-        {
-          "name": "effect",
-          "nested": "effect.Root",
-          "comment": "Distance-from-focus scale and blur effects."
-        }
-      ]
-    }
-  ]
+  "root": {
+    "comment": "Renderer configuration.",
+    "modules": [
+      { "name": "container", "schema": "container/index.schema.json", "comment": "Background fill and padding of the player." },
+      { "name": "layout", "schema": "layout/index.schema.json", "comment": "Alignment and spacing between lyric lines." },
+      { "name": "scroll", "schema": "scroll/index.schema.json", "comment": "Viewport scrolling and its transition animation." },
+      { "name": "line", "schema": "line/index.schema.json", "comment": "Font and per-state colors of lyric lines." },
+      { "name": "effect", "schema": "effect/index.schema.json", "comment": "Distance-from-focus scale and blur effects." }
+    ]
+  }
 }

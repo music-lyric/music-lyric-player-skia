@@ -2,7 +2,7 @@
   "namespace": "music_lyric_player::render::config::line::normal::main",
   "file": "index.gen.h",
   "imports": [
-    { "as": "syllable", "schema": "syllable/index.schema.json" }
+    { "as": "syllable", "schema": "syllable.schema.json" }
   ],
   "items": [
     {

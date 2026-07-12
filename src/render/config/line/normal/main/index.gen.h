@@ -8,7 +8,7 @@
 
 #include <optional>
 
-#include "render/config/line/normal/main/syllable/index.gen.h"
+#include "render/config/line/normal/main/syllable.gen.h"
 
 namespace music_lyric_player::render::config::line::normal::main {
 	/**

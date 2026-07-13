@@ -15,11 +15,11 @@ target_link_libraries(music_lyric_player_playback PUBLIC
 
 add_library(music_lyric_player_render
 	render/components/line/normal/index.cpp
-	render/components/line/normal/plain/index.cpp
-	render/components/line/normal/syllable/index.cpp
-	render/components/line/normal/syllable/word.cpp
-	render/components/line/normal/syllable/animation/float.cpp
-	render/components/line/normal/syllable/animation/mask.cpp
+	render/components/line/normal/main/plain/index.cpp
+	render/components/line/normal/main/syllable/index.cpp
+	render/components/line/normal/main/syllable/word.cpp
+	render/components/line/normal/main/syllable/animation/float.cpp
+	render/components/line/normal/main/syllable/animation/mask.cpp
 	render/components/line/interlude/index.cpp
 	render/core/effect.cpp
 	render/core/layout.cpp

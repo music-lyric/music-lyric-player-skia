@@ -1,4 +1,4 @@
-#include "render/components/line/normal/syllable/animation/mask.h"
+#include "render/components/line/normal/main/syllable/animation/mask.h"
 
 #include <algorithm>
 #include <cmath>
@@ -11,7 +11,7 @@
 #include "include/core/SkTileMode.h"
 #include "include/effects/SkGradient.h"
 
-namespace music_lyric_player::render::components::line::normal::syllable::animation {
+namespace music_lyric_player::render::components::line::normal::main::syllable::animation {
 	Mask::Mask(double lineStart, double lineDuration)
 	    : lineStart(lineStart),
 	      lineDuration(std::max(lineDuration, 0.0)) {}
@@ -138,4 +138,4 @@ namespace music_lyric_player::render::components::line::normal::syllable::animat
 		paint.setShader(SkShaders::LinearGradient(points, {{colors, SkTileMode::kClamp}, interpolation}, nullptr));
 		canvas->drawRect(drawBounds, paint);
 	}
-} // namespace music_lyric_player::render::components::line::normal::syllable::animation
+} // namespace music_lyric_player::render::components::line::normal::main::syllable::animation

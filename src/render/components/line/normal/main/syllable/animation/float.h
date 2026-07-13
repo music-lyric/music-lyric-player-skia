@@ -1,9 +1,9 @@
-#ifndef MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_SYLLABLE_ANIMATION_FLOAT_H_
-#define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_SYLLABLE_ANIMATION_FLOAT_H_
+#ifndef MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_ANIMATION_FLOAT_H_
+#define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_ANIMATION_FLOAT_H_
 
 #include "render/utils/animation/easing.h"
 
-namespace music_lyric_player::render::components::line::normal::syllable::animation {
+namespace music_lyric_player::render::components::line::normal::main::syllable::animation {
 	/**
 	 * Content-timed vertical word motion sampled directly from playback time.
 	 */
@@ -31,6 +31,6 @@ namespace music_lyric_player::render::components::line::normal::syllable::animat
 		mutable float  phase      = 0.0f;
 		mutable double exitStart  = 0.0;
 	};
-} // namespace music_lyric_player::render::components::line::normal::syllable::animation
+} // namespace music_lyric_player::render::components::line::normal::main::syllable::animation
 
-#endif // MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_SYLLABLE_ANIMATION_FLOAT_H_
+#endif // MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_ANIMATION_FLOAT_H_

@@ -1,4 +1,4 @@
-#include "render/components/line/normal/syllable/index.h"
+#include "render/components/line/normal/main/syllable/index.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -8,10 +8,10 @@
 
 #include "music_lyric_model.h"
 #include "render/common/context.h"
-#include "render/components/line/normal/syllable/word.h"
+#include "render/components/line/normal/main/syllable/word.h"
 #include "render/utils/length.h"
 
-namespace music_lyric_player::render::components::line::normal::syllable {
+namespace music_lyric_player::render::components::line::normal::main::syllable {
 	namespace {
 		/**
 		 * Returns the line's absolute start time, or zero when timing is absent.
@@ -135,4 +135,4 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 	float Element::height() const {
 		return this->measuredHeight;
 	}
-} // namespace music_lyric_player::render::components::line::normal::syllable
+} // namespace music_lyric_player::render::components::line::normal::main::syllable

@@ -1,12 +1,12 @@
-#ifndef MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_SYLLABLE_WORD_H_
-#define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_SYLLABLE_WORD_H_
+#ifndef MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_WORD_H_
+#define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_WORD_H_
 
 #include <cstddef>
 #include <string>
 
 #include "include/core/SkColor.h"
 #include "include/core/SkRefCnt.h"
-#include "render/components/line/normal/syllable/animation/index.h"
+#include "render/components/line/normal/main/syllable/animation/index.h"
 
 class SkCanvas;
 class SkTextBlob;
@@ -19,7 +19,7 @@ namespace music_lyric_player::render::common {
 	struct RenderContext;
 } // namespace music_lyric_player::render::common
 
-namespace music_lyric_player::render::components::line::normal::syllable {
+namespace music_lyric_player::render::components::line::normal::main::syllable {
 	/**
 	 * One cached timed-word paragraph with karaoke reveal and vertical float animation.
 	 */
@@ -100,6 +100,6 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		float             x                = 0.0f;
 		float             y                = 0.0f;
 	};
-} // namespace music_lyric_player::render::components::line::normal::syllable
+} // namespace music_lyric_player::render::components::line::normal::main::syllable
 
-#endif // MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_SYLLABLE_WORD_H_
+#endif // MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_WORD_H_

@@ -1,4 +1,4 @@
-#include "render/components/line/normal/plain/index.h"
+#include "render/components/line/normal/main/plain/index.h"
 
 #include <algorithm>
 #include <memory>
@@ -24,7 +24,7 @@
 
 namespace tl = ::skia::textlayout;
 
-namespace music_lyric_player::render::components::line::normal::plain {
+namespace music_lyric_player::render::components::line::normal::main::plain {
 	namespace {
 		using Align = config::layout::Align;
 
@@ -104,4 +104,4 @@ namespace music_lyric_player::render::components::line::normal::plain {
 	float Element::height() const {
 		return this->measuredHeight;
 	}
-} // namespace music_lyric_player::render::components::line::normal::plain
+} // namespace music_lyric_player::render::components::line::normal::main::plain

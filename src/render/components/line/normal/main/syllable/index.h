@@ -1,10 +1,10 @@
-#ifndef MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_SYLLABLE_INDEX_H_
-#define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_SYLLABLE_INDEX_H_
+#ifndef MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_INDEX_H_
+#define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_INDEX_H_
 
 #include <memory>
 #include <vector>
 
-#include "render/components/line/normal/syllable/animation/mask.h"
+#include "render/components/line/normal/main/syllable/animation/mask.h"
 
 class SkCanvas;
 
@@ -16,7 +16,7 @@ namespace music_lyric_player::render::common {
 	struct RenderContext;
 } // namespace music_lyric_player::render::common
 
-namespace music_lyric_player::render::components::line::normal::syllable {
+namespace music_lyric_player::render::components::line::normal::main::syllable {
 	class Word;
 
 	/**
@@ -55,6 +55,6 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 		float                              width          = 0.0f;
 		float                              measuredHeight = 0.0f;
 	};
-} // namespace music_lyric_player::render::components::line::normal::syllable
+} // namespace music_lyric_player::render::components::line::normal::main::syllable
 
-#endif // MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_SYLLABLE_INDEX_H_
+#endif // MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_INDEX_H_

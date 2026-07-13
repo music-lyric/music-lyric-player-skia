@@ -1,4 +1,4 @@
-#include "render/components/line/normal/syllable/word.h"
+#include "render/components/line/normal/main/syllable/word.h"
 
 #include <algorithm>
 #include <cmath>
@@ -29,7 +29,7 @@
 #include "render/utils/color/parse.h"
 #include "render/utils/length.h"
 
-namespace music_lyric_player::render::components::line::normal::syllable {
+namespace music_lyric_player::render::components::line::normal::main::syllable {
 	namespace {
 		constexpr float kGlyphOutset    = 2.0f;
 		constexpr float kUnboundedWidth = 1'000'000.0f;
@@ -301,4 +301,4 @@ namespace music_lyric_player::render::components::line::normal::syllable {
 	float Word::baseline() const {
 		return this->measuredBaseline;
 	}
-} // namespace music_lyric_player::render::components::line::normal::syllable
+} // namespace music_lyric_player::render::components::line::normal::main::syllable

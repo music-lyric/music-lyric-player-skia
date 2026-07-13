@@ -1,5 +1,5 @@
-#ifndef MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_PLAIN_INDEX_H_
-#define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_PLAIN_INDEX_H_
+#ifndef MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_PLAIN_INDEX_H_
+#define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_PLAIN_INDEX_H_
 
 #include <memory>
 #include <string>
@@ -20,7 +20,7 @@ namespace music_lyric_player::render::common {
 	struct RenderContext;
 } // namespace music_lyric_player::render::common
 
-namespace music_lyric_player::render::components::line::normal::plain {
+namespace music_lyric_player::render::components::line::normal::main::plain {
 	/**
 	 * A plain normal-line body that shapes the complete line into one cached paragraph.
 	 */
@@ -57,6 +57,6 @@ namespace music_lyric_player::render::components::line::normal::plain {
 		float                                          width          = 0.0f;
 		float                                          measuredHeight = 0.0f;
 	};
-} // namespace music_lyric_player::render::components::line::normal::plain
+} // namespace music_lyric_player::render::components::line::normal::main::plain
 
-#endif // MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_PLAIN_INDEX_H_
+#endif // MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_PLAIN_INDEX_H_

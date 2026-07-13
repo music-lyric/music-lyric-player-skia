@@ -1,11 +1,11 @@
-#include "render/components/line/normal/syllable/animation/float.h"
+#include "render/components/line/normal/main/syllable/animation/float.h"
 
 #include <algorithm>
 #include <cmath>
 
 #include "render/utils/animation/interpolate.h"
 
-namespace music_lyric_player::render::components::line::normal::syllable::animation {
+namespace music_lyric_player::render::components::line::normal::main::syllable::animation {
 	Float::Float(double start, double duration)
 	    : start(std::isfinite(start) ? start : 0.0),
 	      duration(std::isfinite(duration) ? std::max(duration, 0.0) : 0.0) {}
@@ -49,4 +49,4 @@ namespace music_lyric_player::render::components::line::normal::syllable::animat
 
 		return from;
 	}
-} // namespace music_lyric_player::render::components::line::normal::syllable::animation
+} // namespace music_lyric_player::render::components::line::normal::main::syllable::animation

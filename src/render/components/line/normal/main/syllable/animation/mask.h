@@ -1,5 +1,5 @@
-#ifndef MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_SYLLABLE_ANIMATION_MASK_H_
-#define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_SYLLABLE_ANIMATION_MASK_H_
+#ifndef MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_ANIMATION_MASK_H_
+#define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_ANIMATION_MASK_H_
 
 #include <cstddef>
 #include <vector>
@@ -9,7 +9,7 @@
 
 class SkCanvas;
 
-namespace music_lyric_player::render::components::line::normal::syllable::animation {
+namespace music_lyric_player::render::components::line::normal::main::syllable::animation {
 	/**
 	 * Line-wide karaoke mask timeline that converts word timing and geometry into per-word reveal frames.
 	 */
@@ -74,6 +74,6 @@ namespace music_lyric_player::render::components::line::normal::syllable::animat
 		mutable std::vector<float> phases;
 		mutable std::vector<Frame> frames;
 	};
-} // namespace music_lyric_player::render::components::line::normal::syllable::animation
+} // namespace music_lyric_player::render::components::line::normal::main::syllable::animation
 
-#endif // MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_SYLLABLE_ANIMATION_MASK_H_
+#endif // MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_ANIMATION_MASK_H_

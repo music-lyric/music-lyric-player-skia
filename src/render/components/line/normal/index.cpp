@@ -5,8 +5,8 @@
 
 #include "include/core/SkColor.h"
 #include "render/common/context.h"
-#include "render/components/line/normal/plain/index.h"
-#include "render/components/line/normal/syllable/index.h"
+#include "render/components/line/normal/main/plain/index.h"
+#include "render/components/line/normal/main/syllable/index.h"
 #include "render/utils/color/parse.h"
 
 namespace music_lyric_player::render::components::line::normal {
@@ -25,10 +25,10 @@ namespace music_lyric_player::render::components::line::normal {
 		this->syllableMode = useSyllable;
 		if (useSyllable) {
 			this->plainElement.reset();
-			this->syllableElement = std::make_unique<syllable::Element>(this->info);
+			this->syllableElement = std::make_unique<main::syllable::Element>(this->info);
 		} else {
 			this->syllableElement.reset();
-			this->plainElement = std::make_unique<plain::Element>(this->info);
+			this->plainElement = std::make_unique<main::plain::Element>(this->info);
 		}
 	}
 

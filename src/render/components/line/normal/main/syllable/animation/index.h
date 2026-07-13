@@ -1,0 +1,7 @@
+#ifndef MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_ANIMATION_INDEX_H_
+#define MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_ANIMATION_INDEX_H_
+
+#include "render/components/line/normal/main/syllable/animation/float.h"
+#include "render/components/line/normal/main/syllable/animation/mask.h"
+
+#endif // MUSIC_LYRIC_PLAYER_RENDER_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_ANIMATION_INDEX_H_

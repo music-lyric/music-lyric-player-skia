@@ -15,13 +15,13 @@ namespace music_lyric_player::render::common {
 	struct RenderContext;
 } // namespace music_lyric_player::render::common
 
-namespace music_lyric_player::render::components::line::normal::plain {
+namespace music_lyric_player::render::components::line::normal::main::plain {
 	class Element;
-} // namespace music_lyric_player::render::components::line::normal::plain
+} // namespace music_lyric_player::render::components::line::normal::main::plain
 
-namespace music_lyric_player::render::components::line::normal::syllable {
+namespace music_lyric_player::render::components::line::normal::main::syllable {
 	class Element;
-} // namespace music_lyric_player::render::components::line::normal::syllable
+} // namespace music_lyric_player::render::components::line::normal::main::syllable
 
 namespace music_lyric_player::render::components::line::normal {
 	/**
@@ -58,8 +58,8 @@ namespace music_lyric_player::render::components::line::normal {
 		const ::lyric::runtime::Line&      info;
 		bool                               syllableEnable;
 		bool                               syllableMode = false;
-		std::unique_ptr<plain::Element>    plainElement;
-		std::unique_ptr<syllable::Element> syllableElement;
+		std::unique_ptr<main::plain::Element>    plainElement;
+		std::unique_ptr<main::syllable::Element> syllableElement;
 	};
 } // namespace music_lyric_player::render::components::line::normal
 

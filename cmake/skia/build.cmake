@@ -13,7 +13,7 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
 endif()
 
 # Modules to build
-set(SKIA_MODULES skia skparagraph skshaper skunicode_core skunicode_icu)
+set(SKIA_MODULES skia skshaper skunicode_core skunicode_icu)
 
 # Parameters
 if(NOT DEFINED SKIA_BUILD_CONFIG)
@@ -131,7 +131,7 @@ set(_gn_args
 	"skia_use_libwebp_decode = false"
 	"skia_use_libwebp_encode = false"
 	"skia_use_system_expat = false"
-	"skia_enable_skparagraph = true"
+	"skia_enable_skparagraph = false"
 	"skia_enable_svg = false"
 )
 

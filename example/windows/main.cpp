@@ -20,8 +20,8 @@ int main() {
 	music_lyric_player::playback::Player player;
 	music_lyric_player::render::Renderer renderer(player, fontMgr, player.clock());
 
-	// DirectWrite cannot resolve SkParagraph's default "sans-serif" family, so pick a concrete
-	// system family (covers CJK and latin); also centre-align the lyrics for the demo.
+	// DirectWrite cannot resolve a generic "sans-serif" family, so pick a concrete system family covering CJK and latin.
+	// The demo also left-aligns the lyrics.
 	renderer.config.modify([](music_lyric_player::render::config::Root& cfg) {
 		cfg.layout.align                                              = music_lyric_player::render::config::layout::Align::Left;
 		cfg.line.normal.main.syllable.font.size                       = "42px";

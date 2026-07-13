@@ -5,7 +5,7 @@
 include_guard(GLOBAL)
 
 # Modules
-set(SKIA_MODULES skia skparagraph skshaper skunicode_core skunicode_icu)
+set(SKIA_MODULES skia skshaper skunicode_core skunicode_icu)
 
 # Skia root
 set(SKIA_SRC "${CMAKE_SOURCE_DIR}/third-party/skia" CACHE PATH "Skia submodule source dir")

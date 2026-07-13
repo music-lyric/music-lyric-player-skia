@@ -17,10 +17,6 @@ class SkFontMgr;
 class SkShaper;
 class SkUnicode;
 
-namespace skia::textlayout {
-	class FontCollection;
-} // namespace skia::textlayout
-
 namespace lyric::runtime {
 	class Info;
 } // namespace lyric::runtime
@@ -90,12 +86,11 @@ namespace music_lyric_player::render {
 		 */
 		void rebuildLines(const ::lyric::runtime::Info& info);
 
-		playback::Player&                         player;
-		sk_sp<SkFontMgr>                          fontMgr;
-		const Clock&                              clock;
-		sk_sp<::skia::textlayout::FontCollection> fonts;
-		sk_sp<SkUnicode>                          unicode;
-		std::unique_ptr<SkShaper>                 shaper;
+		playback::Player&         player;
+		sk_sp<SkFontMgr>          fontMgr;
+		const Clock&              clock;
+		sk_sp<SkUnicode>          unicode;
+		std::unique_ptr<SkShaper> shaper;
 
 		int activeIndex = -1;
 

@@ -12,7 +12,6 @@
 #include "include/core/SkRect.h"
 #include "include/core/SkTileMode.h"
 #include "include/effects/SkImageFilters.h"
-#include "modules/skparagraph/include/FontCollection.h"
 #include "modules/skshaper/include/SkShaper.h"
 #include "modules/skunicode/include/SkUnicode.h"
 #include "modules/skunicode/include/SkUnicode_icu.h"
@@ -22,8 +21,6 @@
 #include "render/utils/color/parse.h"
 #include "render/utils/length.h"
 #include "runtime/info.pb.h"
-
-namespace tl = ::skia::textlayout;
 
 namespace music_lyric_player::render {
 	namespace {
@@ -36,12 +33,7 @@ namespace music_lyric_player::render {
 	    : player(player),
 	      fontMgr(std::move(fontMgr)),
 	      clock(clock) {
-		// Resolve families from the system font manager, with per-glyph fallback so mixed scripts do not render as tofu.
-		this->fonts = sk_make_sp<tl::FontCollection>();
-		this->fonts->setDefaultFontManager(this->fontMgr);
-		this->fonts->enableFontFallback();
-
-		// Unicode backend drives SkParagraph's word / grapheme / line-break boundaries.
+		// Unicode backend drives the shaper's word / grapheme / line-break boundaries.
 		this->unicode = SkUnicodes::ICU::Make();
 
 		// Shared HarfBuzz shaper drives the self-laid-out timed words; it keeps the ICU backend for BiDi / script so minority scripts survive.
@@ -124,7 +116,7 @@ namespace music_lyric_player::render {
 			return;
 		}
 		const config::Root&         cfg = this->config.current();
-		const common::RenderContext context{cfg, this->fonts, this->unicode, this->fontMgr, this->shaper.get(), this->player.currentTime()};
+		const common::RenderContext context{cfg, this->unicode, this->fontMgr, this->shaper.get(), this->player.currentTime()};
 
 		// Background always fills, even before a lyric loads.
 		canvas->clear(utils::color::resolve(cfg.container.backgroundColor, config::Default.container.backgroundColor));

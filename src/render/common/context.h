@@ -8,10 +8,6 @@ class SkUnicode;
 class SkFontMgr;
 class SkShaper;
 
-namespace skia::textlayout {
-	class FontCollection;
-} // namespace skia::textlayout
-
 namespace music_lyric_player::render::common {
 	/**
 	 * Non-owning bundle of shared resources handed to line components each frame for layout and paint.
@@ -19,12 +15,11 @@ namespace music_lyric_player::render::common {
 	 * Carries playback time so content-timed animations remain stable across pause and seek.
 	 */
 	struct RenderContext {
-		const config::Root&                              config;
-		const sk_sp<::skia::textlayout::FontCollection>& fonts;
-		const sk_sp<SkUnicode>&                          unicode;
-		const sk_sp<SkFontMgr>&                          fontMgr;
-		SkShaper*                                        shaper;
-		double                                           currentTime;
+		const config::Root&     config;
+		const sk_sp<SkUnicode>& unicode;
+		const sk_sp<SkFontMgr>& fontMgr;
+		SkShaper*               shaper;
+		double                  currentTime;
 	};
 } // namespace music_lyric_player::render::common
 

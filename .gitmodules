@@ -8,3 +8,6 @@
 	url = https://github.com/google/skia.git
 	branch = chrome/m150
 	shallow = true
+[submodule "third-party/glaze"]
+	path = third-party/glaze
+	url = https://github.com/stephenberry/glaze.git

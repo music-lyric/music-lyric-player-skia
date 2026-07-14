@@ -15,6 +15,7 @@ endif()
 # Prebuilt third-party libs; build each once with `cmake -P cmake/<lib>/build.cmake`.
 include(cmake/lyric/include.cmake)
 include(cmake/skia/include.cmake)
+include(cmake/glaze/include.cmake)
 
 add_subdirectory(src)
 

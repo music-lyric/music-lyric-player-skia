@@ -1,6 +1,7 @@
 #ifndef MUSIC_LYRIC_PLAYER_RENDERER_H_
 #define MUSIC_LYRIC_PLAYER_RENDERER_H_
 
+#include <string>
 #include <utility>
 
 #include "abi.h"
@@ -40,6 +41,14 @@ namespace music_lyric_player {
 
 		void resize() {
 			music_lyric_player_renderer_resize(this->handle);
+		}
+
+		void updateConfig(const char* json) {
+			music_lyric_player_renderer_update_config_json(this->handle, json);
+		}
+
+		void updateConfig(const std::string& json) {
+			music_lyric_player_renderer_update_config_json(this->handle, json.c_str());
 		}
 
 		explicit operator bool() const noexcept {

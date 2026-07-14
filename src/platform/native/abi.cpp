@@ -9,11 +9,11 @@
 #include <type_traits>
 #include <vector>
 
-#include "glaze/json.hpp"
 #include "include/core/SkFontMgr.h"
 #include "backend/font/font.h"
 #include "backend/gpu/surface.h"
 #include "playback/player.h"
+#include "render/config/config.gen.glaze.h"
 #include "render/config/index.h"
 #include "render/renderer.h"
 #include "runtime/info.pb.h"

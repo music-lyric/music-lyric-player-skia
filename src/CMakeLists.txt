@@ -54,3 +54,20 @@ target_include_directories(music_lyric_player_backend PUBLIC "${CMAKE_CURRENT_SO
 target_link_libraries(music_lyric_player_backend PUBLIC
 	skia::skia
 	Vulkan::Vulkan)
+
+add_library(music_lyric_player_native STATIC
+	platform/native/abi.cpp
+)
+add_library(music_lyric_player::native ALIAS music_lyric_player_native)
+
+target_compile_features(music_lyric_player_native PUBLIC cxx_std_20)
+
+target_compile_definitions(music_lyric_player_native PUBLIC MUSIC_LYRIC_PLAYER_STATIC_DEFINE)
+
+target_include_directories(music_lyric_player_native PUBLIC "${CMAKE_SOURCE_DIR}/include")
+
+target_link_libraries(music_lyric_player_native PUBLIC
+	music_lyric_player::backend
+	music_lyric_player::render
+	music_lyric_player::playback
+	music_lyric::model)

@@ -43,6 +43,7 @@ target_link_libraries(music_lyric_player_render PUBLIC
 
 add_library(music_lyric_player_backend
 	backend/gpu/vulkan.cpp
+	backend/font/font_win.cpp
 )
 add_library(music_lyric_player::backend ALIAS music_lyric_player_backend)
 

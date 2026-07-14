@@ -1,7 +1,7 @@
 #ifndef MUSIC_LYRIC_PLAYER_UTILS_CLOCK_CLOCK_H_
 #define MUSIC_LYRIC_PLAYER_UTILS_CLOCK_CLOCK_H_
 
-namespace music_lyric_player {
+namespace music_lyric_player::utils {
 	class Clock {
 	public:
 		virtual ~Clock() = default;
@@ -11,6 +11,6 @@ namespace music_lyric_player {
 		 */
 		virtual double now() const = 0;
 	};
-} // namespace music_lyric_player
+} // namespace music_lyric_player::utils
 
 #endif

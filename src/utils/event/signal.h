@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-namespace music_lyric_player {
+namespace music_lyric_player::utils {
 	template <typename... Args>
 	class Signal {
 	public:
@@ -63,6 +63,6 @@ namespace music_lyric_player {
 		std::vector<Entry> listeners;
 		std::size_t        nextId = 1;
 	};
-} // namespace music_lyric_player
+} // namespace music_lyric_player::utils
 
 #endif

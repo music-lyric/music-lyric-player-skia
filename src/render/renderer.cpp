@@ -29,7 +29,7 @@ namespace music_lyric_player::render {
 		constexpr float kBlurEpsilon  = 0.3f;
 	} // namespace
 
-	Renderer::Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const Clock& clock)
+	Renderer::Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const music_lyric_player::utils::Clock& clock)
 	    : player(player),
 	      fontMgr(std::move(fontMgr)),
 	      clock(clock) {

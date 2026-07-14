@@ -37,7 +37,7 @@ namespace music_lyric_player::render {
 		 * Binds to the timing engine, a system font manager and the shared clock.
 		 * The clock is sampled each frame to drive the scroll ease.
 		 */
-		Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const Clock& clock);
+		Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const music_lyric_player::utils::Clock& clock);
 
 		/**
 		 * Unsubscribes from the timing engine and releases layout resources.
@@ -86,11 +86,11 @@ namespace music_lyric_player::render {
 		 */
 		void rebuildLines(const ::lyric::runtime::Info& info);
 
-		playback::Player&         player;
-		sk_sp<SkFontMgr>          fontMgr;
-		const Clock&              clock;
-		sk_sp<SkUnicode>          unicode;
-		std::unique_ptr<SkShaper> shaper;
+		playback::Player&                       player;
+		sk_sp<SkFontMgr>                        fontMgr;
+		const music_lyric_player::utils::Clock& clock;
+		sk_sp<SkUnicode>                        unicode;
+		std::unique_ptr<SkShaper>               shaper;
 
 		int activeIndex = -1;
 

@@ -3,7 +3,7 @@
 
 #include "utils/clock/clock.h"
 
-namespace music_lyric_player {
+namespace music_lyric_player::utils {
 	class SteadyClock : public Clock {
 	public:
 		/**
@@ -11,6 +11,6 @@ namespace music_lyric_player {
 		 */
 		double now() const override;
 	};
-} // namespace music_lyric_player
+} // namespace music_lyric_player::utils
 
 #endif

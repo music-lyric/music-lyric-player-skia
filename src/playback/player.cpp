@@ -13,8 +13,8 @@ namespace music_lyric_player::playback {
 		/**
 		 * Shared stateless real-time clock used when no clock is injected.
 		 */
-		const Clock& defaultClock() {
-			static SteadyClock clock;
+		const utils::Clock& defaultClock() {
+			static utils::SteadyClock clock;
 			return clock;
 		}
 
@@ -89,7 +89,7 @@ namespace music_lyric_player::playback {
 	Player::Player()
 	    : Player(defaultClock()) {}
 
-	Player::Player(const Clock& clock)
+	Player::Player(const utils::Clock& clock)
 	    : clockRef(clock) {
 		this->configListenerId = this->config.onUpdate.add([this](const config::RootChange& changes, const config::Root&) {
 			onConfigUpdate(changes);
@@ -213,7 +213,7 @@ namespace music_lyric_player::playback {
 		return this->offset.resolve(this->config.current().offset.global);
 	}
 
-	const Clock& Player::clock() const {
+	const utils::Clock& Player::clock() const {
 		return this->clockRef;
 	}
 

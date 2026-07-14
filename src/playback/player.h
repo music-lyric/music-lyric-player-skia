@@ -27,7 +27,7 @@ namespace music_lyric_player::playback {
 		/**
 		 * Constructs the player against an injected clock (tests, recording or a shared clock).
 		 */
-		explicit Player(const Clock& clock);
+		explicit Player(const utils::Clock& clock);
 
 		/**
 		 * Loads a parsed lyric, rejecting versions outside the supported caret range.
@@ -102,14 +102,14 @@ namespace music_lyric_player::playback {
 		/**
 		 * The clock this player reads time from (the renderer shares it).
 		 */
-		const Clock& clock() const;
+		const utils::Clock& clock() const;
 
 		config::Manager config;
 
-		Signal<double>                             onPlay;
-		Signal<double>                             onPause;
-		Signal<const ::lyric::runtime::Info&>      onLyricUpdate;
-		Signal<const std::vector<int>&, int, bool> onLinesUpdate;
+		utils::Signal<double>                             onPlay;
+		utils::Signal<double>                             onPause;
+		utils::Signal<const ::lyric::runtime::Info&>      onLyricUpdate;
+		utils::Signal<const std::vector<int>&, int, bool> onLinesUpdate;
 
 	private:
 		/**
@@ -151,7 +151,7 @@ namespace music_lyric_player::playback {
 		 */
 		void onConfigUpdate(const config::RootChange& changes);
 
-		const Clock&           clockRef;
+		const utils::Clock&    clockRef;
 		bool                   playing   = false;
 		int                    scanIndex = 0;
 		std::vector<int>       activeIndex;

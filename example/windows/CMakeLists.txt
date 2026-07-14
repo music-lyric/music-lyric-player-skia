@@ -1,6 +1,6 @@
 include(FetchContent)
 
-# GLFW (window + Vulkan surface + input). Fetched, not vendored.
+# GLFW (window + input). Fetched, not vendored. The backend owns the Vulkan surface, not GLFW.
 FetchContent_Declare(
 	glfw
 	GIT_REPOSITORY https://github.com/glfw/glfw.git
@@ -13,13 +13,10 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glfw)
 
-# Vulkan headers + loader. The user installs the SDK; VULKAN_SDK drives discovery.
-find_package(Vulkan REQUIRED)
-
 add_executable(music_lyric_player_example_windows
 	main.cpp
 	sample_lyric.cpp
-	vulkan_window.cpp
+	window.cpp
 )
 
 target_compile_features(music_lyric_player_example_windows PRIVATE cxx_std_20)
@@ -27,10 +24,11 @@ target_compile_features(music_lyric_player_example_windows PRIVATE cxx_std_20)
 target_include_directories(music_lyric_player_example_windows PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # music_lyric_player::render transitively brings playback, the lyric model (with its /utf-8 flag) and skia.
+# music_lyric_player::backend brings the GPU surface and font manager, and transitively Vulkan.
 target_link_libraries(music_lyric_player_example_windows PRIVATE
+	music_lyric_player::backend
 	music_lyric_player::render
-	glfw
-	Vulkan::Vulkan)
+	glfw)
 
 # Skia's ICU backend (SkUnicode) memory-maps icudtl.dat from the executable's directory at runtime.
 # Copy Skia's data file next to the binary after each build.

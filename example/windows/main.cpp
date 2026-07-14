@@ -1,21 +1,28 @@
 #include <cstdio>
 
 #include "include/core/SkFontMgr.h"
-#include "include/ports/SkTypeface_win.h"
+#include "backend/font/font.h"
+#include "backend/gpu/surface.h"
 #include "playback/player.h"
 #include "render/config/index.h"
 #include "render/renderer.h"
 #include "sample_lyric.h"
-#include "vulkan_window.h"
+#include "window.h"
 
 int main() {
-	example::VulkanWindow window;
+	example::Window window;
 	if (!window.init(1280, 800, "music-lyric-player - skia")) {
-		std::fprintf(stderr, "[example] failed to initialise the Vulkan window\n");
+		std::fprintf(stderr, "[example] failed to initialise the window\n");
 		return 1;
 	}
 
-	sk_sp<SkFontMgr> fontMgr = SkFontMgr_New_DirectWrite();
+	auto surface = music_lyric_player::backend::gpu::createWindowSurface({window.hwnd()});
+	if (surface == nullptr) {
+		std::fprintf(stderr, "[example] failed to create the backend surface\n");
+		return 1;
+	}
+
+	sk_sp<SkFontMgr> fontMgr = music_lyric_player::backend::font::createFontMgr();
 
 	music_lyric_player::playback::Player player;
 	music_lyric_player::render::Renderer renderer(player, fontMgr, player.clock());
@@ -42,9 +49,12 @@ int main() {
 
 	while (!window.shouldClose()) {
 		window.pollEvents();
-		window.drawFrame([&](SkCanvas* canvas, int widthPx, int heightPx, float dpr) {
-			player.tick();
-			renderer.setViewport(widthPx, heightPx, dpr);
+		if (window.pollResized()) {
+			surface->onResize();
+		}
+		player.tick();
+		surface->renderFrame([&](SkCanvas* canvas) {
+			renderer.setViewport(surface->width(), surface->height(), surface->devicePixelRatio());
 			renderer.render(canvas);
 		});
 	}

@@ -8,6 +8,7 @@
 #include <type_traits>
 #include <vector>
 
+#include "include/core/SkFontMgr.h"
 #include "backend/font/font.h"
 #include "backend/gpu/surface.h"
 #include "playback/player.h"

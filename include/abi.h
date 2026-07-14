@@ -142,6 +142,12 @@ MUSIC_LYRIC_PLAYER_API void music_lyric_player_renderer_render(music_lyric_playe
  */
 MUSIC_LYRIC_PLAYER_API void music_lyric_player_renderer_resize(music_lyric_player_renderer_handle* renderer);
 
+/**
+ * Merges a JSON config patch into the renderer's config; only the fields present in `json` take effect.
+ * The JSON object mirrors the renderer config tree: camelCase keys, enum values as their names.
+ */
+MUSIC_LYRIC_PLAYER_API void music_lyric_player_renderer_update_config_json(music_lyric_player_renderer_handle* renderer, const char* json);
+
 #ifdef __cplusplus
 }
 #endif

@@ -5,13 +5,16 @@
 #include <cstdio>
 #include <exception>
 #include <memory>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
+#include "glaze/json.hpp"
 #include "include/core/SkFontMgr.h"
 #include "backend/font/font.h"
 #include "backend/gpu/surface.h"
 #include "playback/player.h"
+#include "render/config/index.h"
 #include "render/renderer.h"
 #include "runtime/info.pb.h"
 
@@ -189,4 +192,19 @@ void music_lyric_player_renderer_render(music_lyric_player_renderer_handle* rend
 
 void music_lyric_player_renderer_resize(music_lyric_player_renderer_handle* renderer) {
 	guardVoid([&] { renderer->surface->onResize(); });
+}
+
+void music_lyric_player_renderer_update_config_json(music_lyric_player_renderer_handle* renderer, const char* json) {
+	guardVoid([&] {
+		if (renderer == nullptr || json == nullptr) {
+			return;
+		}
+		// Glaze reflects the sparse patch struct directly: present keys set their optional, absent keys stay unset.
+		music_lyric_player::render::config::RootPatch patch;
+		if (const glz::error_ctx error = glz::read_json(patch, std::string_view(json))) {
+			reportAbiException("malformed config json");
+			return;
+		}
+		renderer->renderer.config.merge(patch);
+	});
 }

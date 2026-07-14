@@ -71,3 +71,7 @@ target_link_libraries(music_lyric_player_native PUBLIC
 	music_lyric_player::render
 	music_lyric_player::playback
 	music_lyric::model)
+
+# Glaze (compile-time-reflection JSON) is used only inside abi.cpp to (de)serialize config, so it is a
+# PRIVATE dependency; it also raises this target to C++23 (its requirement) without affecting consumers.
+target_link_libraries(music_lyric_player_native PRIVATE glaze::glaze)

@@ -1,3 +1,5 @@
+find_package(Vulkan REQUIRED)
+
 add_library(music_lyric_player_playback
 	utils/clock/steady.cpp
 	playback/merger.cpp
@@ -38,3 +40,16 @@ target_link_libraries(music_lyric_player_render PUBLIC
 	music_lyric_player::playback
 	music_lyric::model
 	skia::skia)
+
+add_library(music_lyric_player_backend
+	backend/gpu/vulkan.cpp
+)
+add_library(music_lyric_player::backend ALIAS music_lyric_player_backend)
+
+target_compile_features(music_lyric_player_backend PUBLIC cxx_std_20)
+
+target_include_directories(music_lyric_player_backend PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+
+target_link_libraries(music_lyric_player_backend PUBLIC
+	skia::skia
+	Vulkan::Vulkan)

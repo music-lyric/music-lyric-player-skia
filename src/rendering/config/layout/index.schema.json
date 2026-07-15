@@ -1,0 +1,30 @@
+{
+  "namespace": "music_lyric_player::rendering::config::layout",
+  "file": "index.gen.h",
+  "items": [
+    {
+      "name": "Root",
+      "comment": "Alignment and spacing applied to every lyric line.",
+      "fields": [
+        {
+          "name": "align",
+          "enum": "Align",
+          "enumComment": "Horizontal alignment of a line within the container.",
+          "values": ["Left", "Center", "Right"],
+          "default": "Left",
+          "comment": "Horizontal alignment of lines within the container."
+        },
+        {
+          "name": "gap",
+          "kind": "length",
+          "default": "\"16px\"",
+          "example": [16, "16px", "2%"],
+          "comment": [
+            "Vertical spacing between adjacent lines.",
+            "A `%` value is relative to the viewport height."
+          ]
+        }
+      ]
+    }
+  ]
+}

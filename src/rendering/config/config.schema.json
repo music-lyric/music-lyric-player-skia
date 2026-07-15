@@ -1,0 +1,15 @@
+{
+  "namespace": "music_lyric_player::rendering::config",
+  "file": "config.gen.h",
+  "defaultInstance": true,
+  "root": {
+    "comment": "Renderer configuration.",
+    "modules": [
+      { "name": "container", "schema": "container/index.schema.json", "comment": "Background fill and padding of the player." },
+      { "name": "layout", "schema": "layout/index.schema.json", "comment": "Alignment and spacing between lyric lines." },
+      { "name": "scroll", "schema": "scroll/index.schema.json", "comment": "Viewport scrolling and its transition animation." },
+      { "name": "line", "schema": "line/index.schema.json", "comment": "Font and per-state colors of lyric lines." },
+      { "name": "effect", "schema": "effect/index.schema.json", "comment": "Distance-from-focus scale and blur effects." }
+    ]
+  }
+}

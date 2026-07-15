@@ -1,0 +1,73 @@
+{
+  "namespace": "music_lyric_player::rendering::config::common",
+  "file": "index.gen.h",
+  "items": [
+    {
+      "name": "FontConfig",
+      "comment": "Font appearance shared by lyric lines and their annotation sub-lines.",
+      "fields": [
+        {
+          "name": "family",
+          "type": "::std::string",
+          "example": "PingFang SC",
+          "comment": "Font family name; empty uses the platform default."
+        },
+        {
+          "name": "size",
+          "kind": "length",
+          "default": "\"34px\"",
+          "example": [34, "34px", "80%"],
+          "comment": [
+            "Font size of the lyric lines.",
+            "A `%` value is relative to the parent line's font size (e.g. translation / background lines)."
+          ]
+        }
+      ]
+    },
+    {
+      "name": "StyleConfig",
+      "comment": "Visual style for a single render state.",
+      "fields": [
+        {
+          "name": "color",
+          "kind": "color",
+          "default": "\"#000000\"",
+          "example": ["#fff", "rgba(255, 255, 255, 0.8)"],
+          "comment": "Color of the render state."
+        },
+        {
+          "name": "opacity",
+          "type": "double",
+          "default": "1.0",
+          "min": 0,
+          "max": 1,
+          "comment": "Opacity of the render state in the [0, 1] range; 1 is fully opaque."
+        }
+      ]
+    },
+    {
+      "name": "StateStyleConfig",
+      "comment": "Inactive and active styles shared by normal lyric lines and their annotation sub-lines.",
+      "fields": [
+        {
+          "name": "normal",
+          "nested": "StyleConfig",
+          "defaults": {
+            "color": "\"#ffffff\"",
+            "opacity": "0.6"
+          },
+          "comment": "Style of inactive lines."
+        },
+        {
+          "name": "active",
+          "nested": "StyleConfig",
+          "defaults": {
+            "color": "\"#ffffff\"",
+            "opacity": "1.0"
+          },
+          "comment": "Style of active lines."
+        }
+      ]
+    }
+  ]
+}

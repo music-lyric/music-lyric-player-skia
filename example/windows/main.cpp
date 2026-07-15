@@ -4,8 +4,8 @@
 #include "backend/font/font.h"
 #include "backend/gpu/surface.h"
 #include "playback/player.h"
-#include "render/config/index.h"
-#include "render/renderer.h"
+#include "rendering/config/index.h"
+#include "rendering/renderer.h"
 #include "sample_lyric.h"
 #include "window.h"
 
@@ -25,17 +25,17 @@ int main() {
 	sk_sp<SkFontMgr> fontMgr = music_lyric_player::backend::font::createFontMgr();
 
 	music_lyric_player::playback::Player player;
-	music_lyric_player::render::Renderer renderer(player, fontMgr, player.clock());
+	music_lyric_player::rendering::Renderer renderer(player, fontMgr, player.clock());
 
 	// DirectWrite cannot resolve a generic "sans-serif" family, so pick a concrete system family covering CJK and latin.
 	// The demo also left-aligns the lyrics.
-	renderer.config.modify([](music_lyric_player::render::config::Root& cfg) {
-		cfg.layout.align                                              = music_lyric_player::render::config::layout::Align::Left;
+	renderer.config.modify([](music_lyric_player::rendering::config::Root& cfg) {
+		cfg.layout.align                                              = music_lyric_player::rendering::config::layout::Align::Left;
 		cfg.line.normal.main.syllable.font.size                       = "42px";
 		cfg.line.normal.main.syllable.font.family                     = "MiSans";
 		cfg.line.normal.main.syllable.style.normal.color              = "rgb(255, 255, 61)";
 		cfg.line.normal.main.syllable.style.active.color              = "#ffffff";
-		cfg.scroll.animation.mode                                     = music_lyric_player::render::config::scroll::Mode::Stagger;
+		cfg.scroll.animation.mode                                     = music_lyric_player::rendering::config::scroll::Mode::Stagger;
 		cfg.scroll.animation.stagger.duration                         = 500;
 		cfg.scroll.animation.stagger.easing                           = "ease";
 		cfg.scroll.animation.stagger.step                             = 40;

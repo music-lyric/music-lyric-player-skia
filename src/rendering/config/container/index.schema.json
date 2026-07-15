@@ -1,0 +1,29 @@
+{
+  "namespace": "music_lyric_player::rendering::config::container",
+  "file": "index.gen.h",
+  "items": [
+    {
+      "name": "Root",
+      "comment": "Background fill and padding of the player.",
+      "fields": [
+        {
+          "name": "backgroundColor",
+          "kind": "color",
+          "default": "\"#101014\"",
+          "example": ["#101014", "rgb(16, 16, 20)"],
+          "comment": "Background fill of the whole player."
+        },
+        {
+          "name": "paddingX",
+          "kind": "length",
+          "default": "\"48px\"",
+          "example": [48, "48px", "5%"],
+          "comment": [
+            "Horizontal padding on each side of the content.",
+            "A `%` value is relative to the viewport width."
+          ]
+        }
+      ]
+    }
+  ]
+}

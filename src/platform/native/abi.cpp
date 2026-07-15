@@ -13,9 +13,9 @@
 #include "backend/font/font.h"
 #include "backend/gpu/surface.h"
 #include "playback/player.h"
-#include "render/config/config.gen.glaze.h"
-#include "render/config/index.h"
-#include "render/renderer.h"
+#include "rendering/config/config.gen.glaze.h"
+#include "rendering/config/index.h"
+#include "rendering/renderer.h"
 #include "runtime/info.pb.h"
 
 namespace {
@@ -69,7 +69,7 @@ struct music_lyric_player_handle {
  */
 struct music_lyric_player_renderer_handle {
 	std::unique_ptr<music_lyric_player::backend::gpu::Surface> surface;
-	music_lyric_player::render::Renderer                       renderer;
+	music_lyric_player::rendering::Renderer                       renderer;
 
 	music_lyric_player_renderer_handle(music_lyric_player::playback::Player& player, void* window)
 		: surface(music_lyric_player::backend::gpu::createWindowSurface({window})),
@@ -200,7 +200,7 @@ void music_lyric_player_renderer_update_config_json(music_lyric_player_renderer_
 			return;
 		}
 		// Glaze reflects the sparse patch struct directly: present keys set their optional, absent keys stay unset.
-		music_lyric_player::render::config::RootPatch patch;
+		music_lyric_player::rendering::config::RootPatch patch;
 		if (const glz::error_ctx error = glz::read_json(patch, std::string_view(json))) {
 			reportAbiException("malformed config json");
 			return;

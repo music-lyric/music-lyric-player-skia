@@ -15,28 +15,28 @@ target_include_directories(music_lyric_player_playback PUBLIC "${CMAKE_CURRENT_S
 target_link_libraries(music_lyric_player_playback PUBLIC
 	music_lyric::model)
 
-add_library(music_lyric_player_render
-	render/components/line/normal/index.cpp
-	render/components/line/normal/main/plain/index.cpp
-	render/components/line/normal/main/syllable/index.cpp
-	render/components/line/normal/main/syllable/word.cpp
-	render/components/line/normal/main/syllable/animation/float.cpp
-	render/components/line/normal/main/syllable/animation/mask.cpp
-	render/components/line/interlude/index.cpp
-	render/core/effect.cpp
-	render/core/layout.cpp
-	render/core/line.cpp
-	render/core/scroll.cpp
-	render/core/transition.cpp
-	render/renderer.cpp
+add_library(music_lyric_player_rendering
+	rendering/components/line/normal/index.cpp
+	rendering/components/line/normal/main/plain/index.cpp
+	rendering/components/line/normal/main/syllable/index.cpp
+	rendering/components/line/normal/main/syllable/word.cpp
+	rendering/components/line/normal/main/syllable/animation/float.cpp
+	rendering/components/line/normal/main/syllable/animation/mask.cpp
+	rendering/components/line/interlude/index.cpp
+	rendering/core/effect.cpp
+	rendering/core/layout.cpp
+	rendering/core/line.cpp
+	rendering/core/scroll.cpp
+	rendering/core/transition.cpp
+	rendering/renderer.cpp
 )
-add_library(music_lyric_player::render ALIAS music_lyric_player_render)
+add_library(music_lyric_player::rendering ALIAS music_lyric_player_rendering)
 
-target_compile_features(music_lyric_player_render PUBLIC cxx_std_20)
+target_compile_features(music_lyric_player_rendering PUBLIC cxx_std_20)
 
-target_include_directories(music_lyric_player_render PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(music_lyric_player_rendering PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
-target_link_libraries(music_lyric_player_render PUBLIC
+target_link_libraries(music_lyric_player_rendering PUBLIC
 	music_lyric_player::playback
 	music_lyric::model
 	skia::skia)
@@ -80,7 +80,7 @@ target_include_directories(music_lyric_player_native PUBLIC "${CMAKE_SOURCE_DIR}
 # Glaze additionally raises this target to its required C++23 without imposing that on consumers.
 target_link_libraries(music_lyric_player_native PRIVATE
 	music_lyric_player::backend
-	music_lyric_player::render
+	music_lyric_player::rendering
 	music_lyric_player::playback
 	music_lyric::model
 	glaze::glaze)

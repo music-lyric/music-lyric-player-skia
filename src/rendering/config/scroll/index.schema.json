@@ -1,0 +1,171 @@
+{
+  "namespace": "music_lyric_player::rendering::config::scroll",
+  "file": "index.gen.h",
+  "mix": {
+    "animation": [
+      {
+        "name": "duration",
+        "type": "double",
+        "default": "500.0",
+        "comment": [
+          "Transition duration of each individual line, in `ms`.",
+          "In cascade modes the total visual length is roughly `duration + maxDelay`.",
+          "`0` snaps to the target without easing."
+        ]
+      },
+      {
+        "name": "easing",
+        "kind": "easing",
+        "default": "\"ease\"",
+        "example": ["ease-in-out", "cubic-bezier(0.4, 0, 0.2, 1)"],
+        "comment": "Easing curve for the transition."
+      }
+    ]
+  },
+  "items": [
+    {
+      "name": "SmoothConfig",
+      "comment": "Parameters for the Smooth mode: a uniform, non-cascade transition.",
+      "fields": [
+        { "include": "animation" },
+        {
+          "name": "delay",
+          "type": "double",
+          "default": "0.0",
+          "comment": "Fixed delay before the transition starts, in `ms`."
+        }
+      ]
+    },
+    {
+      "name": "RippleConfig",
+      "comment": "Parameters for the Ripple mode: a symmetric cascade radiating outward from the active line.",
+      "fields": [
+        { "include": "animation" },
+        {
+          "name": "range",
+          "type": "double",
+          "default": "5.0",
+          "min": 1,
+          "comment": [
+            "Offset (in line units) at which the per-line delay saturates.",
+            "Lines with `|offset| >= range` all receive the maximum delay."
+          ]
+        },
+        {
+          "name": "step",
+          "type": "double",
+          "default": "40.0",
+          "min": 10,
+          "comment": "Delay increment per offset unit, in `ms`; scales the cascade curve."
+        }
+      ]
+    },
+    {
+      "name": "DirectionalConfig",
+      "comment": "Parameters for the Directional mode: a nonlinear cascade following the latest active-line movement direction.",
+      "fields": [
+        { "include": "animation" },
+        {
+          "name": "range",
+          "type": "double",
+          "default": "5.0",
+          "min": 1,
+          "comment": "Offset (in line units) at which the per-line delay saturates."
+        },
+        {
+          "name": "step",
+          "type": "double",
+          "default": "40.0",
+          "min": 10,
+          "comment": "Delay increment per offset unit, in `ms`."
+        }
+      ]
+    },
+    {
+      "name": "StaggerConfig",
+      "comment": "Parameters for the Stagger mode: a linear cascade following the latest active-line movement direction.",
+      "fields": [
+        { "include": "animation" },
+        {
+          "name": "range",
+          "type": "double",
+          "default": "4.0",
+          "min": 1,
+          "comment": "Offset (in line units) at which the delay saturates."
+        },
+        {
+          "name": "step",
+          "type": "double",
+          "default": "50.0",
+          "min": 1,
+          "comment": "Delay increment per offset unit, in `ms`."
+        }
+      ]
+    },
+    {
+      "name": "AnimationConfig",
+      "comment": "Transition animation used when the active line changes.",
+      "fields": [
+        {
+          "name": "mode",
+          "enum": "Mode",
+          "enumComment": "Scroll cascade mode selecting how per-line transition delays are distributed.",
+          "values": ["Smooth", "Ripple", "Directional", "Stagger"],
+          "default": "Smooth",
+          "comment": [
+            "Cascade mode distributing per-line transition delays.",
+            "",
+            "- `Smooth` — all lines move together, no cascade",
+            "- `Ripple` — symmetric cascade outward from the active line",
+            "- `Directional` — nonlinear cascade following the latest active-line movement direction",
+            "- `Stagger` — linear cascade following the latest active-line movement direction"
+          ]
+        },
+        {
+          "name": "smooth",
+          "nested": "SmoothConfig",
+          "comment": "Smooth mode parameters."
+        },
+        {
+          "name": "ripple",
+          "nested": "RippleConfig",
+          "comment": "Ripple mode parameters."
+        },
+        {
+          "name": "directional",
+          "nested": "DirectionalConfig",
+          "comment": "Directional mode parameters."
+        },
+        {
+          "name": "stagger",
+          "nested": "StaggerConfig",
+          "comment": "Stagger mode parameters."
+        }
+      ]
+    },
+    {
+      "name": "Root",
+      "comment": "Viewport scrolling that follows the active line.",
+      "fields": [
+        {
+          "name": "anchor",
+          "type": "double",
+          "default": "0.5",
+          "min": 0,
+          "max": 1,
+          "comment": [
+            "Vertical anchor of the active line inside the viewport, as a ratio of its height.",
+            "",
+            "- `0.5` — keep the active line at the vertical center",
+            "- `0.3` — keep the active line closer to the top"
+          ]
+        },
+        {
+          "name": "animation",
+          "nested": "AnimationConfig",
+          "comment": "Transition animation used when the active line changes."
+        }
+      ]
+    }
+  ]
+}

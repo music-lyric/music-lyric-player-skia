@@ -1,0 +1,16 @@
+target_os = "android"
+
+ndk = getenv("SKIA_ANDROID_NDK_DIR")
+assert(ndk != "", "SKIA_ANDROID_NDK_DIR is required")
+ndk_api = 21
+
+skia_use_angle = false
+skia_use_gl = true
+skia_gl_standard = "gles"
+skia_use_ndk_images = false
+skia_use_perfetto = false
+skia_use_vulkan = false
+skia_use_webgl = false
+skia_use_webgpu = false
+
+skia_use_freetype = true

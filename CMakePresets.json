@@ -10,12 +10,12 @@
       "name": "default",
       "displayName": "Default",
       "generator": "Ninja Multi-Config",
-      "binaryDir": "${sourceDir}/build"
+      "binaryDir": "${sourceDir}/out/build/${presetName}"
     },
     {
       "name": "windows-example",
       "displayName": "Windows Example",
-      "description": "Windows Example With Vlukan",
+      "description": "Windows Example With Vulkan",
       "inherits": "default",
       "condition": {
         "type": "equals",

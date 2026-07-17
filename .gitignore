@@ -47,9 +47,6 @@ Thumbs.db
 *.app
 
 # Build Directories
-build/
-Build/
-build-*/
 out/
 
 # CMake Generated files

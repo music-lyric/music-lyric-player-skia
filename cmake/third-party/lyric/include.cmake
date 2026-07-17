@@ -1,0 +1,120 @@
+include_guard(GLOBAL)
+
+set(LYRIC_SRC "${CMAKE_SOURCE_DIR}/third-party/lyric" CACHE PATH "Lyric model submodule source dir")
+
+if(NOT EXISTS "${LYRIC_SRC}/CMakeLists.txt")
+	message(FATAL_ERROR "[Lyric] Submodule not found: ${LYRIC_SRC}")
+endif()
+
+if(NOT DEFINED LYRIC_BUILD_CONFIG)
+	set(LYRIC_BUILD_CONFIG "Release")
+endif()
+string(TOLOWER "${LYRIC_BUILD_CONFIG}" _lyric_cfg)
+if(NOT _lyric_cfg STREQUAL "debug" AND NOT _lyric_cfg STREQUAL "release")
+	message(FATAL_ERROR "[Lyric] LYRIC_BUILD_CONFIG must be Debug or Release: ${LYRIC_BUILD_CONFIG}")
+endif()
+
+if(NOT DEFINED LYRIC_BUILD_PLATFORM)
+	if(ANDROID)
+		set(LYRIC_BUILD_PLATFORM "android")
+	elseif(EMSCRIPTEN OR CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+		set(LYRIC_BUILD_PLATFORM "web")
+	elseif(WIN32)
+		set(LYRIC_BUILD_PLATFORM "windows")
+	else()
+		message(FATAL_ERROR "[Lyric] Unsupported target platform: ${CMAKE_SYSTEM_NAME}")
+	endif()
+endif()
+string(TOLOWER "${LYRIC_BUILD_PLATFORM}" _lyric_platform)
+
+if(NOT DEFINED LYRIC_BUILD_ARCH)
+	if(_lyric_platform STREQUAL "android")
+		if(DEFINED ANDROID_ABI AND NOT ANDROID_ABI STREQUAL "")
+			set(LYRIC_BUILD_ARCH "${ANDROID_ABI}")
+		else()
+			set(LYRIC_BUILD_ARCH "arm64-v8a")
+		endif()
+	elseif(_lyric_platform STREQUAL "web")
+		set(LYRIC_BUILD_ARCH "wasm32")
+	else()
+		set(LYRIC_BUILD_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+		if(LYRIC_BUILD_ARCH STREQUAL "")
+			set(LYRIC_BUILD_ARCH "x64")
+		endif()
+	endif()
+endif()
+string(TOLOWER "${LYRIC_BUILD_ARCH}" _lyric_arch_input)
+
+if(_lyric_platform STREQUAL "windows")
+	if(_lyric_arch_input MATCHES "^(amd64|x86_64|x64)$")
+		set(_lyric_arch "x64")
+	elseif(_lyric_arch_input MATCHES "^(aarch64|arm64)$")
+		set(_lyric_arch "arm64")
+	elseif(_lyric_arch_input MATCHES "^(i[3-6]86|x86)$")
+		set(_lyric_arch "x86")
+	else()
+		message(FATAL_ERROR "[Lyric] Unsupported Windows architecture: ${LYRIC_BUILD_ARCH}")
+	endif()
+elseif(_lyric_platform STREQUAL "android")
+	if(_lyric_arch_input MATCHES "^(aarch64|arm64|arm64-v8a)$")
+		set(_lyric_arch "arm64-v8a")
+	elseif(_lyric_arch_input MATCHES "^(arm|armeabi-v7a)$")
+		set(_lyric_arch "armeabi-v7a")
+	elseif(_lyric_arch_input MATCHES "^(x64|x86_64)$")
+		set(_lyric_arch "x86_64")
+	elseif(_lyric_arch_input STREQUAL "x86")
+		set(_lyric_arch "x86")
+	else()
+		message(FATAL_ERROR "[Lyric] Unsupported Android architecture: ${LYRIC_BUILD_ARCH}")
+	endif()
+elseif(_lyric_platform STREQUAL "web")
+	if(NOT _lyric_arch_input MATCHES "^(wasm|wasm32)$")
+		message(FATAL_ERROR "[Lyric] Unsupported Web architecture: ${LYRIC_BUILD_ARCH}")
+	endif()
+	set(_lyric_arch "wasm32")
+else()
+	message(FATAL_ERROR "[Lyric] Unsupported platform: ${LYRIC_BUILD_PLATFORM}")
+endif()
+
+if(DEFINED LYRIC_OUT_DIR)
+	set(LYRIC_OUT "${LYRIC_OUT_DIR}")
+else()
+	set(LYRIC_OUT "${CMAKE_SOURCE_DIR}/out/third-party/lyric/${_lyric_platform}-${_lyric_arch}-${_lyric_cfg}")
+endif()
+
+set(_model_lib "${LYRIC_OUT}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}music_lyric_model${CMAKE_STATIC_LIBRARY_SUFFIX}")
+if(NOT EXISTS "${_model_lib}")
+	message(FATAL_ERROR "[Lyric] Prebuilt model not found: ${_model_lib}")
+endif()
+
+file(GLOB LYRIC_LIBRARIES "${LYRIC_OUT}/lib/*${CMAKE_STATIC_LIBRARY_SUFFIX}")
+if(NOT LYRIC_LIBRARIES)
+	message(FATAL_ERROR "[Lyric] No static libraries found: ${LYRIC_OUT}")
+endif()
+
+message(STATUS "[Lyric] ${LYRIC_OUT}")
+
+# The generated pb.h headers expose protobuf types, so consumers need the protobuf, abseil,
+# and utf8_range headers; fetch the sources at configure time instead of staging them.
+# The tag must stay in sync with the protobuf version pinned in third-party/lyric.
+include(FetchContent)
+FetchContent_Declare(lyric_protobuf
+	GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
+	GIT_TAG v35.1
+	GIT_SHALLOW TRUE
+	GIT_SUBMODULES_RECURSE TRUE
+	SOURCE_SUBDIR "headers-only-do-not-build")
+FetchContent_MakeAvailable(lyric_protobuf)
+
+add_library(music_lyric_model INTERFACE)
+add_library(music_lyric::model ALIAS music_lyric_model)
+
+target_include_directories(music_lyric_model SYSTEM INTERFACE
+	"${LYRIC_SRC}/include"
+	"${LYRIC_SRC}/gen"
+	"${lyric_protobuf_SOURCE_DIR}/src"
+	"${lyric_protobuf_SOURCE_DIR}/third_party/utf8_range"
+	"${lyric_protobuf_SOURCE_DIR}/third_party/abseil-cpp")
+target_link_libraries(music_lyric_model INTERFACE ${LYRIC_LIBRARIES})
+target_compile_features(music_lyric_model INTERFACE cxx_std_17)
+target_compile_options(music_lyric_model INTERFACE $<$<CXX_COMPILER_ID:MSVC>:/utf-8;/bigobj>)

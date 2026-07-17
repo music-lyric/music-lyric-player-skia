@@ -1,0 +1,18 @@
+target_os = "win"
+
+clang_win = getenv("SKIA_CLANG_WIN")
+assert(clang_win != "", "SKIA_CLANG_WIN is required")
+
+assert(getenv("SKIA_WIN_CRT") != "", "SKIA_WIN_CRT is required")
+extra_cflags = [
+  getenv("SKIA_WIN_CRT"),
+  "/DSK_USE_VMA",
+]
+
+skia_use_angle = false
+skia_use_direct3d = false
+skia_use_gl = false
+skia_use_vulkan = true
+skia_use_webgl = false
+skia_use_webgpu = false
+skia_use_xps = false

@@ -6,16 +6,13 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Skia and the prebuilt lyric model ship with the dynamic release runtime; force /MD so the app links against both.
-# Debug uses /MDd, so build as Release or RelWithDebInfo unless matching debug deps exist.
+# Match the MSVC runtime with the prebuilt third-party libraries (/MD for Release, /MDd for Debug).
 if(MSVC)
-	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL" CACHE STRING "" FORCE)
+	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "" FORCE)
 endif()
 
-# Prebuilt third-party libs; build each once with `cmake -P cmake/<lib>/build.cmake`.
-include(cmake/lyric/include.cmake)
-include(cmake/skia/include.cmake)
-include(cmake/glaze/include.cmake)
+# Prebuilt third-party libs; build them once with `cmake -P cmake/third-party/build.cmake`.
+include(cmake/third-party/include.cmake)
 
 add_subdirectory(src)
 

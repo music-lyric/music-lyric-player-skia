@@ -1,0 +1,18 @@
+target_os = "wasm"
+
+skia_emsdk_dir = getenv("SKIA_EMSDK_DIR")
+assert(skia_emsdk_dir != "", "SKIA_EMSDK_DIR is required")
+
+extra_cflags = [
+  "-DSKVX_DISABLE_SIMD",
+  "-DSK_FORCE_8_BYTE_ALIGNMENT",
+]
+
+skia_use_angle = false
+skia_use_gl = true
+skia_gl_standard = "webgl"
+skia_use_vulkan = false
+skia_use_webgl = true
+skia_use_webgpu = false
+
+skia_use_freetype = true

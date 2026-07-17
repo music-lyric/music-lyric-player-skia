@@ -23,6 +23,9 @@ target_compile_features(music_lyric_player_example_windows PRIVATE cxx_std_20)
 
 target_include_directories(music_lyric_player_example_windows PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
+set_target_properties(music_lyric_player_example_windows PROPERTIES
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/out/example/${SKIA_PLATFORM}-${SKIA_ARCH}-$<LOWER_CASE:$<CONFIG>>")
+
 # music_lyric_player::rendering transitively brings playback, the lyric model (with its /utf-8 flag) and skia.
 # music_lyric_player::backend brings the GPU surface and font manager, and transitively Vulkan.
 target_link_libraries(music_lyric_player_example_windows PRIVATE

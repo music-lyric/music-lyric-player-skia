@@ -1,0 +1,183 @@
+cmake_minimum_required(VERSION 3.21)
+
+if(NOT CMAKE_SCRIPT_MODE_FILE)
+	message(FATAL_ERROR "[Lyric] Must be run in script mode")
+endif()
+
+if(NOT DEFINED LYRIC_BUILD_CONFIG)
+	set(LYRIC_BUILD_CONFIG "Release")
+endif()
+string(TOLOWER "${LYRIC_BUILD_CONFIG}" _cfg)
+if(NOT _cfg STREQUAL "debug" AND NOT _cfg STREQUAL "release")
+	message(FATAL_ERROR "[Lyric] LYRIC_BUILD_CONFIG must be Debug or Release: ${LYRIC_BUILD_CONFIG}")
+endif()
+
+if(NOT DEFINED LYRIC_BUILD_PLATFORM)
+	if(CMAKE_HOST_WIN32)
+		set(LYRIC_BUILD_PLATFORM "windows")
+	else()
+		message(FATAL_ERROR "[Lyric] LYRIC_BUILD_PLATFORM is required when cross-compiling (windows, android, or web)")
+	endif()
+endif()
+string(TOLOWER "${LYRIC_BUILD_PLATFORM}" _platform)
+if(NOT _platform STREQUAL "windows" AND
+	NOT _platform STREQUAL "android" AND
+	NOT _platform STREQUAL "web")
+	message(FATAL_ERROR "[Lyric] Unsupported platform: ${LYRIC_BUILD_PLATFORM}")
+endif()
+
+if(NOT DEFINED LYRIC_BUILD_ARCH)
+	if(_platform STREQUAL "windows")
+		set(LYRIC_BUILD_ARCH "${CMAKE_HOST_SYSTEM_PROCESSOR}")
+		if(LYRIC_BUILD_ARCH STREQUAL "" AND DEFINED ENV{PROCESSOR_ARCHITECTURE})
+			set(LYRIC_BUILD_ARCH "$ENV{PROCESSOR_ARCHITECTURE}")
+		endif()
+		if(LYRIC_BUILD_ARCH STREQUAL "")
+			set(LYRIC_BUILD_ARCH "x64")
+		endif()
+	elseif(_platform STREQUAL "android")
+		set(LYRIC_BUILD_ARCH "arm64-v8a")
+	else()
+		set(LYRIC_BUILD_ARCH "wasm32")
+	endif()
+endif()
+string(TOLOWER "${LYRIC_BUILD_ARCH}" _arch_input)
+
+if(_platform STREQUAL "windows")
+	if(_arch_input MATCHES "^(amd64|x86_64|x64)$")
+		set(_arch "x64")
+	elseif(_arch_input MATCHES "^(aarch64|arm64)$")
+		set(_arch "arm64")
+	elseif(_arch_input MATCHES "^(i[3-6]86|x86)$")
+		set(_arch "x86")
+	else()
+		message(FATAL_ERROR "[Lyric] Unsupported Windows architecture: ${LYRIC_BUILD_ARCH}")
+	endif()
+elseif(_platform STREQUAL "android")
+	if(_arch_input MATCHES "^(aarch64|arm64|arm64-v8a)$")
+		set(_arch "arm64-v8a")
+	elseif(_arch_input MATCHES "^(arm|armeabi-v7a)$")
+		set(_arch "armeabi-v7a")
+	elseif(_arch_input MATCHES "^(x64|x86_64)$")
+		set(_arch "x86_64")
+	elseif(_arch_input STREQUAL "x86")
+		set(_arch "x86")
+	else()
+		message(FATAL_ERROR "[Lyric] Unsupported Android architecture: ${LYRIC_BUILD_ARCH}")
+	endif()
+else()
+	if(NOT _arch_input MATCHES "^(wasm|wasm32)$")
+		message(FATAL_ERROR "[Lyric] Unsupported Web architecture: ${LYRIC_BUILD_ARCH}")
+	endif()
+	set(_arch "wasm32")
+endif()
+
+get_filename_component(_repo_root "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
+set(LYRIC_SRC "${_repo_root}/third-party/lyric")
+set(LYRIC_OUT "${LYRIC_SRC}/out/${_platform}-${_arch}-${_cfg}")
+set(LYRIC_STAGE "${_repo_root}/out/third-party/lyric/${_platform}-${_arch}-${_cfg}")
+
+message(STATUS "[Lyric] Source   : ${LYRIC_SRC}")
+message(STATUS "[Lyric] Output   : ${LYRIC_OUT}")
+message(STATUS "[Lyric] Stage    : ${LYRIC_STAGE}")
+message(STATUS "[Lyric] Platform : ${_platform}")
+message(STATUS "[Lyric] Arch     : ${_arch}")
+message(STATUS "[Lyric] Config   : ${LYRIC_BUILD_CONFIG}")
+
+if(NOT EXISTS "${LYRIC_SRC}/CMakeLists.txt")
+	message(FATAL_ERROR "[Lyric] Submodule not found: ${LYRIC_SRC}")
+endif()
+
+find_program(NINJA NAMES ninja)
+if(NOT NINJA)
+	message(FATAL_ERROR "[Lyric] Ninja not found")
+endif()
+
+if(_platform STREQUAL "windows" AND NOT CMAKE_HOST_WIN32)
+	message(FATAL_ERROR "[Lyric] Windows build requires a Windows host")
+endif()
+
+if(NOT DEFINED LYRIC_TOOLCHAIN_FILE AND DEFINED CMAKE_TOOLCHAIN_FILE)
+	set(LYRIC_TOOLCHAIN_FILE "${CMAKE_TOOLCHAIN_FILE}")
+endif()
+
+if(_platform STREQUAL "android" AND NOT DEFINED LYRIC_TOOLCHAIN_FILE)
+	if(DEFINED ENV{ANDROID_NDK_ROOT} AND NOT "$ENV{ANDROID_NDK_ROOT}" STREQUAL "")
+		set(LYRIC_TOOLCHAIN_FILE "$ENV{ANDROID_NDK_ROOT}/build/cmake/android.toolchain.cmake")
+	elseif(DEFINED ENV{ANDROID_NDK_HOME} AND NOT "$ENV{ANDROID_NDK_HOME}" STREQUAL "")
+		set(LYRIC_TOOLCHAIN_FILE "$ENV{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake")
+	endif()
+elseif(_platform STREQUAL "web" AND NOT DEFINED LYRIC_TOOLCHAIN_FILE)
+	if(DEFINED ENV{EMSDK} AND NOT "$ENV{EMSDK}" STREQUAL "")
+		set(LYRIC_TOOLCHAIN_FILE "$ENV{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake")
+	endif()
+endif()
+
+if(NOT _platform STREQUAL "windows")
+	if(NOT DEFINED LYRIC_TOOLCHAIN_FILE OR NOT EXISTS "${LYRIC_TOOLCHAIN_FILE}")
+		message(FATAL_ERROR "[Lyric] A valid LYRIC_TOOLCHAIN_FILE is required for ${_platform}")
+	endif()
+endif()
+
+if(LYRIC_BUILD_CLEAN AND EXISTS "${LYRIC_OUT}")
+	message(STATUS "[Lyric] Cleaning: ${LYRIC_OUT}")
+	file(REMOVE_RECURSE "${LYRIC_OUT}")
+endif()
+
+set(_configure_cmd
+	"${CMAKE_COMMAND}"
+	-S "${LYRIC_SRC}"
+	-B "${LYRIC_OUT}"
+	-G Ninja
+	"-DCMAKE_BUILD_TYPE=${LYRIC_BUILD_CONFIG}")
+
+if(_platform STREQUAL "windows")
+	list(APPEND _configure_cmd
+		"-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL"
+		"-Dprotobuf_MSVC_STATIC_RUNTIME=OFF")
+else()
+	list(APPEND _configure_cmd "-DCMAKE_TOOLCHAIN_FILE=${LYRIC_TOOLCHAIN_FILE}")
+endif()
+
+if(_platform STREQUAL "android")
+	list(APPEND _configure_cmd
+		"-DANDROID_ABI=${_arch}"
+		"-DANDROID_PLATFORM=android-21"
+		"-DANDROID_STL=c++_static")
+endif()
+
+execute_process(COMMAND ${_configure_cmd} RESULT_VARIABLE _cfg_rc)
+if(NOT _cfg_rc EQUAL 0)
+	message(FATAL_ERROR "[Lyric] Configure failed (rc=${_cfg_rc})")
+endif()
+
+set(_build_cmd "${CMAKE_COMMAND}" --build "${LYRIC_OUT}" --target music_lyric_model)
+if(LYRIC_BUILD_JOBS)
+	list(APPEND _build_cmd --parallel "${LYRIC_BUILD_JOBS}")
+endif()
+execute_process(COMMAND ${_build_cmd} RESULT_VARIABLE _build_rc)
+if(NOT _build_rc EQUAL 0)
+	message(FATAL_ERROR "[Lyric] Build failed (rc=${_build_rc})")
+endif()
+
+if(_platform STREQUAL "windows")
+	set(_model_lib "${LYRIC_OUT}/music_lyric_model.lib")
+	set(_lib_suffix ".lib")
+else()
+	set(_model_lib "${LYRIC_OUT}/libmusic_lyric_model.a")
+	set(_lib_suffix ".a")
+endif()
+if(NOT EXISTS "${_model_lib}")
+	message(FATAL_ERROR "[Lyric] Product missing: ${_model_lib}")
+endif()
+
+message(STATUS "[Lyric] Staging products...")
+file(REMOVE_RECURSE "${LYRIC_STAGE}")
+file(MAKE_DIRECTORY "${LYRIC_STAGE}/lib")
+
+file(GLOB_RECURSE _stage_libs "${LYRIC_OUT}/*${_lib_suffix}")
+foreach(_lib IN LISTS _stage_libs)
+	file(COPY "${_lib}" DESTINATION "${LYRIC_STAGE}/lib")
+endforeach()
+
+message(STATUS "[Lyric] Done: ${LYRIC_STAGE}")

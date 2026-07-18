@@ -5,7 +5,6 @@
 #include <string>
 #include <utility>
 
-#include "music_lyric_model.h"
 #include "utils/clock/steady.h"
 
 namespace music_lyric_player::playback {
@@ -84,6 +83,14 @@ namespace music_lyric_player::playback {
 			}
 			return compareSemVer(v, upper) < 0;
 		}
+
+		/**
+		 * Absolute start of a line in ms, or zero when timing is absent.
+		 */
+		double lineStartMs(const music_lyric_model::parsed::Line& line) {
+			const music_lyric_model::common::Time* time = music_lyric_model::parsed::getParsedLineTime(line);
+			return time ? static_cast<double>(time->start) : 0.0;
+		}
 	} // namespace
 
 	Player::Player()
@@ -96,12 +103,12 @@ namespace music_lyric_player::playback {
 		});
 	}
 
-	void Player::updateLyric(const ::lyric::runtime::Info& info) {
+	void Player::updateLyric(const music_lyric_model::parsed::Info& info) {
 		// Reject parse results whose lyric format version is incompatible, clearing any current lyric.
-		::lyric::runtime::Info target = info;
-		if (!satisfiesCaret(info.version(), music_lyric_model::SCHEMA_VERSION)) {
-			std::fprintf(stderr, "[music-lyric-player] ignored lyric with incompatible version \"%s\", expected \"^%s\"\n", info.version().c_str(), music_lyric_model::SCHEMA_VERSION);
-			target = ::lyric::runtime::Info{};
+		music_lyric_model::parsed::Info target = info;
+		if (!satisfiesCaret(info.version, music_lyric_model::SCHEMA_VERSION)) {
+			std::fprintf(stderr, "[music-lyric-player] ignored lyric with incompatible version \"%s\", expected \"^%s\"\n", info.version.c_str(), music_lyric_model::SCHEMA_VERSION);
+			target = music_lyric_model::parsed::Info{};
 		}
 
 		pause();
@@ -161,7 +168,7 @@ namespace music_lyric_player::playback {
 		this->config.onUpdate.remove(this->configListenerId);
 
 		this->activeIndex.clear();
-		this->info = ::lyric::runtime::Info{};
+		this->info = music_lyric_model::parsed::Info{};
 	}
 
 	void Player::updateTempOffset(double value) {
@@ -172,10 +179,9 @@ namespace music_lyric_player::playback {
 	std::vector<int> Player::matchLinesWithTime(double time) const {
 		const double     effective = time + currentOffset();
 		std::vector<int> index;
-		for (int i = 0; i < this->info.lines_size(); ++i) {
-			const ::lyric::common::Time* lineTime = music_lyric_model::runtime::getLineTime(this->info.lines(i));
+		for (int i = 0; i < static_cast<int>(this->info.lines.size()); ++i) {
 			// Lines are sorted by start ascending, so the first line starting after `time` ends the scan.
-			if ((lineTime ? static_cast<double>(lineTime->start()) : 0.0) > effective) {
+			if (lineStartMs(this->info.lines[static_cast<std::size_t>(i)]) > effective) {
 				break;
 			}
 			if (this->merger.getMergedTime(i) > effective) {
@@ -201,7 +207,7 @@ namespace music_lyric_player::playback {
 		return getActiveIndex();
 	}
 
-	const ::lyric::runtime::Info& Player::currentInfo() const {
+	const music_lyric_model::parsed::Info& Player::currentInfo() const {
 		return this->info;
 	}
 
@@ -247,7 +253,7 @@ namespace music_lyric_player::playback {
 		}
 		// Promote the sandwiched (already-ended) lines back so the range is contiguous.
 		std::vector<int> bridged;
-		for (int i = min; i <= max && i < this->info.lines_size(); ++i) {
+		for (int i = min; i <= max && i < static_cast<int>(this->info.lines.size()); ++i) {
 			if (i >= 0) {
 				bridged.push_back(i);
 			}
@@ -260,7 +266,7 @@ namespace music_lyric_player::playback {
 	}
 
 	void Player::syncTime(std::optional<double> time) {
-		if (this->info.lines_size() == 0) {
+		if (this->info.lines.empty()) {
 			return;
 		}
 
@@ -270,10 +276,9 @@ namespace music_lyric_player::playback {
 		}
 
 		std::vector<int> index;
-		int              firstIndex = this->info.lines_size();
-		for (int i = 0; i < this->info.lines_size(); ++i) {
-			const ::lyric::common::Time* lineTime = music_lyric_model::runtime::getLineTime(this->info.lines(i));
-			if ((lineTime ? static_cast<double>(lineTime->start()) : 0.0) > effective) {
+		int              firstIndex = static_cast<int>(this->info.lines.size());
+		for (int i = 0; i < static_cast<int>(this->info.lines.size()); ++i) {
+			if (lineStartMs(this->info.lines[static_cast<std::size_t>(i)]) > effective) {
 				firstIndex = i;
 				break;
 			}
@@ -299,9 +304,8 @@ namespace music_lyric_player::playback {
 			}
 		}
 
-		while (this->scanIndex < this->info.lines_size()) {
-			const ::lyric::common::Time* lineTime = music_lyric_model::runtime::getLineTime(this->info.lines(this->scanIndex));
-			if (now >= (lineTime ? static_cast<double>(lineTime->start()) : 0.0)) {
+		while (this->scanIndex < static_cast<int>(this->info.lines.size())) {
+			if (now >= lineStartMs(this->info.lines[static_cast<std::size_t>(this->scanIndex)])) {
 				if (now < this->merger.getMergedTime(this->scanIndex)) {
 					newActive.push_back(this->scanIndex);
 					hasChanged = true;

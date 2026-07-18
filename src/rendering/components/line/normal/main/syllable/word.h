@@ -11,9 +11,7 @@
 class SkCanvas;
 class SkTextBlob;
 
-namespace lyric::runtime {
-	class WordNormal;
-} // namespace lyric::runtime
+#include "music_lyric_model.h"
 
 namespace music_lyric_player::rendering::common {
 	struct RenderContext;
@@ -28,7 +26,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		/**
 		 * Copies the word text and timing needed for frame-independent animation sampling.
 		 */
-		Word(const ::lyric::runtime::WordNormal& info, bool hasSpaceBefore);
+		Word(const music_lyric_model::common::WordNormal& info, bool hasSpaceBefore);
 
 		/**
 		 * Destroys the cached paragraph where its concrete type is complete.

@@ -4,14 +4,11 @@
 #include <array>
 #include <cstddef>
 
+#include "music_lyric_model.h"
 #include "rendering/components/line/base/index.h"
 #include "rendering/utils/animation/tween.h"
 
 class SkCanvas;
-
-namespace lyric::runtime {
-	class Line;
-} // namespace lyric::runtime
 
 namespace music_lyric_player::rendering::common {
 	struct RenderContext;
@@ -26,7 +23,7 @@ namespace music_lyric_player::rendering::components::line::interlude {
 		/**
 		 * Builds an interlude indicator and caches its content-time animation range.
 		 */
-		Element(int index, const ::lyric::runtime::Line& info);
+		Element(int index, const music_lyric_model::parsed::Line& info);
 
 		/**
 		 * Resolves the configured dot geometry and measured line height.

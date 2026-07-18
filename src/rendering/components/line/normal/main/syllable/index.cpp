@@ -16,16 +16,16 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		/**
 		 * Returns the line's absolute start time, or zero when timing is absent.
 		 */
-		double lineStart(const ::lyric::runtime::Line& info) {
-			const ::lyric::common::Time* time = ::music_lyric_model::runtime::getLineTime(info);
-			return time ? static_cast<double>(time->start()) : 0.0;
+		double lineStart(const music_lyric_model::parsed::Line& info) {
+			const music_lyric_model::common::Time* time = music_lyric_model::parsed::getParsedLineTime(info);
+			return time ? static_cast<double>(time->start) : 0.0;
 		}
 
 		/**
 		 * Returns the line's non-negative duration.
 		 */
-		double lineDuration(const ::lyric::runtime::Line& info) {
-			return std::max(static_cast<double>(::music_lyric_model::runtime::getLineDuration(info)), 0.0);
+		double lineDuration(const music_lyric_model::parsed::Line& info) {
+			return std::max(static_cast<double>(music_lyric_model::parsed::getParsedLineDuration(info)), 0.0);
 		}
 
 		struct RowEntry {
@@ -41,17 +41,17 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		};
 	} // namespace
 
-	Element::Element(const ::lyric::runtime::Line& info)
+	Element::Element(const music_lyric_model::parsed::Line& info)
 	    : mask(lineStart(info), lineDuration(info)) {
-		const auto& source = ::music_lyric_model::runtime::getLineWords(info);
-		this->words.reserve(static_cast<std::size_t>(source.size()));
+		const auto& source = music_lyric_model::parsed::getParsedLineWords(info);
+		this->words.reserve(source.size());
 		bool hasSpace = false;
-		for (const ::lyric::runtime::Word& item : source) {
-			if (::music_lyric_model::runtime::isWordSpace(item)) {
+		for (const music_lyric_model::common::Word& item : source) {
+			if (music_lyric_model::common::isWordSpace(item)) {
 				hasSpace = true;
 				continue;
 			}
-			const ::lyric::runtime::WordNormal* normal = ::music_lyric_model::runtime::asWordNormal(item);
+			const music_lyric_model::common::WordNormal* normal = music_lyric_model::common::asWordNormal(item);
 			if (normal == nullptr) {
 				continue;
 			}

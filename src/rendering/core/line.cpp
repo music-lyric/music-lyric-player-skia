@@ -1,23 +1,21 @@
 #include "rendering/core/line.h"
 
-#include <algorithm>
 #include <memory>
 
-#include "music_lyric_model.h"
 #include "rendering/components/line/interlude/index.h"
 #include "rendering/components/line/normal/index.h"
 
 namespace music_lyric_player::rendering::core {
-	void LineManager::rebuild(const ::lyric::runtime::Info& info) {
+	void LineManager::rebuild(const music_lyric_model::parsed::Info& info) {
 		this->lines.clear();
-		this->lines.reserve(static_cast<std::size_t>(std::max(info.lines_size(), 0)));
-		const bool isSyllable = info.timing() == ::lyric::common::TIMING_WORD;
-		for (int i = 0; i < info.lines_size(); ++i) {
-			const ::lyric::runtime::Line& line = info.lines(i);
-			if (::music_lyric_model::runtime::isLineInterlude(line)) {
-				this->lines.push_back(std::make_unique<components::line::interlude::Element>(i, line));
+		this->lines.reserve(info.lines.size());
+		const bool isSyllable = info.timing == music_lyric_model::common::Timing::Word;
+		for (std::size_t i = 0; i < info.lines.size(); ++i) {
+			const music_lyric_model::parsed::Line& line = info.lines[i];
+			if (music_lyric_model::parsed::isParsedLineInterlude(line)) {
+				this->lines.push_back(std::make_unique<components::line::interlude::Element>(static_cast<int>(i), line));
 			} else {
-				this->lines.push_back(std::make_unique<components::line::normal::Element>(i, line, isSyllable));
+				this->lines.push_back(std::make_unique<components::line::normal::Element>(static_cast<int>(i), line, isSyllable));
 			}
 		}
 		this->layoutDirty = true;

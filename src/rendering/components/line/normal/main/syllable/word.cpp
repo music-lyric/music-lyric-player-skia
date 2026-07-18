@@ -38,16 +38,16 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		/**
 		 * Returns the word's absolute start time, or zero when timing is absent.
 		 */
-		double wordStart(const ::lyric::runtime::WordNormal& info) {
-			const ::lyric::common::Time* time = ::music_lyric_model::runtime::getWordTime(info);
-			return time ? static_cast<double>(time->start()) : 0.0;
+		double wordStart(const music_lyric_model::common::WordNormal& info) {
+			const music_lyric_model::common::Time* time = music_lyric_model::common::getWordTime(info);
+			return time ? static_cast<double>(time->start) : 0.0;
 		}
 
 		/**
 		 * Returns the word's non-negative duration.
 		 */
-		double wordDuration(const ::lyric::runtime::WordNormal& info) {
-			return std::max(static_cast<double>(::music_lyric_model::runtime::getWordDuration(info)), 0.0);
+		double wordDuration(const music_lyric_model::common::WordNormal& info) {
+			return std::max(static_cast<double>(music_lyric_model::common::getWordDuration(info)), 0.0);
 		}
 
 		/**
@@ -167,8 +167,8 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		}
 	} // namespace
 
-	Word::Word(const ::lyric::runtime::WordNormal& info, bool hasSpaceBefore)
-	    : text(info.content()),
+	Word::Word(const music_lyric_model::common::WordNormal& info, bool hasSpaceBefore)
+	    : text(info.content),
 	      start(wordStart(info)),
 	      duration(wordDuration(info)),
 	      spaceBefore(hasSpaceBefore),

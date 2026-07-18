@@ -8,9 +8,7 @@
 
 class SkCanvas;
 
-namespace lyric::runtime {
-	class Line;
-} // namespace lyric::runtime
+#include "music_lyric_model.h"
 
 namespace music_lyric_player::rendering::common {
 	struct RenderContext;
@@ -27,7 +25,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		/**
 		 * Builds timed word components and preserves explicit spaces between them.
 		 */
-		explicit Element(const ::lyric::runtime::Line& info);
+		explicit Element(const music_lyric_model::parsed::Line& info);
 
 		/**
 		 * Destroys cached word components where their concrete type is complete.

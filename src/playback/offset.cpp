@@ -11,13 +11,13 @@ namespace music_lyric_player::playback {
 		this->temp = 0.0;
 	}
 
-	void Offset::refreshFromMeta(const ::lyric::runtime::Info& info, bool useMeta) {
+	void Offset::refreshFromMeta(const music_lyric_model::parsed::Info& info, bool useMeta) {
 		if (!useMeta) {
 			this->meta = 0.0;
 			return;
 		}
 		// Meta carries a single lyric offset in milliseconds.
-		this->meta = static_cast<double>(info.meta().offset());
+		this->meta = static_cast<double>(info.meta.offset);
 	}
 
 	double Offset::resolve(double global) const {

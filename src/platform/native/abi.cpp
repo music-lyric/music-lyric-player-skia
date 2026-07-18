@@ -16,7 +16,7 @@
 #include "rendering/config/config.gen.glaze.h"
 #include "rendering/config/index.h"
 #include "rendering/renderer.h"
-#include "runtime/info.pb.h"
+#include "music_lyric_model.h"
 
 namespace {
 	/**
@@ -86,11 +86,8 @@ void music_lyric_player_destroy(music_lyric_player_handle* player) {
 
 void music_lyric_player_update_lyric(music_lyric_player_handle* player, const uint8_t* data, size_t size) {
 	guardVoid([&] {
-		lyric::runtime::Info info;
-		if (!info.ParseFromArray(data, static_cast<int>(size))) {
-			reportAbiException("malformed lyric protobuf payload");
-			return;
-		}
+		const music_lyric_model::parsed::Info info = music_lyric_model::parsed::decodeParsedInfo(
+		    std::vector<std::uint8_t>(data, data + size));
 		player->player.updateLyric(info);
 	});
 }

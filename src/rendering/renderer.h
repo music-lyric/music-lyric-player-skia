@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "include/core/SkRefCnt.h"
+#include "music_lyric_model.h"
 #include "rendering/config/index.h"
 #include "rendering/core/effect.h"
 #include "rendering/core/layout.h"
@@ -16,10 +17,6 @@ class SkCanvas;
 class SkFontMgr;
 class SkShaper;
 class SkUnicode;
-
-namespace lyric::runtime {
-	class Info;
-} // namespace lyric::runtime
 
 namespace music_lyric_player::playback {
 	class Player;
@@ -69,7 +66,7 @@ namespace music_lyric_player::rendering {
 		/**
 		 * Rebuilds the line list from a freshly loaded lyric.
 		 */
-		void handleLyricUpdate(const ::lyric::runtime::Info& info);
+		void handleLyricUpdate(const music_lyric_model::parsed::Info& info);
 
 		/**
 		 * Records the new focus (primary active) line index used to centre scrolling.
@@ -84,7 +81,7 @@ namespace music_lyric_player::rendering {
 		/**
 		 * Rebuilds the line list from a freshly loaded lyric and resets scrolling.
 		 */
-		void rebuildLines(const ::lyric::runtime::Info& info);
+		void rebuildLines(const music_lyric_model::parsed::Info& info);
 
 		playback::Player&                       player;
 		sk_sp<SkFontMgr>                        fontMgr;

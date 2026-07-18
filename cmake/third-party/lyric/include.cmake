@@ -82,39 +82,26 @@ else()
 	set(LYRIC_OUT "${CMAKE_SOURCE_DIR}/out/third-party/lyric/${_lyric_platform}-${_lyric_arch}-${_lyric_cfg}")
 endif()
 
-set(_model_lib "${LYRIC_OUT}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}music_lyric_model${CMAKE_STATIC_LIBRARY_SUFFIX}")
+set(_model_lib "${LYRIC_OUT}/${CMAKE_STATIC_LIBRARY_PREFIX}music_lyric_model${CMAKE_STATIC_LIBRARY_SUFFIX}")
 if(NOT EXISTS "${_model_lib}")
 	message(FATAL_ERROR "[Lyric] Prebuilt model not found: ${_model_lib}")
 endif()
 
-file(GLOB LYRIC_LIBRARIES "${LYRIC_OUT}/lib/*${CMAKE_STATIC_LIBRARY_SUFFIX}")
+file(GLOB LYRIC_LIBRARIES "${LYRIC_OUT}/*${CMAKE_STATIC_LIBRARY_SUFFIX}")
 if(NOT LYRIC_LIBRARIES)
 	message(FATAL_ERROR "[Lyric] No static libraries found: ${LYRIC_OUT}")
 endif()
 
 message(STATUS "[Lyric] ${LYRIC_OUT}")
 
-# The generated pb.h headers expose protobuf types, so consumers need the protobuf, abseil,
-# and utf8_range headers; fetch the sources at configure time instead of staging them.
-# The tag must stay in sync with the protobuf version pinned in third-party/lyric.
-include(FetchContent)
-FetchContent_Declare(lyric_protobuf
-	GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
-	GIT_TAG v35.1
-	GIT_SHALLOW TRUE
-	GIT_SUBMODULES_RECURSE TRUE
-	SOURCE_SUBDIR "headers-only-do-not-build")
-FetchContent_MakeAvailable(lyric_protobuf)
-
+# Public headers only.
 add_library(music_lyric_model INTERFACE)
 add_library(music_lyric::model ALIAS music_lyric_model)
 
 target_include_directories(music_lyric_model SYSTEM INTERFACE
 	"${LYRIC_SRC}/include"
-	"${LYRIC_SRC}/gen"
-	"${lyric_protobuf_SOURCE_DIR}/src"
-	"${lyric_protobuf_SOURCE_DIR}/third_party/utf8_range"
-	"${lyric_protobuf_SOURCE_DIR}/third_party/abseil-cpp")
+	"${LYRIC_SRC}/src")
 target_link_libraries(music_lyric_model INTERFACE ${LYRIC_LIBRARIES})
-target_compile_features(music_lyric_model INTERFACE cxx_std_17)
-target_compile_options(music_lyric_model INTERFACE $<$<CXX_COMPILER_ID:MSVC>:/utf-8;/bigobj>)
+target_compile_features(music_lyric_model INTERFACE cxx_std_20)
+target_compile_definitions(music_lyric_model INTERFACE MUSIC_LYRIC_MODEL_ENABLE_JSON=0)
+target_compile_options(music_lyric_model INTERFACE $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)

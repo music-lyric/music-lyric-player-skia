@@ -10,7 +10,7 @@
 #include "rendering/utils/color/parse.h"
 
 namespace music_lyric_player::rendering::components::line::normal {
-	Element::Element(int index, const ::lyric::runtime::Line& info, bool isSyllable)
+	Element::Element(int index, const music_lyric_model::parsed::Line& info, bool isSyllable)
 	    : base::Element(index),
 	      info(info),
 	      syllableEnable(isSyllable) {}

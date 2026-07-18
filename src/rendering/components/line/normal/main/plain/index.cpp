@@ -167,8 +167,8 @@ namespace music_lyric_player::rendering::components::line::normal::main::plain {
 		};
 	} // namespace
 
-	Element::Element(const ::lyric::runtime::Line& info)
-	    : text(::music_lyric_model::runtime::getLineText(info)) {}
+	Element::Element(const music_lyric_model::parsed::Line& info)
+	    : text(music_lyric_model::parsed::getParsedLineText(info)) {}
 
 	Element::~Element() = default;
 

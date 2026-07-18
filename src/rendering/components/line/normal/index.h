@@ -3,13 +3,10 @@
 
 #include <memory>
 
+#include "music_lyric_model.h"
 #include "rendering/components/line/base/index.h"
 
 class SkCanvas;
-
-namespace lyric::runtime {
-	class Line;
-} // namespace lyric::runtime
 
 namespace music_lyric_player::rendering::common {
 	struct RenderContext;
@@ -30,9 +27,9 @@ namespace music_lyric_player::rendering::components::line::normal {
 	class Element : public base::Element {
 	public:
 		/**
-		 * Creates a normal line backed by the source runtime line and timing mode.
+		 * Creates a normal line backed by the source parsed line and timing mode.
 		 */
-		Element(int index, const ::lyric::runtime::Line& info, bool isSyllable);
+		Element(int index, const music_lyric_model::parsed::Line& info, bool isSyllable);
 
 		/**
 		 * Destroys the selected body renderer where its concrete type is complete.
@@ -55,9 +52,9 @@ namespace music_lyric_player::rendering::components::line::normal {
 		 */
 		void selectBody(bool useSyllable);
 
-		const ::lyric::runtime::Line&      info;
-		bool                               syllableEnable;
-		bool                               syllableMode = false;
+		const music_lyric_model::parsed::Line& info;
+		bool                                   syllableEnable;
+		bool                                   syllableMode = false;
 		std::unique_ptr<main::plain::Element>    plainElement;
 		std::unique_ptr<main::syllable::Element> syllableElement;
 	};

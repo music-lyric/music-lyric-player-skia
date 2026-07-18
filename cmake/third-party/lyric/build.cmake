@@ -124,12 +124,15 @@ if(LYRIC_BUILD_CLEAN AND EXISTS "${LYRIC_OUT}")
 	file(REMOVE_RECURSE "${LYRIC_OUT}")
 endif()
 
+# binary protobuf only + LTO.
 set(_configure_cmd
 	"${CMAKE_COMMAND}"
 	-S "${LYRIC_SRC}"
 	-B "${LYRIC_OUT}"
 	-G Ninja
-	"-DCMAKE_BUILD_TYPE=${LYRIC_BUILD_CONFIG}")
+	"-DCMAKE_BUILD_TYPE=${LYRIC_BUILD_CONFIG}"
+	"-DMUSIC_LYRIC_MODEL_ENABLE_JSON=OFF"
+	"-DMUSIC_LYRIC_MODEL_ENABLE_LTO=ON")
 
 if(_platform STREQUAL "windows")
 	list(APPEND _configure_cmd
@@ -173,11 +176,11 @@ endif()
 
 message(STATUS "[Lyric] Staging products...")
 file(REMOVE_RECURSE "${LYRIC_STAGE}")
-file(MAKE_DIRECTORY "${LYRIC_STAGE}/lib")
+file(MAKE_DIRECTORY "${LYRIC_STAGE}")
 
 file(GLOB_RECURSE _stage_libs "${LYRIC_OUT}/*${_lib_suffix}")
 foreach(_lib IN LISTS _stage_libs)
-	file(COPY "${_lib}" DESTINATION "${LYRIC_STAGE}/lib")
+	file(COPY "${_lib}" DESTINATION "${LYRIC_STAGE}")
 endforeach()
 
 message(STATUS "[Lyric] Done: ${LYRIC_STAGE}")

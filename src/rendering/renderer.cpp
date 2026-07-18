@@ -20,7 +20,6 @@
 #include "rendering/components/line/base/index.h"
 #include "rendering/utils/color/parse.h"
 #include "rendering/utils/length.h"
-#include "runtime/info.pb.h"
 
 namespace music_lyric_player::rendering {
 	namespace {
@@ -39,7 +38,7 @@ namespace music_lyric_player::rendering {
 		// Shared HarfBuzz shaper drives the self-laid-out timed words; it keeps the ICU backend for BiDi / script so minority scripts survive.
 		this->shaper = SkShaper::Make(this->fontMgr);
 
-		this->lyricListener  = this->player.onLyricUpdate.add([this](const ::lyric::runtime::Info& info) {
+		this->lyricListener  = this->player.onLyricUpdate.add([this](const music_lyric_model::parsed::Info& info) {
 			handleLyricUpdate(info);
 		});
 		this->linesListener  = this->player.onLinesUpdate.add([this](const std::vector<int>&, int firstIndex, bool) {
@@ -50,7 +49,7 @@ namespace music_lyric_player::rendering {
 		});
 
 		// Adopt any lyric already loaded before the renderer attached.
-		if (this->player.currentInfo().lines_size() > 0) {
+		if (!this->player.currentInfo().lines.empty()) {
 			rebuildLines(this->player.currentInfo());
 			this->activeIndex = this->player.currentActive();
 		}
@@ -91,7 +90,7 @@ namespace music_lyric_player::rendering {
 		this->dpr       = dpr;
 	}
 
-	void Renderer::handleLyricUpdate(const ::lyric::runtime::Info& info) {
+	void Renderer::handleLyricUpdate(const music_lyric_model::parsed::Info& info) {
 		rebuildLines(info);
 		this->activeIndex = -1;
 	}
@@ -104,7 +103,7 @@ namespace music_lyric_player::rendering {
 		this->lines.invalidateLayout();
 	}
 
-	void Renderer::rebuildLines(const ::lyric::runtime::Info& info) {
+	void Renderer::rebuildLines(const music_lyric_model::parsed::Info& info) {
 		this->lines.rebuild(info);
 		// Drop the scroll and effect tweens so a freshly loaded lyric snaps into place instead of sliding from the old song.
 		this->scroll.reset();

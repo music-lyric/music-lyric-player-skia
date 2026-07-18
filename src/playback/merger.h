@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "runtime/info.pb.h"
+#include "music_lyric_model.h"
 
 namespace music_lyric_player::playback {
 	/**
@@ -16,7 +16,7 @@ namespace music_lyric_player::playback {
 		 * Rebuilds the merged end-time table from the lyric and merge settings.
 		 * The referenced info must outlive every later query.
 		 */
-		void build(const ::lyric::runtime::Info& info, double mergeWindow, int mergeLimit);
+		void build(const music_lyric_model::parsed::Info& info, double mergeWindow, int mergeLimit);
 
 		/**
 		 * Returns the merged deactivation time of a line, falling back to the raw time when unbuilt.
@@ -30,8 +30,8 @@ namespace music_lyric_player::playback {
 		 */
 		double getRawTime(int index) const;
 
-		const ::lyric::runtime::Info* info = nullptr;
-		std::vector<double>  mergedEnd;
+		const music_lyric_model::parsed::Info* info = nullptr;
+		std::vector<double>                    mergedEnd;
 	};
 } // namespace music_lyric_player::playback
 

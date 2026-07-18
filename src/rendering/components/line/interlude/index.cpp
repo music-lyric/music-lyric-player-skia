@@ -20,11 +20,11 @@ namespace music_lyric_player::rendering::components::line::interlude {
 		constexpr float kPaddingY = 6.0f;
 	} // namespace
 
-	Element::Element(int index, const ::lyric::runtime::Line& info)
+	Element::Element(int index, const music_lyric_model::parsed::Line& info)
 	    : base::Element(index) {
-		const ::lyric::common::Time* time = ::music_lyric_model::runtime::getLineTime(info);
-		this->start                       = time ? static_cast<double>(time->start()) : 0.0;
-		const double duration             = static_cast<double>(::music_lyric_model::runtime::getLineDuration(info));
+		const music_lyric_model::common::Time* time = music_lyric_model::parsed::getParsedLineTime(info);
+		this->start                                = time ? static_cast<double>(time->start) : 0.0;
+		const double duration                      = static_cast<double>(music_lyric_model::parsed::getParsedLineDuration(info));
 		this->slice                       = std::floor(std::max(duration, 0.0) / static_cast<double>(kDotCount));
 
 		this->scaleTween.setDuration(kScaleDuration);

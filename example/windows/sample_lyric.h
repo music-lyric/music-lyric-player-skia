@@ -1,13 +1,13 @@
 #ifndef MUSIC_LYRIC_PLAYER_EXAMPLE_SAMPLE_LYRIC_H_
 #define MUSIC_LYRIC_PLAYER_EXAMPLE_SAMPLE_LYRIC_H_
 
-#include "runtime/info.pb.h"
+#include "music_lyric_model.h"
 
 namespace example {
 	/**
-	 * Decodes the embedded v3 protobuf lyric used by the demo.
+	 * Decodes the embedded protobuf lyric used by the demo.
 	 */
-	::lyric::runtime::Info buildSampleLyric();
+	music_lyric_model::parsed::Info buildSampleLyric();
 } // namespace example
 
 #endif

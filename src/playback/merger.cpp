@@ -5,13 +5,11 @@
 #include <cstddef>
 #include <limits>
 
-#include "music_lyric_model.h"
-
 namespace music_lyric_player::playback {
-	void Merger::build(const ::lyric::runtime::Info& info, double mergeWindow, int mergeLimit) {
+	void Merger::build(const music_lyric_model::parsed::Info& info, double mergeWindow, int mergeLimit) {
 		this->info = &info;
 
-		const int count = info.lines_size();
+		const int count = static_cast<int>(info.lines.size());
 		this->mergedEnd.assign(static_cast<std::size_t>(count), 0.0);
 		if (count == 0) {
 			return;
@@ -46,14 +44,14 @@ namespace music_lyric_player::playback {
 	}
 
 	double Merger::getRawTime(int index) const {
-		if (this->info == nullptr || index < 0 || index >= this->info->lines_size()) {
+		if (this->info == nullptr || index < 0 || index >= static_cast<int>(this->info->lines.size())) {
 			return 0.0;
 		}
-		if (index == this->info->lines_size() - 1) {
+		if (index == static_cast<int>(this->info->lines.size()) - 1) {
 			return std::numeric_limits<double>::infinity();
 		}
-		const ::lyric::common::Time* end   = music_lyric_model::runtime::getLineTime(this->info->lines(index));
-		const ::lyric::common::Time* start = music_lyric_model::runtime::getLineTime(this->info->lines(index + 1));
-		return std::max(end ? static_cast<double>(end->end()) : 0.0, start ? static_cast<double>(start->start()) : 0.0);
+		const music_lyric_model::common::Time* end   = music_lyric_model::parsed::getParsedLineTime(this->info->lines[static_cast<std::size_t>(index)]);
+		const music_lyric_model::common::Time* start = music_lyric_model::parsed::getParsedLineTime(this->info->lines[static_cast<std::size_t>(index + 1)]);
+		return std::max(end ? static_cast<double>(end->end) : 0.0, start ? static_cast<double>(start->start) : 0.0);
 	}
 } // namespace music_lyric_player::playback

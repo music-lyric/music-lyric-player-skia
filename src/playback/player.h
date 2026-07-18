@@ -5,10 +5,10 @@
 #include <optional>
 #include <vector>
 
+#include "music_lyric_model.h"
 #include "playback/config/index.h"
 #include "playback/merger.h"
 #include "playback/offset.h"
-#include "runtime/info.pb.h"
 #include "utils/clock/clock.h"
 #include "utils/event/signal.h"
 
@@ -32,7 +32,7 @@ namespace music_lyric_player::playback {
 		/**
 		 * Loads a parsed lyric, rejecting versions outside the supported caret range.
 		 */
-		void updateLyric(const ::lyric::runtime::Info& info);
+		void updateLyric(const music_lyric_model::parsed::Info& info);
 
 		/**
 		 * Starts or resumes playback, optionally seeking to `seek` first.
@@ -87,7 +87,7 @@ namespace music_lyric_player::playback {
 		/**
 		 * The current lyric info.
 		 */
-		const ::lyric::runtime::Info& currentInfo() const;
+		const music_lyric_model::parsed::Info& currentInfo() const;
 
 		/**
 		 * The current playback time in ms.
@@ -106,10 +106,10 @@ namespace music_lyric_player::playback {
 
 		config::Manager config;
 
-		utils::Signal<double>                             onPlay;
-		utils::Signal<double>                             onPause;
-		utils::Signal<const ::lyric::runtime::Info&>      onLyricUpdate;
-		utils::Signal<const std::vector<int>&, int, bool> onLinesUpdate;
+		utils::Signal<double>                               onPlay;
+		utils::Signal<double>                               onPause;
+		utils::Signal<const music_lyric_model::parsed::Info&> onLyricUpdate;
+		utils::Signal<const std::vector<int>&, int, bool>   onLinesUpdate;
 
 	private:
 		/**
@@ -151,16 +151,16 @@ namespace music_lyric_player::playback {
 		 */
 		void onConfigUpdate(const config::RootChange& changes);
 
-		const utils::Clock&    clockRef;
-		bool                   playing   = false;
-		int                    scanIndex = 0;
-		std::vector<int>       activeIndex;
-		double                 start = 0.0;
-		double                 seek  = 0.0;
-		::lyric::runtime::Info info;
-		Merger                 merger;
-		Offset                 offset;
-		std::size_t            configListenerId = 0;
+		const utils::Clock&               clockRef;
+		bool                              playing   = false;
+		int                               scanIndex = 0;
+		std::vector<int>                  activeIndex;
+		double                            start = 0.0;
+		double                            seek  = 0.0;
+		music_lyric_model::parsed::Info   info;
+		Merger                            merger;
+		Offset                            offset;
+		std::size_t                       configListenerId = 0;
 	};
 } // namespace music_lyric_player::playback
 

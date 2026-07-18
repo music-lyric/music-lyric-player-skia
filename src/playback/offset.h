@@ -1,7 +1,7 @@
 #ifndef MUSIC_LYRIC_PLAYER_PLAYBACK_OFFSET_H_
 #define MUSIC_LYRIC_PLAYER_PLAYBACK_OFFSET_H_
 
-#include "runtime/info.pb.h"
+#include "music_lyric_model.h"
 
 namespace music_lyric_player::playback {
 	/**
@@ -19,7 +19,7 @@ namespace music_lyric_player::playback {
 		/**
 		 * Re-derives the meta offset from the lyric, or clears it when `useMeta` is false.
 		 */
-		void refreshFromMeta(const ::lyric::runtime::Info& info, bool useMeta);
+		void refreshFromMeta(const music_lyric_model::parsed::Info& info, bool useMeta);
 
 		/**
 		 * Combines the given global offset with meta and temp; non-finite results clamp to 0.

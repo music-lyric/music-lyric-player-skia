@@ -5,11 +5,8 @@
 #include <memory>
 #include <vector>
 
+#include "music_lyric_model.h"
 #include "rendering/components/line/base/index.h"
-
-namespace lyric::runtime {
-	class Info;
-} // namespace lyric::runtime
 
 namespace music_lyric_player::rendering::common {
 	struct RenderContext;
@@ -26,7 +23,7 @@ namespace music_lyric_player::rendering::core {
 		 * Rebuilds the line list from a freshly loaded lyric, dropping the previous lines.
 		 * Marks the layout dirty so the new lines wrap on the next frame.
 		 */
-		void rebuild(const ::lyric::runtime::Info& info);
+		void rebuild(const music_lyric_model::parsed::Info& info);
 
 		/**
 		 * Drops all lines and marks the layout dirty.

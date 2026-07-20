@@ -19,7 +19,6 @@
 #include "playback/player.h"
 #include "rendering/common/context.h"
 #include "rendering/components/line/base/index.h"
-#include "rendering/utils/color/parse.h"
 #include "rendering/utils/length.h"
 
 namespace music_lyric_player::rendering {
@@ -121,7 +120,7 @@ namespace music_lyric_player::rendering {
 		const common::RenderContext context{cfg, this->unicode, this->fontMgr, this->shaper.get(), this->player.currentTime()};
 
 		// Background always fills, even before a lyric loads.
-		canvas->clear(utils::color::resolve(cfg.container.backgroundColor, config::Default.container.backgroundColor));
+		this->container.paintBackground(canvas, context);
 
 		if (this->viewportW <= 0 || this->viewportH <= 0) {
 			return;
@@ -133,7 +132,7 @@ namespace music_lyric_player::rendering {
 		const float logicalW = static_cast<float>(this->viewportW) / this->dpr;
 		const float logicalH = static_cast<float>(this->viewportH) / this->dpr;
 
-		const float padX         = std::min(static_cast<float>(resolveLength(cfg.container.paddingX, config::Default.container.paddingX, logicalW)), logicalW * 0.5f);
+		const float padX         = this->container.paddingX(logicalW, context);
 		const float contentWidth = std::max(logicalW - 2.0f * padX, 1.0f);
 		this->lines.ensureLayout(contentWidth, context);
 

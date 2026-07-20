@@ -6,6 +6,7 @@
 
 #include "include/core/SkRefCnt.h"
 #include "music_lyric_model.h"
+#include "rendering/components/container/index.h"
 #include "rendering/config/index.h"
 #include "rendering/core/effect.h"
 #include "rendering/core/layout.h"
@@ -94,6 +95,8 @@ namespace music_lyric_player::rendering {
 		int   viewportW = 0; // physical pixels
 		int   viewportH = 0; // physical pixels
 		float dpr       = 1.0f;
+
+		components::container::Element container;
 
 		core::LineManager   lines;
 		core::LayoutManager layout;

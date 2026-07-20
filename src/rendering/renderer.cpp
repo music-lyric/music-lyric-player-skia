@@ -13,6 +13,7 @@
 #include "include/core/SkTileMode.h"
 #include "include/effects/SkImageFilters.h"
 #include "modules/skshaper/include/SkShaper.h"
+#include "modules/skshaper/include/SkShaper_harfbuzz.h"
 #include "modules/skunicode/include/SkUnicode.h"
 #include "modules/skunicode/include/SkUnicode_icu.h"
 #include "playback/player.h"
@@ -35,8 +36,10 @@ namespace music_lyric_player::rendering {
 		// Unicode backend drives the shaper's word / grapheme / line-break boundaries.
 		this->unicode = SkUnicodes::ICU::Make();
 
-		// Shared HarfBuzz shaper drives the self-laid-out timed words; it keeps the ICU backend for BiDi / script so minority scripts survive.
-		this->shaper = SkShaper::Make(this->fontMgr);
+		// The shaper-driven wrapper re-shapes at each candidate break, so it measures wrapped widths exactly.
+		// The default shape-then-wrap mis-breaks CJK, RTL and mixed-script lines and lets them overflow the block; this one wraps them correctly.
+		// It shares the ICU backend for BiDi / script so minority scripts survive, and the self-laid-out timed words pass an unbounded width so it never breaks them.
+		this->shaper = SkShapers::HB::ShaperDrivenWrapper(this->unicode, this->fontMgr);
 
 		this->lyricListener  = this->player.onLyricUpdate.add([this](const music_lyric_model::parsed::Info& info) {
 			handleLyricUpdate(info);

@@ -271,8 +271,6 @@ file(MAKE_DIRECTORY "${SKIA_STAGE}")
 foreach(_lib IN LISTS _ninja_targets)
 	file(COPY "${SKIA_OUT}/${_lib}" DESTINATION "${SKIA_STAGE}")
 endforeach()
-if(EXISTS "${SKIA_OUT}/icudtl.dat")
-	file(COPY "${SKIA_OUT}/icudtl.dat" DESTINATION "${SKIA_STAGE}")
-endif()
+# Skia stages its own icudtl.dat, but the engine embeds ICU itself (see src/backend/icu), so it is not shipped.
 
 message(STATUS "[Skia] Done: ${SKIA_STAGE}")

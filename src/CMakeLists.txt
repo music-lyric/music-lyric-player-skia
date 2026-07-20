@@ -55,6 +55,40 @@ target_link_libraries(music_lyric_player_backend PUBLIC
 	skia::skia
 	Vulkan::Vulkan)
 
+# Embed ICU data on Windows, where Skia leaves SkLoadICU() for the embedder to supply.
+# Other platforms assemble ICU in through Skia itself, so this path is Windows-only.
+# SKIA_ICU_PROFILE selects the size: flutter (~0.74MB, default) or common (~10MB, full CJK dictionary).
+if(WIN32)
+	if(NOT DEFINED SKIA_ICU_PROFILE)
+		set(SKIA_ICU_PROFILE "flutter" CACHE STRING "ICU data profile to embed: flutter (minimal) or common (full)")
+	endif()
+
+	set(_icu_data_dat "${SKIA_SRC}/third_party/externals/icu/${SKIA_ICU_PROFILE}/icudtl.dat")
+	if(NOT EXISTS "${_icu_data_dat}")
+		message(FATAL_ERROR "[ICU] Profile data not found: ${_icu_data_dat} (build Skia once to sync externals, or set SKIA_ICU_PROFILE)")
+	endif()
+
+	find_program(MUSIC_LYRIC_PLAYER_PYTHON NAMES python python3 REQUIRED)
+	set(_icu_data_gen "${CMAKE_CURRENT_BINARY_DIR}/gen/icu_data.gen.cpp")
+	set(_icu_data_script "${CMAKE_SOURCE_DIR}/script/generate-icu-data.py")
+
+	add_custom_command(
+		OUTPUT "${_icu_data_gen}"
+		COMMAND "${MUSIC_LYRIC_PLAYER_PYTHON}" "${_icu_data_script}" "${_icu_data_dat}" "${_icu_data_gen}"
+		DEPENDS "${_icu_data_script}" "${_icu_data_dat}"
+		COMMENT "Embedding ICU data (profile: ${SKIA_ICU_PROFILE})"
+		VERBATIM)
+
+	# An object library so the override and blob link directly into each artifact, letting our SkLoadICU shadow Skia's without a duplicate symbol.
+	add_library(music_lyric_player_icu OBJECT
+		backend/icu/load.cpp
+		"${_icu_data_gen}"
+	)
+	add_library(music_lyric_player::icu ALIAS music_lyric_player_icu)
+
+	target_compile_features(music_lyric_player_icu PUBLIC cxx_std_20)
+endif()
+
 add_library(music_lyric_player_native SHARED
 	platform/native/abi.cpp
 )
@@ -87,3 +121,8 @@ target_link_libraries(music_lyric_player_native PRIVATE
 	music_lyric_player::playback
 	music_lyric::model
 	glaze::glaze)
+
+# The embedded ICU data and SkLoadICU override must sit in the final DLL link, next to Skia's text stack.
+if(WIN32)
+	target_link_libraries(music_lyric_player_native PRIVATE music_lyric_player::icu)
+endif()

@@ -11,6 +11,40 @@
 
 namespace music_lyric_player::rendering::config::container {
 	/**
+	 * Soft fade at the top and bottom edges of the player.
+	 *
+	 * Lines ease out as they approach the viewport edge.
+	 */
+	struct FadeConfig {
+		/**
+		 * Whether to enable the edge fade.
+		 *
+		 * @default true
+		 */
+		bool enabled = true;
+		/**
+		 * Top fade range.
+		 * A `%` value is relative to the viewport height.
+		 * A bare number or `px` is an absolute length in logical pixels.
+		 *
+		 * @default "5%"
+		 * @example "5%"
+		 * @example "24px"
+		 */
+		::std::string top = "5%";
+		/**
+		 * Bottom fade range.
+		 * A `%` value is relative to the viewport height.
+		 * A bare number or `px` is an absolute length in logical pixels.
+		 *
+		 * @default "10%"
+		 * @example "10%"
+		 * @example "48px"
+		 */
+		::std::string bottom = "10%";
+	};
+
+	/**
 	 * Background fill and padding of the player.
 	 */
 	struct Root {
@@ -34,18 +68,52 @@ namespace music_lyric_player::rendering::config::container {
 		 * @example "5%"
 		 */
 		::std::string paddingX = "48px";
+		/**
+		 * Edge fade applied at the top and bottom of the player.
+		 */
+		FadeConfig fade;
+	};
+
+	struct FadeConfigPatch {
+		::std::optional<bool> enabled;
+		::std::optional<::std::string> top;
+		::std::optional<::std::string> bottom;
 	};
 
 	struct RootPatch {
 		::std::optional<::std::string> backgroundColor;
 		::std::optional<::std::string> paddingX;
+		FadeConfigPatch fade;
+	};
+
+	struct FadeConfigChange {
+		bool enabled = false;
+		bool top = false;
+		bool bottom = false;
+		bool any = false;
 	};
 
 	struct RootChange {
 		bool backgroundColor = false;
 		bool paddingX = false;
+		FadeConfigChange fade;
 		bool any = false;
 	};
+
+	/**
+	 * Called by the config Manager and the parent aggregate, not part of the public API.
+	 */
+	inline void apply(FadeConfig& cfg, const FadeConfigPatch& patch) {
+		if (patch.enabled.has_value()) {
+			cfg.enabled = *patch.enabled;
+		}
+		if (patch.top.has_value()) {
+			cfg.top = *patch.top;
+		}
+		if (patch.bottom.has_value()) {
+			cfg.bottom = *patch.bottom;
+		}
+	}
 
 	/**
 	 * Called by the config Manager and the parent aggregate, not part of the public API.
@@ -57,6 +125,19 @@ namespace music_lyric_player::rendering::config::container {
 		if (patch.paddingX.has_value()) {
 			cfg.paddingX = *patch.paddingX;
 		}
+		apply(cfg.fade, patch.fade);
+	}
+
+	/**
+	 * Called by the config Manager and the parent aggregate, not part of the public API.
+	 */
+	inline FadeConfigChange diff(const FadeConfig& prev, const FadeConfig& next) {
+		FadeConfigChange change;
+		change.enabled = prev.enabled != next.enabled;
+		change.top = prev.top != next.top;
+		change.bottom = prev.bottom != next.bottom;
+		change.any = change.enabled || change.top || change.bottom;
+		return change;
 	}
 
 	/**
@@ -66,7 +147,8 @@ namespace music_lyric_player::rendering::config::container {
 		RootChange change;
 		change.backgroundColor = prev.backgroundColor != next.backgroundColor;
 		change.paddingX = prev.paddingX != next.paddingX;
-		change.any = change.backgroundColor || change.paddingX;
+		change.fade = diff(prev.fade, next.fade);
+		change.any = change.backgroundColor || change.paddingX || change.fade.any;
 		return change;
 	}
 

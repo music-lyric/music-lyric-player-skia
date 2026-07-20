@@ -154,6 +154,13 @@ namespace music_lyric_player::rendering {
 		this->scroll.update(now, targetY, static_cast<int>(focus), this->lines.size(), cfg.scroll.animation);
 		this->effect.update(now, static_cast<int>(focus), this->lines.size(), cfg.effect, cfg.scroll.animation);
 
+		// Fade the top and bottom edges: paint the lines into a layer, then erase its edge alpha with a gradient.
+		const bool fade = this->container.fadeActive(logicalH, context);
+		if (fade) {
+			const SkRect fadeBounds = SkRect::MakeWH(logicalW, logicalH);
+			canvas->saveLayer(&fadeBounds, nullptr);
+		}
+
 		for (std::size_t i = 0; i < this->lines.size(); ++i) {
 			const components::line::base::Element& line = this->lines.at(i);
 			const float                            y    = this->layout.top(i) - this->scroll.offsetAt(i, now);
@@ -191,6 +198,11 @@ namespace music_lyric_player::rendering {
 			for (; saved > 0; --saved) {
 				canvas->restore();
 			}
+		}
+
+		if (fade) {
+			this->container.paintEdgeFade(canvas, logicalW, logicalH, context);
+			canvas->restore();
 		}
 	}
 } // namespace music_lyric_player::rendering

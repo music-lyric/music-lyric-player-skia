@@ -3,6 +3,37 @@
   "file": "index.gen.h",
   "items": [
     {
+      "name": "FadeConfig",
+      "comment": [
+        "Soft fade at the top and bottom edges of the player.",
+        "",
+        "Lines ease out as they approach the viewport edge."
+      ],
+      "fields": [
+        { "name": "enabled", "type": "bool", "default": "true", "comment": "Whether to enable the edge fade." },
+        {
+          "name": "top",
+          "kind": "length",
+          "default": "\"5%\"",
+          "example": ["5%", "24px"],
+          "comment": [
+            "Top fade range.",
+            "A `%` value is relative to the viewport height."
+          ]
+        },
+        {
+          "name": "bottom",
+          "kind": "length",
+          "default": "\"10%\"",
+          "example": ["10%", "48px"],
+          "comment": [
+            "Bottom fade range.",
+            "A `%` value is relative to the viewport height."
+          ]
+        }
+      ]
+    },
+    {
       "name": "Root",
       "comment": "Background fill and padding of the player.",
       "fields": [
@@ -22,6 +53,11 @@
             "Horizontal padding on each side of the content.",
             "A `%` value is relative to the viewport width."
           ]
+        },
+        {
+          "name": "fade",
+          "nested": "FadeConfig",
+          "comment": "Edge fade applied at the top and bottom of the player."
         }
       ]
     }

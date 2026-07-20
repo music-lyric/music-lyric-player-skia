@@ -14,12 +14,17 @@ set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glfw)
 
 add_executable(music_lyric_player_example_windows
+	lyric_input.cpp
 	main.cpp
-	sample_lyric.cpp
 	window.cpp
 )
 
 target_compile_features(music_lyric_player_example_windows PRIVATE cxx_std_20)
+
+# The demo may carry UTF-8 string literals, so the source must be read and encoded as UTF-8.
+if(MSVC)
+	target_compile_options(music_lyric_player_example_windows PRIVATE /utf-8)
+endif()
 
 target_include_directories(music_lyric_player_example_windows PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 
@@ -28,15 +33,9 @@ set_target_properties(music_lyric_player_example_windows PROPERTIES
 
 # music_lyric_player::rendering transitively brings playback, the lyric model (with its /utf-8 flag) and skia.
 # music_lyric_player::backend brings the GPU surface and font manager, and transitively Vulkan.
+# music_lyric_player::icu embeds the ICU data and SkLoadICU override so no external icudtl.dat is needed.
 target_link_libraries(music_lyric_player_example_windows PRIVATE
 	music_lyric_player::backend
 	music_lyric_player::rendering
+	music_lyric_player::icu
 	glfw)
-
-# Skia's ICU backend (SkUnicode) memory-maps icudtl.dat from the executable's directory at runtime.
-# Copy Skia's data file next to the binary after each build.
-add_custom_command(TARGET music_lyric_player_example_windows POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different
-		"${SKIA_OUT}/icudtl.dat"
-		"$<TARGET_FILE_DIR:music_lyric_player_example_windows>/icudtl.dat"
-	COMMENT "Copying icudtl.dat next to the example executable")

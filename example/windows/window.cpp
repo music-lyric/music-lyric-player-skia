@@ -44,6 +44,29 @@ namespace example {
 			}
 		});
 
+		glfwSetKeyCallback(this->window, [](GLFWwindow* window, int key, int, int action, int) {
+			if (action != GLFW_PRESS && action != GLFW_REPEAT) {
+				return;
+			}
+			auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
+			if (self == nullptr) {
+				return;
+			}
+			switch (key) {
+				case GLFW_KEY_R:
+					self->actions.push_back(InputAction::Restart);
+					break;
+				case GLFW_KEY_L:
+					self->actions.push_back(InputAction::LoadHex);
+					break;
+				case GLFW_KEY_SPACE:
+					self->actions.push_back(InputAction::TogglePause);
+					break;
+				default:
+					break;
+			}
+		});
+
 		return true;
 	}
 
@@ -63,5 +86,17 @@ namespace example {
 		const bool wasResized = this->resized;
 		this->resized         = false;
 		return wasResized;
+	}
+
+	std::vector<InputAction> Window::drainActions() {
+		std::vector<InputAction> drained;
+		drained.swap(this->actions);
+		return drained;
+	}
+
+	void Window::setTitle(const char* title) {
+		if (this->window != nullptr) {
+			glfwSetWindowTitle(this->window, title);
+		}
 	}
 } // namespace example

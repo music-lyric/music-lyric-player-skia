@@ -1,0 +1,160 @@
+name: Release Windows
+
+on:
+  workflow_call:
+    outputs:
+      artifact:
+        description: 'artifact name.'
+        value: ${{ jobs.build.outputs.artifact }}
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  third-party-skia:
+    runs-on: windows-2025
+    timeout-minutes: 120
+    outputs:
+      cache-key: ${{ steps.key.outputs.value }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 1
+
+      - name: Resolve Cache Key
+        id: key
+        shell: bash
+        run: |
+          hash=$( { git rev-parse HEAD:third-party/skia; cat cmake/third-party/skia/args/common.gn cmake/third-party/skia/args/windows.gn; } | sha256sum | cut -c1-16)
+          echo "value=skia-v1-windows-x64-release-$hash" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Skia
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: out/third-party/skia
+          key: ${{ steps.key.outputs.value }}
+
+      - name: Checkout Skia Submodule
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: git submodule update --init --depth 1 third-party/skia
+
+      - name: Expose LLVM
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: echo "C:/Program Files/LLVM/bin" >> "$GITHUB_PATH"
+
+      # Skia's clang-cl needs the Windows SDK and MSVC headers on the environment.
+      - name: Setup MSVC
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+
+      - name: Build Skia
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: cmake -P cmake/third-party/skia/build.cmake
+
+  third-party-lyric:
+    runs-on: windows-2025
+    timeout-minutes: 60
+    outputs:
+      cache-key: ${{ steps.key.outputs.value }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 1
+
+      - name: Resolve Cache Key
+        id: key
+        shell: bash
+        run: |
+          hash=$(git rev-parse HEAD:third-party/lyric | sha256sum | cut -c1-16)
+          echo "value=lyric-v1-windows-x64-release-$hash" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Lyric
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: out/third-party/lyric
+          key: ${{ steps.key.outputs.value }}
+
+      - name: Checkout Lyric Submodule
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: git submodule update --init --recursive --depth 1 third-party/lyric
+
+      - name: Setup MSVC
+        if: steps.cache.outputs.cache-hit != 'true'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+
+      - name: Build Lyric
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: cmake -P cmake/third-party/lyric/build.cmake
+
+  build:
+    needs: [third-party-skia, third-party-lyric]
+    runs-on: windows-2025
+    timeout-minutes: 60
+    outputs:
+      artifact: ${{ steps.meta.outputs.name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Restore Skia
+        uses: actions/cache/restore@v4
+        with:
+          path: out/third-party/skia
+          key: ${{ needs.third-party-skia.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: Restore Lyric
+        uses: actions/cache/restore@v4
+        with:
+          path: out/third-party/lyric
+          key: ${{ needs.third-party-lyric.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: Install Vulkan SDK
+        uses: jakoch/install-vulkan-sdk-action@v1.6.0
+        with:
+          cache: true
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+
+      - name: Verify Glaze
+        shell: bash
+        run: cmake -P cmake/third-party/glaze/build.cmake
+
+      - name: Package
+        shell: bash
+        run: cmake -P cmake/package/windows.cmake
+
+      - name: Resolve Artifact Name
+        id: meta
+        shell: bash
+        run: echo "name=windows-x64-release" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Zip Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.name }}
+          path: out/app/dist/windows-x64-release.zip
+          if-no-files-found: error

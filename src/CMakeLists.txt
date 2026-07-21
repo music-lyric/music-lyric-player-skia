@@ -64,9 +64,9 @@ if(WIN32)
 		set(SKIA_ICU_PROFILE "flutter" CACHE STRING "ICU data profile to embed: flutter (minimal) or common (full)")
 	endif()
 
-	set(_icu_data_dat "${SKIA_SRC}/third_party/externals/icu/${SKIA_ICU_PROFILE}/icudtl.dat")
+	set(_icu_data_dat "${CMAKE_SOURCE_DIR}/out/third-party/skia/icu/${SKIA_ICU_PROFILE}/icudtl.dat")
 	if(NOT EXISTS "${_icu_data_dat}")
-		message(FATAL_ERROR "[ICU] Profile data not found: ${_icu_data_dat} (build Skia once to sync externals, or set SKIA_ICU_PROFILE)")
+		message(FATAL_ERROR "[ICU] Profile data not found: ${_icu_data_dat} (build Skia once to stage the ICU profiles into out/, or set SKIA_ICU_PROFILE)")
 	endif()
 
 	find_program(MUSIC_LYRIC_PLAYER_PYTHON NAMES python python3 REQUIRED)

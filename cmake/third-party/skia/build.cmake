@@ -271,6 +271,20 @@ file(MAKE_DIRECTORY "${SKIA_STAGE}")
 foreach(_lib IN LISTS _ninja_targets)
 	file(COPY "${SKIA_OUT}/${_lib}" DESTINATION "${SKIA_STAGE}")
 endforeach()
-# Skia stages its own icudtl.dat, but the engine embeds ICU itself (see src/backend/icu), so it is not shipped.
+
+# Copy every ICU data profile.
+set(_icu_externals "${SKIA_SRC}/third_party/externals/icu")
+set(_icu_stage "${_repo_root}/out/third-party/skia/icu")
+file(GLOB _icu_profile_dats "${_icu_externals}/*/icudtl.dat")
+if(_icu_profile_dats)
+	foreach(_dat IN LISTS _icu_profile_dats)
+		get_filename_component(_profile_dir "${_dat}" DIRECTORY)
+		get_filename_component(_profile "${_profile_dir}" NAME)
+		file(COPY "${_dat}" DESTINATION "${_icu_stage}/${_profile}")
+		message(STATUS "[Skia] ICU profile staged: ${_profile}")
+	endforeach()
+else()
+	message(WARNING "[Skia] No ICU profile data found under ${_icu_externals}")
+endif()
 
 message(STATUS "[Skia] Done: ${SKIA_STAGE}")

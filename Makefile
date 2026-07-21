@@ -1,4 +1,4 @@
-.PHONY: format clean third-party-build third-party-lyric-build third-party-skia-build third-party-glaze-build example-windows-build
+.PHONY: format clean third-party-build third-party-lyric-build third-party-skia-build third-party-glaze-build example-windows-build package-windows
 
 # Format Code.
 format:
@@ -28,3 +28,7 @@ third-party-glaze-build:
 example-windows-build:
 	cmake --preset windows-example
 	cmake --build --preset windows-example-release
+
+# Build and package the Windows native distribution zip.
+package-windows:
+	cmake -P cmake/package/windows.cmake

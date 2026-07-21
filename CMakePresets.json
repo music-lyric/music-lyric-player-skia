@@ -10,13 +10,14 @@
       "name": "default",
       "displayName": "Default",
       "generator": "Ninja Multi-Config",
-      "binaryDir": "${sourceDir}/out/build/${presetName}"
+      "binaryDir": "${sourceDir}/out/app/cache"
     },
     {
       "name": "windows-example",
       "displayName": "Windows Example",
       "description": "Windows Example With Vulkan",
       "inherits": "default",
+      "binaryDir": "${sourceDir}/out/example/cache",
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",

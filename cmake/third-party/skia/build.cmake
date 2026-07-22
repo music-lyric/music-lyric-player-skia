@@ -284,7 +284,7 @@ if(_icu_profile_dats)
 		message(STATUS "[Skia] ICU profile staged: ${_profile}")
 	endforeach()
 else()
-	message(WARNING "[Skia] No ICU profile data found under ${_icu_externals}")
+	message(FATAL_ERROR "[Skia] No ICU profile data found under ${_icu_externals}")
 endif()
 
 message(STATUS "[Skia] Done: ${SKIA_STAGE}")

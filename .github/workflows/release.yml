@@ -24,20 +24,29 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download All Platform Artifacts
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist
           merge-multiple: true
 
-      - name: List Collected Assets
+      - name: List Assets
         shell: bash
         run: ls -R dist
+
+      - name: Build Notes
+        shell: bash
+        run: python3 script/change-log/build.py --current
 
       - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
           files: dist/**/*
-          generate_release_notes: true
-          prerelease: ${{ contains(github.ref_name, '-') }}
+          body_path: CURRENT_CHANGELOG.md
+          prerelease: false
           fail_on_unmatched_files: true

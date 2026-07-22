@@ -76,3 +76,6 @@ Testing/
 
 # Temp
 .temp
+
+# Generated
+CURRENT_CHANGELOG.md

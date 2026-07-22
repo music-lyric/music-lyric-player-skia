@@ -1,4 +1,4 @@
-.PHONY: format clean third-party-build third-party-lyric-build third-party-skia-build third-party-glaze-build example-windows-build package-windows
+.PHONY: format clean third-party-build third-party-lyric-build third-party-skia-build third-party-glaze-build example-windows-build package-windows change-log-build
 
 # Format Code.
 format:
@@ -32,3 +32,7 @@ example-windows-build:
 # Build and package the Windows native distribution zip.
 package-windows:
 	cmake -P cmake/package/windows.cmake
+
+# Build the change log from conventional commits.
+change-log-build:
+	python script/change-log/build.py $(CHANGE_LOG_ARGS)

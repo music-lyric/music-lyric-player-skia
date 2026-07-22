@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  third-party-skia:
+  build-third-party-skia:
     runs-on: windows-2025
     timeout-minutes: 120
     outputs:
@@ -38,12 +38,17 @@ jobs:
           path: out/third-party/skia
           key: ${{ steps.key.outputs.value }}
 
-      - name: Checkout Skia Submodule
+      - name: Update Git Config
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        run: git config --global core.longpaths true
+
+      - name: Init Skia
         if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
         run: git submodule update --init --depth 1 third-party/skia
 
-      - name: Expose LLVM
+      - name: Setup LLVM
         if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
         run: echo "C:/Program Files/LLVM/bin" >> "$GITHUB_PATH"
@@ -60,7 +65,7 @@ jobs:
         shell: bash
         run: cmake -P cmake/third-party/skia/build.cmake
 
-  third-party-lyric:
+  build-third-party-lyric:
     runs-on: windows-2025
     timeout-minutes: 60
     outputs:
@@ -86,7 +91,7 @@ jobs:
           path: out/third-party/lyric
           key: ${{ steps.key.outputs.value }}
 
-      - name: Checkout Lyric Submodule
+      - name: Init Lyric
         if: steps.cache.outputs.cache-hit != 'true'
         shell: bash
         run: git submodule update --init --recursive --depth 1 third-party/lyric
@@ -103,7 +108,7 @@ jobs:
         run: cmake -P cmake/third-party/lyric/build.cmake
 
   build:
-    needs: [third-party-skia, third-party-lyric]
+    needs: [build-third-party-skia, build-third-party-lyric]
     runs-on: windows-2025
     timeout-minutes: 60
     outputs:
@@ -119,17 +124,17 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: out/third-party/skia
-          key: ${{ needs.third-party-skia.outputs.cache-key }}
+          key: ${{ needs.build-third-party-skia.outputs.cache-key }}
           fail-on-cache-miss: true
 
       - name: Restore Lyric
         uses: actions/cache/restore@v4
         with:
           path: out/third-party/lyric
-          key: ${{ needs.third-party-lyric.outputs.cache-key }}
+          key: ${{ needs.build-third-party-lyric.outputs.cache-key }}
           fail-on-cache-miss: true
 
-      - name: Install Vulkan SDK
+      - name: Setup Vulkan
         uses: jakoch/install-vulkan-sdk-action@v1.6.0
         with:
           cache: true
@@ -152,7 +157,7 @@ jobs:
         shell: bash
         run: echo "name=windows-x64-release" >> "$GITHUB_OUTPUT"
 
-      - name: Upload Zip Artifact
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.meta.outputs.name }}

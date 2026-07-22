@@ -1,4 +1,4 @@
-.PHONY: format clean third-party-build third-party-lyric-build third-party-skia-build third-party-glaze-build example-windows-build package-windows change-log-build
+.PHONY: format clean third-party-build third-party-lyric-build third-party-skia-build third-party-glaze-build example-windows-build package-windows change-log-build release
 
 # Format Code.
 format:
@@ -36,3 +36,7 @@ package-windows:
 # Build the change log from conventional commits.
 change-log-build:
 	python script/change-log/build.py $(CHANGE_LOG_ARGS)
+
+# Bump version.
+release:
+	python script/release.py $(RELEASE_ARGS)

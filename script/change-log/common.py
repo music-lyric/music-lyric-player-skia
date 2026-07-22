@@ -60,9 +60,11 @@ def run_git(args):
 
 
 def project_version():
-    text = (REPO_ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
-    match = re.search(r"project\([^)]*VERSION\s+([0-9]+\.[0-9]+\.[0-9]+)", text)
-    return match.group(1) if match else "0.0.0"
+    version_file = REPO_ROOT / "VERSION.txt"
+    if not version_file.exists():
+        return "0.0.0"
+    version = version_file.read_text(encoding="utf-8").strip()
+    return version or "0.0.0"
 
 
 def parse_commit_message(message):

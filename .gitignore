@@ -73,6 +73,7 @@ Testing/
 
 # Cache
 .cache/
+__pycache__
 
 # Temp
 .temp

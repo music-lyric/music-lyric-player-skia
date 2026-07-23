@@ -77,7 +77,7 @@ namespace music_lyric_player::rendering::components::line::interlude {
 		return tween.sample(now);
 	}
 
-	void Element::paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const {
+	void Element::paint(SkCanvas* canvas, float x, float y, double now, bool active, bool /* played */, const common::RenderContext& context) const {
 		const config::Root& cfg   = context.config;
 		const SkColor       color = this->stateColor(
                         now,

@@ -26,9 +26,10 @@ namespace music_lyric_player::rendering::components::line::base {
 		virtual void layout(float width, const common::RenderContext& context) = 0;
 
 		/**
-		 * Paints the line with its top-left at (`x`, `y`), sampling any per-frame animation at `now` and styling for the active or normal state.
+		 * Paints the line with its top-left at (`x`, `y`), sampling any per-frame animation at `now` and styling for the active, played, or normal state.
+		 * `played` marks a line already sung (before the active line); it drives the dimmer played styling.
 		 */
-		virtual void paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const = 0;
+		virtual void paint(SkCanvas* canvas, float x, float y, double now, bool active, bool played, const common::RenderContext& context) const = 0;
 
 		/**
 		 * The measured height in logical pixels; valid after `layout`.

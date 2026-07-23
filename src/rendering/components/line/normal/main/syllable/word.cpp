@@ -239,7 +239,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		canvas->restore();
 	}
 
-	void Word::paint(SkCanvas* canvas, float lineX, float lineY, double now, bool active, bool maskEnabled, float maskProgress, float maskFeather, const common::RenderContext& context) const {
+	void Word::paint(SkCanvas* canvas, float lineX, float lineY, double now, bool active, bool maskEnabled, float maskProgress, float maskFeather, float inactiveOpacity, const common::RenderContext& context) const {
 		if (!this->blob) {
 			return;
 		}
@@ -261,9 +261,9 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		const double  normalOpacity  = cfg.line.normal.main.syllable.style.normal.opacity;
 		const double  activeOpacity  = cfg.line.normal.main.syllable.style.active.opacity;
 
-		// Inactive lines paint the whole word in the normal state color and opacity.
+		// Inactive lines paint the whole word in the normal state color; the opacity is eased by the owning element so a deactivating line fades out (web `.word` `transition: opacity 0.8s ease`) instead of snapping.
 		if (!active) {
-			this->paintBlob(canvas, drawX, drawY, utils::color::withOpacity(normalColor, normalOpacity));
+			this->paintBlob(canvas, drawX, drawY, utils::color::withOpacity(normalColor, inactiveOpacity));
 			return;
 		}
 

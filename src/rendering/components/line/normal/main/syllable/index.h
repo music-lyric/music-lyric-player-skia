@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "rendering/components/line/normal/main/syllable/animation/mask.h"
+#include "rendering/utils/animation/tween.h"
 
 class SkCanvas;
 
@@ -38,9 +39,9 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		void layout(float width, const common::RenderContext& context);
 
 		/**
-		 * Paints every cached word with karaoke reveal and float animation.
+		 * Paints every cached word with karaoke reveal and float animation; `played` selects the dimmer played word opacity.
 		 */
-		void paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const;
+		void paint(SkCanvas* canvas, float x, float y, double now, bool active, bool played, const common::RenderContext& context) const;
 
 		/**
 		 * Returns the total laid-out row height in logical pixels.
@@ -52,6 +53,12 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		mutable animation::Mask            mask;
 		float                              width          = 0.0f;
 		float                              measuredHeight = 0.0f;
+
+		// The line-wide word opacity, eased across state flips: it snaps to the active brightness on activation and eases over 0.8s to the normal or played brightness otherwise, mirroring the web `.word` `transition: opacity 0.8s ease`.
+		mutable ::music_lyric_player::rendering::animation::Tween<float> wordOpacity;
+		mutable bool                                                    wordFadeReady   = false;
+		mutable bool                                                    wordWasActive   = false;
+		mutable float                                                   wordOpacityGoal = 0.0f;
 	};
 } // namespace music_lyric_player::rendering::components::line::normal::main::syllable
 

@@ -9,10 +9,14 @@
 #include "music_lyric_model.h"
 #include "rendering/common/context.h"
 #include "rendering/components/line/normal/main/syllable/word.h"
+#include "rendering/utils/animation/easing.h"
 #include "rendering/utils/length.h"
 
 namespace music_lyric_player::rendering::components::line::normal::main::syllable {
 	namespace {
+		// The word's own opacity fade when a line deactivates; mirrors the web `.word` `transition: opacity 0.8s ease`.
+		constexpr double kWordFadeDurationMs = 800.0;
+
 		/**
 		 * Returns the line's absolute start time, or zero when timing is absent.
 		 */
@@ -43,6 +47,10 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 	Element::Element(const music_lyric_model::parsed::Line& info)
 	    : mask(lineStart(info), lineDuration(info)) {
+		// CSS `ease` over 0.8s; only deactivation animates.
+		this->wordOpacity.setEasing(::music_lyric_player::rendering::animation::CubicBezier{0.25f, 0.1f, 0.25f, 1.0f});
+		this->wordOpacity.setDuration(kWordFadeDurationMs);
+
 		const auto& source = music_lyric_model::parsed::getParsedLineWords(info);
 		this->words.reserve(source.size());
 		bool hasSpace = false;
@@ -121,14 +129,36 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		this->measuredHeight = rowY;
 	}
 
-	void Element::paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const {
+	void Element::paint(SkCanvas* canvas, float x, float y, double now, bool active, bool played, const common::RenderContext& context) const {
+		const auto& style         = context.config.line.normal.main.syllable.style;
+		const float normalOpacity = static_cast<float>(style.normal.opacity);
+		const float activeOpacity = static_cast<float>(style.active.opacity);
+		const float playedOpacity = static_cast<float>(style.played.opacity);
+
+		// Drive the line-wide word opacity across state flips: activation snaps to the active brightness, every other change eases to the normal or played brightness.
+		const float goal = active ? activeOpacity : (played ? playedOpacity : normalOpacity);
+		if (!this->wordFadeReady) {
+			this->wordOpacity.snap(goal);
+			this->wordFadeReady = true;
+		} else if (active && !this->wordWasActive) {
+			this->wordOpacity.snap(goal);
+		} else if (goal != this->wordOpacityGoal) {
+			this->wordOpacity.retarget(now, goal);
+		} else {
+			// Stable state: track config edits without restarting an in-flight fade.
+			this->wordOpacity.setTarget(goal);
+		}
+		this->wordWasActive         = active;
+		this->wordOpacityGoal       = goal;
+		const float inactiveOpacity = this->wordOpacity.sample(now);
+
 		const auto& maskConfig = context.config.line.normal.main.syllable.word.animation.mask;
 		if (active && maskConfig.enabled) {
 			this->mask.sample(context.currentTime, maskConfig.feather.normal, maskConfig.feather.first, maskConfig.feather.last);
 		}
 
 		for (std::size_t i = 0; i < this->words.size(); ++i) {
-			this->words[i]->paint(canvas, x, y, now, active, maskConfig.enabled, this->mask.progress(i), this->mask.feather(i), context);
+			this->words[i]->paint(canvas, x, y, now, active, maskConfig.enabled, this->mask.progress(i), this->mask.feather(i), inactiveOpacity, context);
 		}
 	}
 

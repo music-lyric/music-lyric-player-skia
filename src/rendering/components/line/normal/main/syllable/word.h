@@ -45,8 +45,9 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 		/**
 		 * Paints the inactive word, its timed active-color reveal, and its float transform.
+		 * `inactiveOpacity` is the line-wide word opacity used while inactive, eased by the owning element so a deactivating line fades out instead of snapping.
 		 */
-		void paint(SkCanvas* canvas, float lineX, float lineY, double now, bool active, bool maskEnabled, float maskProgress, float maskFeather, const common::RenderContext& context) const;
+		void paint(SkCanvas* canvas, float lineX, float lineY, double now, bool active, bool maskEnabled, float maskProgress, float maskFeather, float inactiveOpacity, const common::RenderContext& context) const;
 
 		/**
 		 * Returns the timing and measured geometry consumed by the line-wide mask host.

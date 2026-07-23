@@ -47,7 +47,7 @@
     },
     {
       "name": "StateStyleConfig",
-      "comment": "Inactive and active styles shared by normal lyric lines and their annotation sub-lines.",
+      "comment": "Inactive, active, and played styles shared by normal lyric lines and their annotation sub-lines.",
       "fields": [
         {
           "name": "normal",
@@ -66,6 +66,15 @@
             "opacity": "1.0"
           },
           "comment": "Style of active lines."
+        },
+        {
+          "name": "played",
+          "nested": "StyleConfig",
+          "defaults": {
+            "color": "\"#ffffff\"",
+            "opacity": "0.4"
+          },
+          "comment": "Style of played lines that have already been sung."
         }
       ]
     }

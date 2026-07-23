@@ -169,6 +169,8 @@ namespace music_lyric_player::rendering {
 				continue;
 			}
 			const bool active = static_cast<int>(i) == this->activeIndex;
+			// A line before the active one has already been sung; it takes the dimmer played styling.
+			const bool played = static_cast<int>(i) < this->activeIndex;
 
 			// Focus effect: shrink and/or blur lines away from the active one, both eased per line.
 			const float scale = this->effect.scaleAt(i, now);
@@ -193,7 +195,7 @@ namespace music_lyric_player::rendering {
 				++saved;
 			}
 
-			line.paint(canvas, padX, y, now, active, context);
+			line.paint(canvas, padX, y, now, active, played, context);
 
 			for (; saved > 0; --saved) {
 				canvas->restore();

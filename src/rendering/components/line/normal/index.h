@@ -5,6 +5,7 @@
 
 #include "music_lyric_model.h"
 #include "rendering/components/line/base/index.h"
+#include "rendering/utils/animation/tween.h"
 
 class SkCanvas;
 
@@ -42,9 +43,9 @@ namespace music_lyric_player::rendering::components::line::normal {
 		void layout(float width, const common::RenderContext& context) override;
 
 		/**
-		 * Resolves shared colors and delegates painting to the selected body renderer.
+		 * Resolves shared colors, applies the eased line-wide base opacity, and delegates painting to the selected body renderer.
 		 */
-		void paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const override;
+		void paint(SkCanvas* canvas, float x, float y, double now, bool active, bool played, const common::RenderContext& context) const override;
 
 	private:
 		/**
@@ -57,6 +58,11 @@ namespace music_lyric_player::rendering::components::line::normal {
 		bool                                   syllableMode = false;
 		std::unique_ptr<main::plain::Element>    plainElement;
 		std::unique_ptr<main::syllable::Element> syllableElement;
+
+		// The line-wide base opacity, eased across every state change over 0.6s, mirroring the web `.normal` `transition: opacity 0.6s ease`; it multiplies the whole line the way CSS opacity composites onto the children.
+		mutable animation::Tween<float> baseOpacity;
+		mutable bool                    baseOpacityReady = false;
+		mutable float                   baseOpacityGoal  = 0.0f;
 	};
 } // namespace music_lyric_player::rendering::components::line::normal
 

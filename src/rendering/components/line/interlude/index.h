@@ -31,9 +31,9 @@ namespace music_lyric_player::rendering::components::line::interlude {
 		void layout(float width, const common::RenderContext& context) override;
 
 		/**
-		 * Paints the dots at their content-time opacity and active-state scale.
+		 * Paints the dots at their content-time opacity and active-state scale; the played state carries no extra styling here.
 		 */
-		void paint(SkCanvas* canvas, float x, float y, double now, bool active, const common::RenderContext& context) const override;
+		void paint(SkCanvas* canvas, float x, float y, double now, bool active, bool played, const common::RenderContext& context) const override;
 
 	private:
 		/**

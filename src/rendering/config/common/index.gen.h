@@ -57,7 +57,7 @@ namespace music_lyric_player::rendering::config::common {
 	};
 
 	/**
-	 * Inactive and active styles shared by normal lyric lines and their annotation sub-lines.
+	 * Inactive, active, and played styles shared by normal lyric lines and their annotation sub-lines.
 	 */
 	struct StateStyleConfig {
 		/**
@@ -68,6 +68,10 @@ namespace music_lyric_player::rendering::config::common {
 		 * Style of active lines.
 		 */
 		StyleConfig active = StyleConfig{ .color = "#ffffff", .opacity = 1.0 };
+		/**
+		 * Style of played lines that have already been sung.
+		 */
+		StyleConfig played = StyleConfig{ .color = "#ffffff", .opacity = 0.4 };
 	};
 
 	struct FontConfigPatch {
@@ -83,6 +87,7 @@ namespace music_lyric_player::rendering::config::common {
 	struct StateStyleConfigPatch {
 		StyleConfigPatch normal;
 		StyleConfigPatch active;
+		StyleConfigPatch played;
 	};
 
 	struct FontConfigChange {
@@ -100,6 +105,7 @@ namespace music_lyric_player::rendering::config::common {
 	struct StateStyleConfigChange {
 		StyleConfigChange normal;
 		StyleConfigChange active;
+		StyleConfigChange played;
 		bool any = false;
 	};
 
@@ -133,6 +139,7 @@ namespace music_lyric_player::rendering::config::common {
 	inline void apply(StateStyleConfig& cfg, const StateStyleConfigPatch& patch) {
 		apply(cfg.normal, patch.normal);
 		apply(cfg.active, patch.active);
+		apply(cfg.played, patch.played);
 	}
 
 	/**
@@ -164,7 +171,8 @@ namespace music_lyric_player::rendering::config::common {
 		StateStyleConfigChange change;
 		change.normal = diff(prev.normal, next.normal);
 		change.active = diff(prev.active, next.active);
-		change.any = change.normal.any || change.active.any;
+		change.played = diff(prev.played, next.played);
+		change.any = change.normal.any || change.active.any || change.played.any;
 		return change;
 	}
 

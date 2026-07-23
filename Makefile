@@ -1,12 +1,24 @@
-.PHONY: format clean third-party-build third-party-lyric-build third-party-skia-build third-party-glaze-build example-windows-build package-windows change-log-build release
+.PHONY: format config-generate clean third-party-build third-party-lyric-build third-party-skia-build third-party-glaze-build example-windows-build package-windows change-log-build release
 
 # Format Code.
 format:
 	python script/format-code.py
 
-# Clean.
+# Clean Build.
 clean:
 	cmake -E rm -rf out third-party/lyric/out third-party/skia/out
+
+# Bump version.
+release:
+	python script/release.py $(RELEASE_ARGS)
+
+# Generate config from JSON schemas.
+config-generate:
+	python script/generate-config/main.py $(CONFIG_ARGS)
+
+# Build the change log from conventional commits.
+change-log-build:
+	python script/change-log/build.py $(CHANGE_LOG_ARGS)
 
 # Build All Third-Party Libraries.
 third-party-build:
@@ -33,10 +45,3 @@ example-windows-build:
 package-windows:
 	cmake -P cmake/package/windows.cmake
 
-# Build the change log from conventional commits.
-change-log-build:
-	python script/change-log/build.py $(CHANGE_LOG_ARGS)
-
-# Bump version.
-release:
-	python script/release.py $(RELEASE_ARGS)

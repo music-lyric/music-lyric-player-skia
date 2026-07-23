@@ -12,6 +12,9 @@
 #include "rendering/config/line/index.gen.h"
 #include "rendering/config/scroll/index.gen.h"
 
+#include "utils/config/access.h"
+#include "utils/config/property.h"
+
 namespace music_lyric_player::rendering::config {
 	/**
 	 * Renderer configuration.
@@ -37,49 +40,57 @@ namespace music_lyric_player::rendering::config {
 		 * Distance-from-focus scale and blur effects.
 		 */
 		::music_lyric_player::rendering::config::effect::Root effect;
+
+		bool operator==(const Root&) const = default;
+
+		friend void overlay(Root& dst, const Root& src, ::music_lyric_player::utils::config::Access key) {
+			overlay(dst.container, src.container, key);
+			overlay(dst.layout, src.layout, key);
+			overlay(dst.scroll, src.scroll, key);
+			overlay(dst.line, src.line, key);
+			overlay(dst.effect, src.effect, key);
+		}
+
+		friend void capture(Root& delta, const Root& prev, const Root& next, ::music_lyric_player::utils::config::Access key) {
+			capture(delta.container, prev.container, next.container, key);
+			capture(delta.layout, prev.layout, next.layout, key);
+			capture(delta.scroll, prev.scroll, next.scroll, key);
+			capture(delta.line, prev.line, next.line, key);
+			capture(delta.effect, prev.effect, next.effect, key);
+		}
+
+		/**
+		 * Resolves the accumulated overrides into a fully-concrete config: resets `out` to the defaults, overlays the overrides, then fills every leaf that was not explicitly set from its inherited source.
+		 */
+		friend void resolve(Root& out, const Root& overrides, ::music_lyric_player::utils::config::Access key) {
+			out = Root{};
+			overlay(out, overrides, key);
+			if (!overrides.line.normal.main.syllable.font.family.assigned()) {
+				out.line.normal.main.syllable.font.family = out.line.normal.base.font.family.value();
+			}
+			if (!overrides.line.normal.main.syllable.font.size.assigned()) {
+				out.line.normal.main.syllable.font.size = out.line.normal.base.font.size.value();
+			}
+			if (!overrides.line.normal.main.syllable.style.normal.color.assigned()) {
+				out.line.normal.main.syllable.style.normal.color = out.line.normal.base.style.normal.color.value();
+			}
+			if (!overrides.line.normal.main.syllable.style.normal.opacity.assigned()) {
+				out.line.normal.main.syllable.style.normal.opacity = out.line.normal.base.style.normal.opacity.value();
+			}
+			if (!overrides.line.normal.main.syllable.style.active.color.assigned()) {
+				out.line.normal.main.syllable.style.active.color = out.line.normal.base.style.active.color.value();
+			}
+			if (!overrides.line.normal.main.syllable.style.active.opacity.assigned()) {
+				out.line.normal.main.syllable.style.active.opacity = out.line.normal.base.style.active.opacity.value();
+			}
+			if (!overrides.line.normal.main.syllable.style.played.color.assigned()) {
+				out.line.normal.main.syllable.style.played.color = out.line.normal.base.style.played.color.value();
+			}
+			if (!overrides.line.normal.main.syllable.style.played.opacity.assigned()) {
+				out.line.normal.main.syllable.style.played.opacity = out.line.normal.base.style.played.opacity.value();
+			}
+		}
 	};
-
-	struct RootPatch {
-		::music_lyric_player::rendering::config::container::RootPatch container;
-		::music_lyric_player::rendering::config::layout::RootPatch layout;
-		::music_lyric_player::rendering::config::scroll::RootPatch scroll;
-		::music_lyric_player::rendering::config::line::RootPatch line;
-		::music_lyric_player::rendering::config::effect::RootPatch effect;
-	};
-
-	struct RootChange {
-		::music_lyric_player::rendering::config::container::RootChange container;
-		::music_lyric_player::rendering::config::layout::RootChange layout;
-		::music_lyric_player::rendering::config::scroll::RootChange scroll;
-		::music_lyric_player::rendering::config::line::RootChange line;
-		::music_lyric_player::rendering::config::effect::RootChange effect;
-		bool any = false;
-	};
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(Root& cfg, const RootPatch& patch) {
-		apply(cfg.container, patch.container);
-		apply(cfg.layout, patch.layout);
-		apply(cfg.scroll, patch.scroll);
-		apply(cfg.line, patch.line);
-		apply(cfg.effect, patch.effect);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline RootChange diff(const Root& prev, const Root& next) {
-		RootChange change;
-		change.container = diff(prev.container, next.container);
-		change.layout = diff(prev.layout, next.layout);
-		change.scroll = diff(prev.scroll, next.scroll);
-		change.line = diff(prev.line, next.line);
-		change.effect = diff(prev.effect, next.effect);
-		change.any = change.container.any || change.layout.any || change.scroll.any || change.line.any || change.effect.any;
-		return change;
-	}
 
 	/**
 	 * Built-in defaults (every field at its schema default); the fallback when a config value fails to parse.

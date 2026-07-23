@@ -41,8 +41,8 @@ namespace music_lyric_player::rendering::components::line::normal::main::plain {
 			const config::Root& cfg = context.config;
 
 			sk_sp<SkTypeface> typeface;
-			if (!cfg.line.normal.main.syllable.font.family.empty()) {
-				typeface = context.fontMgr->matchFamilyStyle(cfg.line.normal.main.syllable.font.family.c_str(), SkFontStyle::Normal());
+			if (!cfg.line.normal.main.syllable.font.family.value().empty()) {
+				typeface = context.fontMgr->matchFamilyStyle(cfg.line.normal.main.syllable.font.family.value().c_str(), SkFontStyle::Normal());
 			}
 			if (!typeface) {
 				typeface = context.fontMgr->matchFamilyStyle(nullptr, SkFontStyle::Normal());

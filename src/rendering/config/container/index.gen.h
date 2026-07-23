@@ -6,8 +6,10 @@
 #ifndef MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_CONTAINER_CONFIG_GEN_H_
 #define MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_CONTAINER_CONFIG_GEN_H_
 
-#include <optional>
 #include <string>
+
+#include "utils/config/access.h"
+#include "utils/config/property.h"
 
 namespace music_lyric_player::rendering::config::container {
 	/**
@@ -21,7 +23,7 @@ namespace music_lyric_player::rendering::config::container {
 		 *
 		 * @default true
 		 */
-		bool enabled = true;
+		::music_lyric_player::utils::config::Property<bool> enabled = true;
 		/**
 		 * Top fade range.
 		 * A `%` value is relative to the viewport height.
@@ -31,7 +33,7 @@ namespace music_lyric_player::rendering::config::container {
 		 * @example "5%"
 		 * @example "24px"
 		 */
-		::std::string top = "5%";
+		::music_lyric_player::utils::config::Property<::std::string> top = "5%";
 		/**
 		 * Bottom fade range.
 		 * A `%` value is relative to the viewport height.
@@ -41,7 +43,21 @@ namespace music_lyric_player::rendering::config::container {
 		 * @example "10%"
 		 * @example "48px"
 		 */
-		::std::string bottom = "10%";
+		::music_lyric_player::utils::config::Property<::std::string> bottom = "10%";
+
+		bool operator==(const FadeConfig&) const = default;
+
+		friend void overlay(FadeConfig& dst, const FadeConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.enabled.assigned()) dst.enabled = src.enabled.value();
+			if (src.top.assigned()) dst.top = src.top.value();
+			if (src.bottom.assigned()) dst.bottom = src.bottom.value();
+		}
+
+		friend void capture(FadeConfig& delta, const FadeConfig& prev, const FadeConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.enabled == next.enabled)) delta.enabled = next.enabled.value();
+			if (!(prev.top == next.top)) delta.top = next.top.value();
+			if (!(prev.bottom == next.bottom)) delta.bottom = next.bottom.value();
+		}
 	};
 
 	/**
@@ -56,7 +72,7 @@ namespace music_lyric_player::rendering::config::container {
 		 * @example "#101014"
 		 * @example "rgb(16, 16, 20)"
 		 */
-		::std::string backgroundColor = "#101014";
+		::music_lyric_player::utils::config::Property<::std::string> backgroundColor = "#101014";
 		/**
 		 * Horizontal padding on each side of the content.
 		 * A `%` value is relative to the viewport width.
@@ -67,90 +83,26 @@ namespace music_lyric_player::rendering::config::container {
 		 * @example "48px"
 		 * @example "5%"
 		 */
-		::std::string paddingX = "48px";
+		::music_lyric_player::utils::config::Property<::std::string> paddingX = "48px";
 		/**
 		 * Edge fade applied at the top and bottom of the player.
 		 */
 		FadeConfig fade;
-	};
 
-	struct FadeConfigPatch {
-		::std::optional<bool> enabled;
-		::std::optional<::std::string> top;
-		::std::optional<::std::string> bottom;
-	};
+		bool operator==(const Root&) const = default;
 
-	struct RootPatch {
-		::std::optional<::std::string> backgroundColor;
-		::std::optional<::std::string> paddingX;
-		FadeConfigPatch fade;
-	};
-
-	struct FadeConfigChange {
-		bool enabled = false;
-		bool top = false;
-		bool bottom = false;
-		bool any = false;
-	};
-
-	struct RootChange {
-		bool backgroundColor = false;
-		bool paddingX = false;
-		FadeConfigChange fade;
-		bool any = false;
-	};
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(FadeConfig& cfg, const FadeConfigPatch& patch) {
-		if (patch.enabled.has_value()) {
-			cfg.enabled = *patch.enabled;
+		friend void overlay(Root& dst, const Root& src, ::music_lyric_player::utils::config::Access key) {
+			if (src.backgroundColor.assigned()) dst.backgroundColor = src.backgroundColor.value();
+			if (src.paddingX.assigned()) dst.paddingX = src.paddingX.value();
+			overlay(dst.fade, src.fade, key);
 		}
-		if (patch.top.has_value()) {
-			cfg.top = *patch.top;
-		}
-		if (patch.bottom.has_value()) {
-			cfg.bottom = *patch.bottom;
-		}
-	}
 
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(Root& cfg, const RootPatch& patch) {
-		if (patch.backgroundColor.has_value()) {
-			cfg.backgroundColor = *patch.backgroundColor;
+		friend void capture(Root& delta, const Root& prev, const Root& next, ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.backgroundColor == next.backgroundColor)) delta.backgroundColor = next.backgroundColor.value();
+			if (!(prev.paddingX == next.paddingX)) delta.paddingX = next.paddingX.value();
+			capture(delta.fade, prev.fade, next.fade, key);
 		}
-		if (patch.paddingX.has_value()) {
-			cfg.paddingX = *patch.paddingX;
-		}
-		apply(cfg.fade, patch.fade);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline FadeConfigChange diff(const FadeConfig& prev, const FadeConfig& next) {
-		FadeConfigChange change;
-		change.enabled = prev.enabled != next.enabled;
-		change.top = prev.top != next.top;
-		change.bottom = prev.bottom != next.bottom;
-		change.any = change.enabled || change.top || change.bottom;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline RootChange diff(const Root& prev, const Root& next) {
-		RootChange change;
-		change.backgroundColor = prev.backgroundColor != next.backgroundColor;
-		change.paddingX = prev.paddingX != next.paddingX;
-		change.fade = diff(prev.fade, next.fade);
-		change.any = change.backgroundColor || change.paddingX || change.fade.any;
-		return change;
-	}
+	};
 
 } // namespace music_lyric_player::rendering::config::container
 

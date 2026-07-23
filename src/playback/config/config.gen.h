@@ -6,111 +6,66 @@
 #ifndef MUSIC_LYRIC_PLAYER_PLAYBACK_CONFIG_CONFIG_GEN_H_
 #define MUSIC_LYRIC_PLAYER_PLAYBACK_CONFIG_CONFIG_GEN_H_
 
-#include <optional>
+#include "utils/config/access.h"
+#include "utils/config/property.h"
 
 namespace music_lyric_player::playback::config {
 	/**
 	 * The global layer of the three-layer offset (global + meta + temp).
 	 */
 	struct OffsetConfig {
-		double global = 0.0;  // ms applied to every song
-		bool useMeta = true;  // apply the lyric's own meta offset
-		bool resetTempOnLyricChange = true;  // clear the temp offset when a new lyric loads
+		::music_lyric_player::utils::config::Property<double> global = 0.0;  // ms applied to every song
+		::music_lyric_player::utils::config::Property<bool> useMeta = true;  // apply the lyric's own meta offset
+		::music_lyric_player::utils::config::Property<bool> resetTempOnLyricChange = true;  // clear the temp offset when a new lyric loads
+
+		bool operator==(const OffsetConfig&) const = default;
+
+		friend void overlay(OffsetConfig& dst, const OffsetConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.global.assigned()) dst.global = src.global.value();
+			if (src.useMeta.assigned()) dst.useMeta = src.useMeta.value();
+			if (src.resetTempOnLyricChange.assigned()) dst.resetTempOnLyricChange = src.resetTempOnLyricChange.value();
+		}
+
+		friend void capture(OffsetConfig& delta, const OffsetConfig& prev, const OffsetConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.global == next.global)) delta.global = next.global.value();
+			if (!(prev.useMeta == next.useMeta)) delta.useMeta = next.useMeta.value();
+			if (!(prev.resetTempOnLyricChange == next.resetTempOnLyricChange)) delta.resetTempOnLyricChange = next.resetTempOnLyricChange.value();
+		}
 	};
 
 	/**
 	 * Timing-engine configuration.
 	 */
 	struct Root {
-		bool bridgeActive = true;  // fill active-index gaps
-		double mergeWindow = 300.0;  // ms cluster for joint deactivation
-		int mergeLimit = 3;  // max lines per merge batch
+		::music_lyric_player::utils::config::Property<bool> bridgeActive = true;  // fill active-index gaps
+		::music_lyric_player::utils::config::Property<double> mergeWindow = 300.0;  // ms cluster for joint deactivation
+		::music_lyric_player::utils::config::Property<int> mergeLimit = 3;  // max lines per merge batch
 		OffsetConfig offset;  // the three-layer offset's global settings
+
+		bool operator==(const Root&) const = default;
+
+		friend void overlay(Root& dst, const Root& src, ::music_lyric_player::utils::config::Access key) {
+			if (src.bridgeActive.assigned()) dst.bridgeActive = src.bridgeActive.value();
+			if (src.mergeWindow.assigned()) dst.mergeWindow = src.mergeWindow.value();
+			if (src.mergeLimit.assigned()) dst.mergeLimit = src.mergeLimit.value();
+			overlay(dst.offset, src.offset, key);
+		}
+
+		friend void capture(Root& delta, const Root& prev, const Root& next, ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.bridgeActive == next.bridgeActive)) delta.bridgeActive = next.bridgeActive.value();
+			if (!(prev.mergeWindow == next.mergeWindow)) delta.mergeWindow = next.mergeWindow.value();
+			if (!(prev.mergeLimit == next.mergeLimit)) delta.mergeLimit = next.mergeLimit.value();
+			capture(delta.offset, prev.offset, next.offset, key);
+		}
+
+		/**
+		 * Resolves the accumulated overrides into a fully-concrete config: resets `out` to the defaults, overlays the overrides, then fills every leaf that was not explicitly set from its inherited source.
+		 */
+		friend void resolve(Root& out, const Root& overrides, ::music_lyric_player::utils::config::Access key) {
+			out = Root{};
+			overlay(out, overrides, key);
+		}
 	};
-
-	struct OffsetConfigPatch {
-		::std::optional<double> global;
-		::std::optional<bool> useMeta;
-		::std::optional<bool> resetTempOnLyricChange;
-	};
-
-	struct RootPatch {
-		::std::optional<bool> bridgeActive;
-		::std::optional<double> mergeWindow;
-		::std::optional<int> mergeLimit;
-		OffsetConfigPatch offset;
-	};
-
-	struct OffsetConfigChange {
-		bool global = false;
-		bool useMeta = false;
-		bool resetTempOnLyricChange = false;
-		bool any = false;
-	};
-
-	struct RootChange {
-		bool bridgeActive = false;
-		bool mergeWindow = false;
-		bool mergeLimit = false;
-		OffsetConfigChange offset;
-		bool any = false;
-	};
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(OffsetConfig& cfg, const OffsetConfigPatch& patch) {
-		if (patch.global.has_value()) {
-			cfg.global = *patch.global;
-		}
-		if (patch.useMeta.has_value()) {
-			cfg.useMeta = *patch.useMeta;
-		}
-		if (patch.resetTempOnLyricChange.has_value()) {
-			cfg.resetTempOnLyricChange = *patch.resetTempOnLyricChange;
-		}
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(Root& cfg, const RootPatch& patch) {
-		if (patch.bridgeActive.has_value()) {
-			cfg.bridgeActive = *patch.bridgeActive;
-		}
-		if (patch.mergeWindow.has_value()) {
-			cfg.mergeWindow = *patch.mergeWindow;
-		}
-		if (patch.mergeLimit.has_value()) {
-			cfg.mergeLimit = *patch.mergeLimit;
-		}
-		apply(cfg.offset, patch.offset);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline OffsetConfigChange diff(const OffsetConfig& prev, const OffsetConfig& next) {
-		OffsetConfigChange change;
-		change.global = prev.global != next.global;
-		change.useMeta = prev.useMeta != next.useMeta;
-		change.resetTempOnLyricChange = prev.resetTempOnLyricChange != next.resetTempOnLyricChange;
-		change.any = change.global || change.useMeta || change.resetTempOnLyricChange;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline RootChange diff(const Root& prev, const Root& next) {
-		RootChange change;
-		change.bridgeActive = prev.bridgeActive != next.bridgeActive;
-		change.mergeWindow = prev.mergeWindow != next.mergeWindow;
-		change.mergeLimit = prev.mergeLimit != next.mergeLimit;
-		change.offset = diff(prev.offset, next.offset);
-		change.any = change.bridgeActive || change.mergeWindow || change.mergeLimit || change.offset.any;
-		return change;
-	}
 
 	/**
 	 * Built-in defaults (every field at its schema default); the fallback when a config value fails to parse.

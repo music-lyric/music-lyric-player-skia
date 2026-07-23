@@ -6,8 +6,10 @@
 #ifndef MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_COMMON_CONFIG_GEN_H_
 #define MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_COMMON_CONFIG_GEN_H_
 
-#include <optional>
 #include <string>
+
+#include "utils/config/access.h"
+#include "utils/config/property.h"
 
 namespace music_lyric_player::rendering::config::common {
 	/**
@@ -19,7 +21,7 @@ namespace music_lyric_player::rendering::config::common {
 		 *
 		 * @example "PingFang SC"
 		 */
-		::std::string family = {};
+		::music_lyric_player::utils::config::Property<::std::string> family = {};
 		/**
 		 * Font size of the lyric lines.
 		 * A `%` value is relative to the parent line's font size (e.g. translation / background lines).
@@ -30,7 +32,19 @@ namespace music_lyric_player::rendering::config::common {
 		 * @example "34px"
 		 * @example "80%"
 		 */
-		::std::string size = "34px";
+		::music_lyric_player::utils::config::Property<::std::string> size = "34px";
+
+		bool operator==(const FontConfig&) const = default;
+
+		friend void overlay(FontConfig& dst, const FontConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.family.assigned()) dst.family = src.family.value();
+			if (src.size.assigned()) dst.size = src.size.value();
+		}
+
+		friend void capture(FontConfig& delta, const FontConfig& prev, const FontConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.family == next.family)) delta.family = next.family.value();
+			if (!(prev.size == next.size)) delta.size = next.size.value();
+		}
 	};
 
 	/**
@@ -45,7 +59,7 @@ namespace music_lyric_player::rendering::config::common {
 		 * @example "#fff"
 		 * @example "rgba(255, 255, 255, 0.8)"
 		 */
-		::std::string color = "#000000";
+		::music_lyric_player::utils::config::Property<::std::string> color = "#000000";
 		/**
 		 * Opacity of the render state in the [0, 1] range; 1 is fully opaque.
 		 *
@@ -53,7 +67,19 @@ namespace music_lyric_player::rendering::config::common {
 		 * @minimum 0
 		 * @maximum 1
 		 */
-		double opacity = 1.0;
+		::music_lyric_player::utils::config::Property<double> opacity = 1.0;
+
+		bool operator==(const StyleConfig&) const = default;
+
+		friend void overlay(StyleConfig& dst, const StyleConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.color.assigned()) dst.color = src.color.value();
+			if (src.opacity.assigned()) dst.opacity = src.opacity.value();
+		}
+
+		friend void capture(StyleConfig& delta, const StyleConfig& prev, const StyleConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.color == next.color)) delta.color = next.color.value();
+			if (!(prev.opacity == next.opacity)) delta.opacity = next.opacity.value();
+		}
 	};
 
 	/**
@@ -72,109 +98,21 @@ namespace music_lyric_player::rendering::config::common {
 		 * Style of played lines that have already been sung.
 		 */
 		StyleConfig played = StyleConfig{ .color = "#ffffff", .opacity = 0.4 };
-	};
 
-	struct FontConfigPatch {
-		::std::optional<::std::string> family;
-		::std::optional<::std::string> size;
-	};
+		bool operator==(const StateStyleConfig&) const = default;
 
-	struct StyleConfigPatch {
-		::std::optional<::std::string> color;
-		::std::optional<double> opacity;
-	};
-
-	struct StateStyleConfigPatch {
-		StyleConfigPatch normal;
-		StyleConfigPatch active;
-		StyleConfigPatch played;
-	};
-
-	struct FontConfigChange {
-		bool family = false;
-		bool size = false;
-		bool any = false;
-	};
-
-	struct StyleConfigChange {
-		bool color = false;
-		bool opacity = false;
-		bool any = false;
-	};
-
-	struct StateStyleConfigChange {
-		StyleConfigChange normal;
-		StyleConfigChange active;
-		StyleConfigChange played;
-		bool any = false;
-	};
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(FontConfig& cfg, const FontConfigPatch& patch) {
-		if (patch.family.has_value()) {
-			cfg.family = *patch.family;
+		friend void overlay(StateStyleConfig& dst, const StateStyleConfig& src, ::music_lyric_player::utils::config::Access key) {
+			overlay(dst.normal, src.normal, key);
+			overlay(dst.active, src.active, key);
+			overlay(dst.played, src.played, key);
 		}
-		if (patch.size.has_value()) {
-			cfg.size = *patch.size;
+
+		friend void capture(StateStyleConfig& delta, const StateStyleConfig& prev, const StateStyleConfig& next, ::music_lyric_player::utils::config::Access key) {
+			capture(delta.normal, prev.normal, next.normal, key);
+			capture(delta.active, prev.active, next.active, key);
+			capture(delta.played, prev.played, next.played, key);
 		}
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(StyleConfig& cfg, const StyleConfigPatch& patch) {
-		if (patch.color.has_value()) {
-			cfg.color = *patch.color;
-		}
-		if (patch.opacity.has_value()) {
-			cfg.opacity = *patch.opacity;
-		}
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(StateStyleConfig& cfg, const StateStyleConfigPatch& patch) {
-		apply(cfg.normal, patch.normal);
-		apply(cfg.active, patch.active);
-		apply(cfg.played, patch.played);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline FontConfigChange diff(const FontConfig& prev, const FontConfig& next) {
-		FontConfigChange change;
-		change.family = prev.family != next.family;
-		change.size = prev.size != next.size;
-		change.any = change.family || change.size;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline StyleConfigChange diff(const StyleConfig& prev, const StyleConfig& next) {
-		StyleConfigChange change;
-		change.color = prev.color != next.color;
-		change.opacity = prev.opacity != next.opacity;
-		change.any = change.color || change.opacity;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline StateStyleConfigChange diff(const StateStyleConfig& prev, const StateStyleConfig& next) {
-		StateStyleConfigChange change;
-		change.normal = diff(prev.normal, next.normal);
-		change.active = diff(prev.active, next.active);
-		change.played = diff(prev.played, next.played);
-		change.any = change.normal.any || change.active.any || change.played.any;
-		return change;
-	}
+	};
 
 } // namespace music_lyric_player::rendering::config::common
 

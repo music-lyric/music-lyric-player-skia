@@ -6,8 +6,10 @@
 #ifndef MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_LINE_INTERLUDE_CONFIG_GEN_H_
 #define MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_LINE_INTERLUDE_CONFIG_GEN_H_
 
-#include <optional>
 #include <string>
+
+#include "utils/config/access.h"
+#include "utils/config/property.h"
 
 namespace music_lyric_player::rendering::config::line::interlude {
 	/**
@@ -22,7 +24,7 @@ namespace music_lyric_player::rendering::config::line::interlude {
 		 * @example "#fff"
 		 * @example "rgba(255, 255, 255, 0.8)"
 		 */
-		::std::string color = "#ffffff";
+		::music_lyric_player::utils::config::Property<::std::string> color = "#ffffff";
 		/**
 		 * Dot opacity for this playback state.
 		 *
@@ -30,7 +32,19 @@ namespace music_lyric_player::rendering::config::line::interlude {
 		 * @minimum 0
 		 * @maximum 1
 		 */
-		double opacity = 1.0;
+		::music_lyric_player::utils::config::Property<double> opacity = 1.0;
+
+		bool operator==(const StyleConfig&) const = default;
+
+		friend void overlay(StyleConfig& dst, const StyleConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.color.assigned()) dst.color = src.color.value();
+			if (src.opacity.assigned()) dst.opacity = src.opacity.value();
+		}
+
+		friend void capture(StyleConfig& delta, const StyleConfig& prev, const StyleConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.color == next.color)) delta.color = next.color.value();
+			if (!(prev.opacity == next.opacity)) delta.opacity = next.opacity.value();
+		}
 	};
 
 	/**
@@ -45,6 +59,18 @@ namespace music_lyric_player::rendering::config::line::interlude {
 		 * Style progressively filled while the interlude is active.
 		 */
 		StyleConfig active = StyleConfig{ .color = "#ffffff", .opacity = 0.8 };
+
+		bool operator==(const StateConfig&) const = default;
+
+		friend void overlay(StateConfig& dst, const StateConfig& src, ::music_lyric_player::utils::config::Access key) {
+			overlay(dst.normal, src.normal, key);
+			overlay(dst.active, src.active, key);
+		}
+
+		friend void capture(StateConfig& delta, const StateConfig& prev, const StateConfig& next, ::music_lyric_player::utils::config::Access key) {
+			capture(delta.normal, prev.normal, next.normal, key);
+			capture(delta.active, prev.active, next.active, key);
+		}
 	};
 
 	/**
@@ -59,108 +85,24 @@ namespace music_lyric_player::rendering::config::line::interlude {
 		 * @example 16
 		 * @example "16px"
 		 */
-		::std::string size = "16px";
+		::music_lyric_player::utils::config::Property<::std::string> size = "16px";
 		/**
 		 * Inactive and active dot styles.
 		 */
 		StateConfig style;
-	};
 
-	struct StyleConfigPatch {
-		::std::optional<::std::string> color;
-		::std::optional<double> opacity;
-	};
+		bool operator==(const Root&) const = default;
 
-	struct StateConfigPatch {
-		StyleConfigPatch normal;
-		StyleConfigPatch active;
-	};
-
-	struct RootPatch {
-		::std::optional<::std::string> size;
-		StateConfigPatch style;
-	};
-
-	struct StyleConfigChange {
-		bool color = false;
-		bool opacity = false;
-		bool any = false;
-	};
-
-	struct StateConfigChange {
-		StyleConfigChange normal;
-		StyleConfigChange active;
-		bool any = false;
-	};
-
-	struct RootChange {
-		bool size = false;
-		StateConfigChange style;
-		bool any = false;
-	};
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(StyleConfig& cfg, const StyleConfigPatch& patch) {
-		if (patch.color.has_value()) {
-			cfg.color = *patch.color;
+		friend void overlay(Root& dst, const Root& src, ::music_lyric_player::utils::config::Access key) {
+			if (src.size.assigned()) dst.size = src.size.value();
+			overlay(dst.style, src.style, key);
 		}
-		if (patch.opacity.has_value()) {
-			cfg.opacity = *patch.opacity;
+
+		friend void capture(Root& delta, const Root& prev, const Root& next, ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.size == next.size)) delta.size = next.size.value();
+			capture(delta.style, prev.style, next.style, key);
 		}
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(StateConfig& cfg, const StateConfigPatch& patch) {
-		apply(cfg.normal, patch.normal);
-		apply(cfg.active, patch.active);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(Root& cfg, const RootPatch& patch) {
-		if (patch.size.has_value()) {
-			cfg.size = *patch.size;
-		}
-		apply(cfg.style, patch.style);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline StyleConfigChange diff(const StyleConfig& prev, const StyleConfig& next) {
-		StyleConfigChange change;
-		change.color = prev.color != next.color;
-		change.opacity = prev.opacity != next.opacity;
-		change.any = change.color || change.opacity;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline StateConfigChange diff(const StateConfig& prev, const StateConfig& next) {
-		StateConfigChange change;
-		change.normal = diff(prev.normal, next.normal);
-		change.active = diff(prev.active, next.active);
-		change.any = change.normal.any || change.active.any;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline RootChange diff(const Root& prev, const Root& next) {
-		RootChange change;
-		change.size = prev.size != next.size;
-		change.style = diff(prev.style, next.style);
-		change.any = change.size || change.style.any;
-		return change;
-	}
+	};
 
 } // namespace music_lyric_player::rendering::config::line::interlude
 

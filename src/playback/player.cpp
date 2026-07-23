@@ -98,7 +98,7 @@ namespace music_lyric_player::playback {
 
 	Player::Player(const utils::Clock& clock)
 	    : clockRef(clock) {
-		this->configListenerId = this->config.onUpdate.add([this](const config::RootChange& changes, const config::Root&) {
+		this->configListenerId = this->config.onUpdate.add([this](const config::Root& changes, const config::Root&) {
 			onConfigUpdate(changes);
 		});
 	}
@@ -324,18 +324,18 @@ namespace music_lyric_player::playback {
 		emitLinesUpdate(false);
 	}
 
-	void Player::onConfigUpdate(const config::RootChange& changes) {
+	void Player::onConfigUpdate(const config::Root& changes) {
 		// Toggling meta usage re-derives the lyric offset from the current info.
-		const bool metaToggled = changes.offset.useMeta;
+		const bool metaToggled = changes.offset.useMeta.assigned();
 		if (metaToggled) {
 			this->offset.refreshFromMeta(this->info, this->config.current().offset.useMeta);
 		}
 		// An offset change shifts effective time, so re-match active lines.
-		if (metaToggled || changes.offset.global) {
+		if (metaToggled || changes.offset.global.assigned()) {
 			syncTime();
 		}
 		// Merge settings changed: rebuild merged ends and re-match.
-		if (changes.mergeWindow || changes.mergeLimit) {
+		if (changes.mergeWindow.assigned() || changes.mergeLimit.assigned()) {
 			buildMergedLineEnd();
 			syncTime();
 		}

@@ -9,6 +9,9 @@
 #include "rendering/config/line/interlude/index.gen.h"
 #include "rendering/config/line/normal/index.gen.h"
 
+#include "utils/config/access.h"
+#include "utils/config/property.h"
+
 namespace music_lyric_player::rendering::config::line {
 	/**
 	 * Normal-line rendering and instrumental-gap indicators.
@@ -22,37 +25,19 @@ namespace music_lyric_player::rendering::config::line {
 		 * Instrumental-gap indicator geometry and animation styles.
 		 */
 		::music_lyric_player::rendering::config::line::interlude::Root interlude;
+
+		bool operator==(const Root&) const = default;
+
+		friend void overlay(Root& dst, const Root& src, ::music_lyric_player::utils::config::Access key) {
+			overlay(dst.normal, src.normal, key);
+			overlay(dst.interlude, src.interlude, key);
+		}
+
+		friend void capture(Root& delta, const Root& prev, const Root& next, ::music_lyric_player::utils::config::Access key) {
+			capture(delta.normal, prev.normal, next.normal, key);
+			capture(delta.interlude, prev.interlude, next.interlude, key);
+		}
 	};
-
-	struct RootPatch {
-		::music_lyric_player::rendering::config::line::normal::RootPatch normal;
-		::music_lyric_player::rendering::config::line::interlude::RootPatch interlude;
-	};
-
-	struct RootChange {
-		::music_lyric_player::rendering::config::line::normal::RootChange normal;
-		::music_lyric_player::rendering::config::line::interlude::RootChange interlude;
-		bool any = false;
-	};
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(Root& cfg, const RootPatch& patch) {
-		apply(cfg.normal, patch.normal);
-		apply(cfg.interlude, patch.interlude);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline RootChange diff(const Root& prev, const Root& next) {
-		RootChange change;
-		change.normal = diff(prev.normal, next.normal);
-		change.interlude = diff(prev.interlude, next.interlude);
-		change.any = change.normal.any || change.interlude.any;
-		return change;
-	}
 
 } // namespace music_lyric_player::rendering::config::line
 

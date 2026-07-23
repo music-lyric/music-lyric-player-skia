@@ -6,8 +6,10 @@
 #ifndef MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_SCROLL_CONFIG_GEN_H_
 #define MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_SCROLL_CONFIG_GEN_H_
 
-#include <optional>
 #include <string>
+
+#include "utils/config/access.h"
+#include "utils/config/property.h"
 
 namespace music_lyric_player::rendering::config::scroll {
 	/**
@@ -31,7 +33,7 @@ namespace music_lyric_player::rendering::config::scroll {
 		 *
 		 * @default 500.0
 		 */
-		double duration = 500.0;
+		::music_lyric_player::utils::config::Property<double> duration = 500.0;
 		/**
 		 * Easing curve for the transition.
 		 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.
@@ -40,13 +42,27 @@ namespace music_lyric_player::rendering::config::scroll {
 		 * @example "ease-in-out"
 		 * @example "cubic-bezier(0.4, 0, 0.2, 1)"
 		 */
-		::std::string easing = "ease";
+		::music_lyric_player::utils::config::Property<::std::string> easing = "ease";
 		/**
 		 * Fixed delay before the transition starts, in `ms`.
 		 *
 		 * @default 0.0
 		 */
-		double delay = 0.0;
+		::music_lyric_player::utils::config::Property<double> delay = 0.0;
+
+		bool operator==(const SmoothConfig&) const = default;
+
+		friend void overlay(SmoothConfig& dst, const SmoothConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.duration.assigned()) dst.duration = src.duration.value();
+			if (src.easing.assigned()) dst.easing = src.easing.value();
+			if (src.delay.assigned()) dst.delay = src.delay.value();
+		}
+
+		friend void capture(SmoothConfig& delta, const SmoothConfig& prev, const SmoothConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.duration == next.duration)) delta.duration = next.duration.value();
+			if (!(prev.easing == next.easing)) delta.easing = next.easing.value();
+			if (!(prev.delay == next.delay)) delta.delay = next.delay.value();
+		}
 	};
 
 	/**
@@ -60,7 +76,7 @@ namespace music_lyric_player::rendering::config::scroll {
 		 *
 		 * @default 500.0
 		 */
-		double duration = 500.0;
+		::music_lyric_player::utils::config::Property<double> duration = 500.0;
 		/**
 		 * Easing curve for the transition.
 		 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.
@@ -69,7 +85,7 @@ namespace music_lyric_player::rendering::config::scroll {
 		 * @example "ease-in-out"
 		 * @example "cubic-bezier(0.4, 0, 0.2, 1)"
 		 */
-		::std::string easing = "ease";
+		::music_lyric_player::utils::config::Property<::std::string> easing = "ease";
 		/**
 		 * Offset (in line units) at which the per-line delay saturates.
 		 * Lines with `|offset| >= range` all receive the maximum delay.
@@ -77,14 +93,30 @@ namespace music_lyric_player::rendering::config::scroll {
 		 * @default 5.0
 		 * @minimum 1
 		 */
-		double range = 5.0;
+		::music_lyric_player::utils::config::Property<double> range = 5.0;
 		/**
 		 * Delay increment per offset unit, in `ms`; scales the cascade curve.
 		 *
 		 * @default 40.0
 		 * @minimum 10
 		 */
-		double step = 40.0;
+		::music_lyric_player::utils::config::Property<double> step = 40.0;
+
+		bool operator==(const RippleConfig&) const = default;
+
+		friend void overlay(RippleConfig& dst, const RippleConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.duration.assigned()) dst.duration = src.duration.value();
+			if (src.easing.assigned()) dst.easing = src.easing.value();
+			if (src.range.assigned()) dst.range = src.range.value();
+			if (src.step.assigned()) dst.step = src.step.value();
+		}
+
+		friend void capture(RippleConfig& delta, const RippleConfig& prev, const RippleConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.duration == next.duration)) delta.duration = next.duration.value();
+			if (!(prev.easing == next.easing)) delta.easing = next.easing.value();
+			if (!(prev.range == next.range)) delta.range = next.range.value();
+			if (!(prev.step == next.step)) delta.step = next.step.value();
+		}
 	};
 
 	/**
@@ -98,7 +130,7 @@ namespace music_lyric_player::rendering::config::scroll {
 		 *
 		 * @default 500.0
 		 */
-		double duration = 500.0;
+		::music_lyric_player::utils::config::Property<double> duration = 500.0;
 		/**
 		 * Easing curve for the transition.
 		 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.
@@ -107,21 +139,37 @@ namespace music_lyric_player::rendering::config::scroll {
 		 * @example "ease-in-out"
 		 * @example "cubic-bezier(0.4, 0, 0.2, 1)"
 		 */
-		::std::string easing = "ease";
+		::music_lyric_player::utils::config::Property<::std::string> easing = "ease";
 		/**
 		 * Offset (in line units) at which the per-line delay saturates.
 		 *
 		 * @default 5.0
 		 * @minimum 1
 		 */
-		double range = 5.0;
+		::music_lyric_player::utils::config::Property<double> range = 5.0;
 		/**
 		 * Delay increment per offset unit, in `ms`.
 		 *
 		 * @default 40.0
 		 * @minimum 10
 		 */
-		double step = 40.0;
+		::music_lyric_player::utils::config::Property<double> step = 40.0;
+
+		bool operator==(const DirectionalConfig&) const = default;
+
+		friend void overlay(DirectionalConfig& dst, const DirectionalConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.duration.assigned()) dst.duration = src.duration.value();
+			if (src.easing.assigned()) dst.easing = src.easing.value();
+			if (src.range.assigned()) dst.range = src.range.value();
+			if (src.step.assigned()) dst.step = src.step.value();
+		}
+
+		friend void capture(DirectionalConfig& delta, const DirectionalConfig& prev, const DirectionalConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.duration == next.duration)) delta.duration = next.duration.value();
+			if (!(prev.easing == next.easing)) delta.easing = next.easing.value();
+			if (!(prev.range == next.range)) delta.range = next.range.value();
+			if (!(prev.step == next.step)) delta.step = next.step.value();
+		}
 	};
 
 	/**
@@ -135,7 +183,7 @@ namespace music_lyric_player::rendering::config::scroll {
 		 *
 		 * @default 500.0
 		 */
-		double duration = 500.0;
+		::music_lyric_player::utils::config::Property<double> duration = 500.0;
 		/**
 		 * Easing curve for the transition.
 		 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.
@@ -144,21 +192,37 @@ namespace music_lyric_player::rendering::config::scroll {
 		 * @example "ease-in-out"
 		 * @example "cubic-bezier(0.4, 0, 0.2, 1)"
 		 */
-		::std::string easing = "ease";
+		::music_lyric_player::utils::config::Property<::std::string> easing = "ease";
 		/**
 		 * Offset (in line units) at which the delay saturates.
 		 *
 		 * @default 4.0
 		 * @minimum 1
 		 */
-		double range = 4.0;
+		::music_lyric_player::utils::config::Property<double> range = 4.0;
 		/**
 		 * Delay increment per offset unit, in `ms`.
 		 *
 		 * @default 50.0
 		 * @minimum 1
 		 */
-		double step = 50.0;
+		::music_lyric_player::utils::config::Property<double> step = 50.0;
+
+		bool operator==(const StaggerConfig&) const = default;
+
+		friend void overlay(StaggerConfig& dst, const StaggerConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.duration.assigned()) dst.duration = src.duration.value();
+			if (src.easing.assigned()) dst.easing = src.easing.value();
+			if (src.range.assigned()) dst.range = src.range.value();
+			if (src.step.assigned()) dst.step = src.step.value();
+		}
+
+		friend void capture(StaggerConfig& delta, const StaggerConfig& prev, const StaggerConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.duration == next.duration)) delta.duration = next.duration.value();
+			if (!(prev.easing == next.easing)) delta.easing = next.easing.value();
+			if (!(prev.range == next.range)) delta.range = next.range.value();
+			if (!(prev.step == next.step)) delta.step = next.step.value();
+		}
 	};
 
 	/**
@@ -175,7 +239,7 @@ namespace music_lyric_player::rendering::config::scroll {
 		 *
 		 * @default Mode::Smooth
 		 */
-		Mode mode = Mode::Smooth;
+		::music_lyric_player::utils::config::Property<Mode> mode = Mode::Smooth;
 		/**
 		 * Smooth mode parameters.
 		 */
@@ -192,6 +256,24 @@ namespace music_lyric_player::rendering::config::scroll {
 		 * Stagger mode parameters.
 		 */
 		StaggerConfig stagger;
+
+		bool operator==(const AnimationConfig&) const = default;
+
+		friend void overlay(AnimationConfig& dst, const AnimationConfig& src, ::music_lyric_player::utils::config::Access key) {
+			if (src.mode.assigned()) dst.mode = src.mode.value();
+			overlay(dst.smooth, src.smooth, key);
+			overlay(dst.ripple, src.ripple, key);
+			overlay(dst.directional, src.directional, key);
+			overlay(dst.stagger, src.stagger, key);
+		}
+
+		friend void capture(AnimationConfig& delta, const AnimationConfig& prev, const AnimationConfig& next, ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.mode == next.mode)) delta.mode = next.mode.value();
+			capture(delta.smooth, prev.smooth, next.smooth, key);
+			capture(delta.ripple, prev.ripple, next.ripple, key);
+			capture(delta.directional, prev.directional, next.directional, key);
+			capture(delta.stagger, prev.stagger, next.stagger, key);
+		}
 	};
 
 	/**
@@ -208,266 +290,24 @@ namespace music_lyric_player::rendering::config::scroll {
 		 * @minimum 0
 		 * @maximum 1
 		 */
-		double anchor = 0.5;
+		::music_lyric_player::utils::config::Property<double> anchor = 0.5;
 		/**
 		 * Transition animation used when the active line changes.
 		 */
 		AnimationConfig animation;
+
+		bool operator==(const Root&) const = default;
+
+		friend void overlay(Root& dst, const Root& src, ::music_lyric_player::utils::config::Access key) {
+			if (src.anchor.assigned()) dst.anchor = src.anchor.value();
+			overlay(dst.animation, src.animation, key);
+		}
+
+		friend void capture(Root& delta, const Root& prev, const Root& next, ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.anchor == next.anchor)) delta.anchor = next.anchor.value();
+			capture(delta.animation, prev.animation, next.animation, key);
+		}
 	};
-
-	struct SmoothConfigPatch {
-		::std::optional<double> duration;
-		::std::optional<::std::string> easing;
-		::std::optional<double> delay;
-	};
-
-	struct RippleConfigPatch {
-		::std::optional<double> duration;
-		::std::optional<::std::string> easing;
-		::std::optional<double> range;
-		::std::optional<double> step;
-	};
-
-	struct DirectionalConfigPatch {
-		::std::optional<double> duration;
-		::std::optional<::std::string> easing;
-		::std::optional<double> range;
-		::std::optional<double> step;
-	};
-
-	struct StaggerConfigPatch {
-		::std::optional<double> duration;
-		::std::optional<::std::string> easing;
-		::std::optional<double> range;
-		::std::optional<double> step;
-	};
-
-	struct AnimationConfigPatch {
-		::std::optional<Mode> mode;
-		SmoothConfigPatch smooth;
-		RippleConfigPatch ripple;
-		DirectionalConfigPatch directional;
-		StaggerConfigPatch stagger;
-	};
-
-	struct RootPatch {
-		::std::optional<double> anchor;
-		AnimationConfigPatch animation;
-	};
-
-	struct SmoothConfigChange {
-		bool duration = false;
-		bool easing = false;
-		bool delay = false;
-		bool any = false;
-	};
-
-	struct RippleConfigChange {
-		bool duration = false;
-		bool easing = false;
-		bool range = false;
-		bool step = false;
-		bool any = false;
-	};
-
-	struct DirectionalConfigChange {
-		bool duration = false;
-		bool easing = false;
-		bool range = false;
-		bool step = false;
-		bool any = false;
-	};
-
-	struct StaggerConfigChange {
-		bool duration = false;
-		bool easing = false;
-		bool range = false;
-		bool step = false;
-		bool any = false;
-	};
-
-	struct AnimationConfigChange {
-		bool mode = false;
-		SmoothConfigChange smooth;
-		RippleConfigChange ripple;
-		DirectionalConfigChange directional;
-		StaggerConfigChange stagger;
-		bool any = false;
-	};
-
-	struct RootChange {
-		bool anchor = false;
-		AnimationConfigChange animation;
-		bool any = false;
-	};
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(SmoothConfig& cfg, const SmoothConfigPatch& patch) {
-		if (patch.duration.has_value()) {
-			cfg.duration = *patch.duration;
-		}
-		if (patch.easing.has_value()) {
-			cfg.easing = *patch.easing;
-		}
-		if (patch.delay.has_value()) {
-			cfg.delay = *patch.delay;
-		}
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(RippleConfig& cfg, const RippleConfigPatch& patch) {
-		if (patch.duration.has_value()) {
-			cfg.duration = *patch.duration;
-		}
-		if (patch.easing.has_value()) {
-			cfg.easing = *patch.easing;
-		}
-		if (patch.range.has_value()) {
-			cfg.range = *patch.range;
-		}
-		if (patch.step.has_value()) {
-			cfg.step = *patch.step;
-		}
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(DirectionalConfig& cfg, const DirectionalConfigPatch& patch) {
-		if (patch.duration.has_value()) {
-			cfg.duration = *patch.duration;
-		}
-		if (patch.easing.has_value()) {
-			cfg.easing = *patch.easing;
-		}
-		if (patch.range.has_value()) {
-			cfg.range = *patch.range;
-		}
-		if (patch.step.has_value()) {
-			cfg.step = *patch.step;
-		}
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(StaggerConfig& cfg, const StaggerConfigPatch& patch) {
-		if (patch.duration.has_value()) {
-			cfg.duration = *patch.duration;
-		}
-		if (patch.easing.has_value()) {
-			cfg.easing = *patch.easing;
-		}
-		if (patch.range.has_value()) {
-			cfg.range = *patch.range;
-		}
-		if (patch.step.has_value()) {
-			cfg.step = *patch.step;
-		}
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(AnimationConfig& cfg, const AnimationConfigPatch& patch) {
-		if (patch.mode.has_value()) {
-			cfg.mode = *patch.mode;
-		}
-		apply(cfg.smooth, patch.smooth);
-		apply(cfg.ripple, patch.ripple);
-		apply(cfg.directional, patch.directional);
-		apply(cfg.stagger, patch.stagger);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(Root& cfg, const RootPatch& patch) {
-		if (patch.anchor.has_value()) {
-			cfg.anchor = *patch.anchor;
-		}
-		apply(cfg.animation, patch.animation);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline SmoothConfigChange diff(const SmoothConfig& prev, const SmoothConfig& next) {
-		SmoothConfigChange change;
-		change.duration = prev.duration != next.duration;
-		change.easing = prev.easing != next.easing;
-		change.delay = prev.delay != next.delay;
-		change.any = change.duration || change.easing || change.delay;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline RippleConfigChange diff(const RippleConfig& prev, const RippleConfig& next) {
-		RippleConfigChange change;
-		change.duration = prev.duration != next.duration;
-		change.easing = prev.easing != next.easing;
-		change.range = prev.range != next.range;
-		change.step = prev.step != next.step;
-		change.any = change.duration || change.easing || change.range || change.step;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline DirectionalConfigChange diff(const DirectionalConfig& prev, const DirectionalConfig& next) {
-		DirectionalConfigChange change;
-		change.duration = prev.duration != next.duration;
-		change.easing = prev.easing != next.easing;
-		change.range = prev.range != next.range;
-		change.step = prev.step != next.step;
-		change.any = change.duration || change.easing || change.range || change.step;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline StaggerConfigChange diff(const StaggerConfig& prev, const StaggerConfig& next) {
-		StaggerConfigChange change;
-		change.duration = prev.duration != next.duration;
-		change.easing = prev.easing != next.easing;
-		change.range = prev.range != next.range;
-		change.step = prev.step != next.step;
-		change.any = change.duration || change.easing || change.range || change.step;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline AnimationConfigChange diff(const AnimationConfig& prev, const AnimationConfig& next) {
-		AnimationConfigChange change;
-		change.mode = prev.mode != next.mode;
-		change.smooth = diff(prev.smooth, next.smooth);
-		change.ripple = diff(prev.ripple, next.ripple);
-		change.directional = diff(prev.directional, next.directional);
-		change.stagger = diff(prev.stagger, next.stagger);
-		change.any = change.mode || change.smooth.any || change.ripple.any || change.directional.any || change.stagger.any;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline RootChange diff(const Root& prev, const Root& next) {
-		RootChange change;
-		change.anchor = prev.anchor != next.anchor;
-		change.animation = diff(prev.animation, next.animation);
-		change.any = change.anchor || change.animation.any;
-		return change;
-	}
 
 } // namespace music_lyric_player::rendering::config::scroll
 

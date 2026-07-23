@@ -110,12 +110,14 @@
         {
           "name": "font",
           "nested": "common.FontConfig",
-          "comment": "Font of the karaoke main content."
+          "inheritFrom": "line.normal.base.font",
+          "comment": "Font of the karaoke main content; inherits the base line font when unset."
         },
         {
           "name": "style",
           "nested": "common.StateStyleConfig",
-          "comment": "Inactive and active styles of the karaoke main content."
+          "inheritFrom": "line.normal.base.style",
+          "comment": "Inactive, active, and played styles of the karaoke main content; inherit the base line styles when unset."
         },
         {
           "name": "word",

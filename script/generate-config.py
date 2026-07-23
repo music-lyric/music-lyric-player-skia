@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
 """Generate C++ config code from JSON schema(s).
 
-Per config in `items[]`, emits (in the schema's `namespace`): the resolved `struct`
-with defaults, its deeply-optional `Patch` mirror, its `<Name>Change` mirror (a `bool` per leaf,
-a nested `Change` per child, plus a rolled-up `any`), and the internal ADL machinery `apply`
-(deep-merge) and `diff(prev, next) -> <Name>Change`. A schema with `"defaultInstance": true`
-additionally gets an `inline const Root Default` instance (all schema defaults) for its `Root`, so
-consumers can fall back to a default value on a parse failure. Output goes to the schema's `file`,
-next to the schema, opened with `// clang-format off`.
+Per config in `items[]`, emits (in the schema's `namespace`) a single resolved `struct`: each leaf is a
+`::music_lyric_player::utils::config::Property<T>` carrying the schema default plus a presence flag, so the
+one struct doubles as its own sparse patch (a `Property` reads through to its value but also records whether
+it was explicitly set). It also gets a defaulted `operator==` (values only) and the config machinery
+`overlay` (copy every set leaf from one config onto another) and `capture` (record changed leaves into a
+delta config) as hidden `friend`s, each taking a trailing `::music_lyric_player::utils::config::Access`
+passkey. Because the machinery is a hidden friend it never leaks into the namespace (found solely via ADL)
+and the passkey's private constructor means only `Manager` can invoke it; `Manager` reports changes with a
+delta config from `capture`. A schema with `"defaultInstance": true` additionally gets an
+`inline const Root Default` instance (all schema defaults) for its `Root` plus a hidden-friend
+`resolve(out, overrides, key)` that resets `out` to the defaults, overlays the accumulated overrides, then
+fills every leaf that was not explicitly set from its inherited source, so consumers can fall back to a
+default value on a parse failure. Output goes to the schema's `file`, next to the schema, opened with
+`// clang-format off`.
 
 Schema shape:
     { "namespace": "a::b", "file": "config.gen.h", "defaultInstance"?: true,
@@ -59,6 +66,18 @@ KIND_NOTES = {
     "length": "A bare number or `px` is an absolute length in logical pixels.",
     "easing": "Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.",
 }
+
+# Passkey type gating the generated machinery; only `utils::config::Manager` can mint one, so external code cannot call overlay / capture / resolve.
+ACCESS_TYPE = "::music_lyric_player::utils::config::Access"
+
+# Project-relative include for the passkey header, added to every generated header.
+ACCESS_INCLUDE = "utils/config/access.h"
+
+# Wrapper carrying each leaf's value plus its presence flag, so one Config struct doubles as its own patch.
+PROPERTY_TYPE = "::music_lyric_player::utils::config::Property"
+
+# Project-relative include for the Property wrapper, added to every generated header.
+PROPERTY_INCLUDE = "utils/config/property.h"
 
 
 class SchemaError(Exception):
@@ -332,6 +351,8 @@ def validate_structure(schema):
                     isinstance(overrides, dict) and overrides and all(isinstance(k, str) and isinstance(v, str) for k, v in overrides.items())
                 ):
                     raise SchemaError(f"{at} ('{field_name}').defaults must be a non-empty object of field -> C++ literal string")
+                if "inheritFrom" in field and (not isinstance(field["inheritFrom"], str) or not field["inheritFrom"]):
+                    raise SchemaError(f"{at} ('{field_name}').inheritFrom must be a non-empty string (a dotted path from Root to the inherited source)")
                 target = field["nested"]
                 if not isinstance(target, str) or not target:
                     raise SchemaError(f"{at} ('{field_name}').nested must be a non-empty string")
@@ -367,6 +388,8 @@ def validate_structure(schema):
                     field_type = field.get("type")
                     if not isinstance(field_type, str) or not field_type:
                         raise SchemaError(f"{at} ('{field_name}') must have a non-empty 'type', a 'kind', an 'enum', or 'nested'")
+                if "inheritFrom" in field:
+                    raise SchemaError(f"{at} ('{field_name}') has 'inheritFrom' but is a leaf; inheritance is only supported on nested fields")
                 if "default" in field and not isinstance(field["default"], str):
                     raise SchemaError(f"{at} ('{field_name}').default must be a string holding a C++ literal")
 
@@ -424,13 +447,13 @@ def load_module(path, cache, loading=None):
 
 
 def resolve_nested(module, value):
-    """Resolve a `nested` reference (bare = local & unqualified, dotted `alias.Struct` = imported & fully-qualified) to `(module, cfg, type, patch_type)`."""
+    """Resolve a `nested` reference (bare = local & unqualified, dotted `alias.Struct` = imported & fully-qualified) to `(module, cfg, type)`."""
     if "." in value:
         alias, _, struct = value.partition(".")
         target = module.imports[alias]
         type_str = f"::{target.namespace}::{struct}"
-        return target, target.by_name[struct], type_str, type_str + "Patch"
-    return module, module.by_name[value], value, value + "Patch"
+        return target, target.by_name[struct], type_str
+    return module, module.by_name[value], value
 
 
 def include_path_for(out_path):
@@ -516,12 +539,12 @@ def note(field, inline):
 
 
 def gen_struct(cfg, module):
-    """Emit the resolved struct; leaves carry their defaults (value-initialised when omitted)."""
+    """Emit the resolved struct; leaves carry their defaults (value-initialised when omitted), and the config machinery rides along as hidden friends."""
     out = [jsdoc(cfg.get("comment"), "\t") + f"\tstruct {cfg['name']} {{"]
     for field in cfg["fields"]:
         above = field_doc(field, "\t\t", module.inline)
         if is_nested(field):
-            _, _, type_str, _ = resolve_nested(module, field["nested"])
+            _, _, type_str = resolve_nested(module, field["nested"])
             overrides = field.get("defaults")
             if overrides:
                 # C++20 designated initialisers override chosen sub-fields; the rest keep their in-class defaults.
@@ -530,79 +553,151 @@ def gen_struct(cfg, module):
             else:
                 out.append(f"{above}\t\t{type_str} {field['name']};{note(field, module.inline)}")
         else:
-            out.append(f"{above}\t\t{leaf_type(field)} {field['name']} = {leaf_default(field)};{note(field, module.inline)}")
+            out.append(f"{above}\t\t{PROPERTY_TYPE}<{leaf_type(field)}> {field['name']} = {leaf_default(field)};{note(field, module.inline)}")
+    # A defaulted equality lets Manager tell whether a resolve actually changed anything; the rest of the machinery is hidden friends found only via ADL and gated by the passkey, so they stay out of the namespace and only Manager can invoke them.
+    out.append("")
+    out.append(f"\t\tbool operator==(const {cfg['name']}&) const = default;")
+    out.append("")
+    out.append(gen_overlay(cfg, module))
+    out.append("")
+    out.append(gen_capture(cfg, module))
+    if module.default_instance and cfg["name"] == "Root":
+        out.append("")
+        out.append(gen_resolve(module))
     out.append("\t};")
     return "\n".join(out)
 
 
-def gen_patch(cfg, module):
-    """Emit the deeply-optional patch mirror of a config."""
-    out = [f"\tstruct {cfg['name']}Patch {{"]
-    for field in cfg["fields"]:
-        if is_nested(field):
-            _, _, _, patch_str = resolve_nested(module, field["nested"])
-            out.append(f"\t\t{patch_str} {field['name']};")
-        else:
-            out.append(f"\t\t::std::optional<{leaf_type(field)}> {field['name']};")
-    out.append("\t};")
-    return "\n".join(out)
-
-
-def gen_apply(cfg, module):
-    """Emit the internal `apply`: deep-merge a patch into a config (nested calls resolve via ADL)."""
+def gen_overlay(cfg, module):
+    """Emit the hidden-friend `overlay`: copy every explicitly-set leaf from `src` onto `dst`; nested calls resolve via ADL and forward the passkey."""
     name = cfg["name"]
     fields = cfg["fields"]
-    unused = "" if fields else "[[maybe_unused]] "
-    out = ["\t/**\n\t * Called by the config Manager and the parent aggregate, not part of the public API.\n\t */"]
-    out.append(f"\tinline void apply({unused}{name}& cfg, {unused}const {name}Patch& patch) {{")
+    obj = "" if fields else "[[maybe_unused]] "
+    key = "" if any(is_nested(field) for field in fields) else "[[maybe_unused]] "
+    out = [f"\t\tfriend void overlay({obj}{name}& dst, {obj}const {name}& src, {key}{ACCESS_TYPE} key) {{"]
     for field in fields:
         n = field["name"]
         if is_nested(field):
-            out.append(f"\t\tapply(cfg.{n}, patch.{n});")
+            out.append(f"\t\t\toverlay(dst.{n}, src.{n}, key);")
         else:
-            out.append(f"\t\tif (patch.{n}.has_value()) {{")
-            out.append(f"\t\t\tcfg.{n} = *patch.{n};")
-            out.append("\t\t}")
-    out.append("\t}")
+            out.append(f"\t\t\tif (src.{n}.assigned()) dst.{n} = src.{n}.value();")
+    out.append("\t\t}")
     return "\n".join(out)
 
 
-def gen_change(cfg, module):
-    """Emit `<Name>Change`: a `bool` per leaf, a nested `<Child>Change` per child, plus `bool any` rolling up the subtree."""
-    out = [f"\tstruct {cfg['name']}Change {{"]
-    for field in cfg["fields"]:
-        n = field["name"]
-        if is_nested(field):
-            _, _, type_str, _ = resolve_nested(module, field["nested"])
-            out.append(f"\t\t{type_str}Change {n};")
-        else:
-            out.append(f"\t\tbool {n} = false;")
-    out.append("\t\tbool any = false;")
-    out.append("\t};")
-    return "\n".join(out)
-
-
-def gen_diff(cfg, module):
-    """Emit the internal `diff`: returns a `<Name>Change` mirror; each leaf bool (or a child's `any`) marks what differs, rolled up into `any`."""
+def gen_capture(cfg, module):
+    """Emit the hidden-friend `capture`: record every leaf whose value changed between `prev` and `next` into `delta` (nested calls resolve via ADL and forward the passkey)."""
     name = cfg["name"]
     fields = cfg["fields"]
-    unused = "" if fields else "[[maybe_unused]] "
-    out = ["\t/**\n\t * Called by the config Manager and the parent aggregate, not part of the public API.\n\t */"]
-    out.append(f"\tinline {name}Change diff({unused}const {name}& prev, {unused}const {name}& next) {{")
-    out.append(f"\t\t{name}Change change;")
-    rolled = []
+    obj = "" if fields else "[[maybe_unused]] "
+    key = "" if any(is_nested(field) for field in fields) else "[[maybe_unused]] "
+    out = [f"\t\tfriend void capture({obj}{name}& delta, {obj}const {name}& prev, {obj}const {name}& next, {key}{ACCESS_TYPE} key) {{"]
     for field in fields:
         n = field["name"]
         if is_nested(field):
-            out.append(f"\t\tchange.{n} = diff(prev.{n}, next.{n});")
-            rolled.append(f"change.{n}.any")
+            out.append(f"\t\t\tcapture(delta.{n}, prev.{n}, next.{n}, key);")
         else:
-            out.append(f"\t\tchange.{n} = prev.{n} != next.{n};")
-            rolled.append(f"change.{n}")
-    if rolled:
-        out.append(f"\t\tchange.any = {' || '.join(rolled)};")
-    out.append("\t\treturn change;")
-    out.append("\t}")
+            out.append(f"\t\t\tif (!(prev.{n} == next.{n})) delta.{n} = next.{n}.value();")
+    out.append("\t\t}")
+    return "\n".join(out)
+
+
+def walk_leaves(module, cfg, prefix=""):
+    """Every leaf's dotted sub-path under a config, recursing through nested fields (imported or local)."""
+    leaves = []
+    for field in cfg["fields"]:
+        path = f"{prefix}{field['name']}"
+        if is_nested(field):
+            target_module, target_cfg, _ = resolve_nested(module, field["nested"])
+            leaves += walk_leaves(target_module, target_cfg, path + ".")
+        else:
+            leaves.append(path)
+    return leaves
+
+
+def resolve_path(root_module, path):
+    """Resolve a dotted absolute path from `Root` to the `(module, cfg)` of the nested config it names; raises if a segment is missing or a leaf."""
+    module, cfg = root_module, root_module.by_name["Root"]
+    for part in path.split("."):
+        field = next((f for f in cfg["fields"] if f["name"] == part), None)
+        if field is None:
+            raise SchemaError(f"inheritFrom path '{path}' has no field '{part}'")
+        if not is_nested(field):
+            raise SchemaError(f"inheritFrom path '{path}' segment '{part}' is a leaf, not a nested config")
+        module, cfg, _ = resolve_nested(module, field["nested"])
+    return module, cfg
+
+
+def collect_inherit_edges(root_module):
+    """Walk the whole tree from `Root`, returning `(consumer_path, source_path, type_module, type_cfg)` for every `inheritFrom` field; validates each source resolves to the same type and is not the field itself or its own descendant."""
+    edges = []
+
+    def walk(module, cfg, prefix):
+        for field in cfg["fields"]:
+            if not is_nested(field):
+                continue
+            path = f"{prefix}{field['name']}"
+            target_module, target_cfg, _ = resolve_nested(module, field["nested"])
+            if "inheritFrom" in field:
+                source = field["inheritFrom"]
+                if source == path or source.startswith(path + "."):
+                    raise SchemaError(f"field '{path}' cannot inheritFrom '{source}' (itself or its own descendant)")
+                source_module, source_cfg = resolve_path(root_module, source)
+                if (source_module.namespace, source_cfg["name"]) != (target_module.namespace, target_cfg["name"]):
+                    raise SchemaError(f"inheritFrom '{source}' resolves to '{source_cfg['name']}' but field '{path}' is '{target_cfg['name']}'; the inherited source must be the same type")
+                edges.append((path, source, target_module, target_cfg))
+            walk(target_module, target_cfg, path + ".")
+
+    walk(root_module, root_module.by_name["Root"], "")
+    return order_inherit_edges(edges)
+
+
+def order_inherit_edges(edges):
+    """Order the fix-ups so every source is fully resolved before it is read (a consumer whose source lies inside another's subtree comes later); raises on a dependency cycle."""
+
+    def depends_on(consumer_edge, provider_edge):
+        source = consumer_edge[1]
+        provided = provider_edge[0]
+        return source == provided or source.startswith(provided + ".")
+
+    ordered = []
+    state = {}  # index -> "visiting" | "done"
+
+    def visit(index):
+        if state.get(index) == "done":
+            return
+        if state.get(index) == "visiting":
+            raise SchemaError(f"inheritFrom cycle involving '{edges[index][0]}'")
+        state[index] = "visiting"
+        for other, edge in enumerate(edges):
+            if other != index and depends_on(edges[index], edge):
+                visit(other)
+        state[index] = "done"
+        ordered.append(edges[index])
+
+    for index in range(len(edges)):
+        visit(index)
+    return ordered
+
+
+def gen_resolve(module):
+    """Emit the hidden-friend `resolve(out, overrides, key)`: resets `out` to defaults, overlays the accumulated overrides, then fills each leaf that was not explicitly set from its inherited source."""
+    edges = collect_inherit_edges(module)
+    out = [
+        "\t\t/**",
+        "\t\t * Resolves the accumulated overrides into a fully-concrete config: resets `out` to the defaults, overlays the overrides, then fills every leaf that was not explicitly set from its inherited source.",
+        "\t\t */",
+        f"\t\tfriend void resolve(Root& out, const Root& overrides, {ACCESS_TYPE} key) {{",
+        "\t\t\tout = Root{};",
+        "\t\t\toverlay(out, overrides, key);",
+    ]
+    # Edges are topologically ordered, so every source is fully resolved before a consumer reads it.
+    for consumer, source, type_module, type_cfg in edges:
+        for leaf in walk_leaves(type_module, type_cfg):
+            out.append(f"\t\t\tif (!overrides.{consumer}.{leaf}.assigned()) {{")
+            out.append(f"\t\t\t\tout.{consumer}.{leaf} = out.{source}.{leaf}.value();")
+            out.append("\t\t\t}")
+    out.append("\t\t}")
     return "\n".join(out)
 
 
@@ -642,11 +737,6 @@ def gen_default(cfg, module):
         "\t */",
         "\tinline const Root Default{};",
     ])
-
-
-def module_has_leaf(module):
-    """Whether any config in the module has a leaf (non-nested) field — those drive the `::std::optional` patch members."""
-    return any(not is_nested(field) for cfg in module.items for field in cfg["fields"])
 
 
 def module_has_string(module):
@@ -725,26 +815,24 @@ def render(module, schema_name):
     ]
 
     stdlib = []
-    if module_has_leaf(module):
-        stdlib.append("#include <optional>")  # every leaf field gets a `::std::optional<...>` patch member
     if module_has_string(module):
-        stdlib.append("#include <string>")
+        stdlib.append("#include <string>")  # string leaves become `Property<::std::string>`
     if stdlib:
         parts += ["", *stdlib]
     referenced = [f'#include "{path}"' for path in referenced_includes(module)]
     if referenced:
         parts += ["", *referenced]
+    parts += ["", f'#include "{ACCESS_INCLUDE}"', f'#include "{PROPERTY_INCLUDE}"']  # the passkey and the leaf wrapper every config uses
 
     parts += ["", f"namespace {namespace} {{"]
 
-    # enums first (referenced by the structs below), then structs / patches / change mirrors / apply / diff, then the root Default instance (only when the schema opts in)
+    # enums first (referenced by the structs below); then the value structs, each leaf a `Property<T>` (value plus presence) and each carrying `operator==` plus overlay / capture (and the root's resolve) as machinery; then the root Default instance (only when the schema opts in).
     for block in gen_enums(module):
         parts.append(block)
         parts.append("")
-    for stage in (gen_struct, gen_patch, gen_change, gen_apply, gen_diff):
-        for cfg in items:
-            parts.append(stage(cfg, module))
-            parts.append("")
+    for cfg in items:
+        parts.append(gen_struct(cfg, module))
+        parts.append("")
     for cfg in items:
         block = gen_default(cfg, module)
         if block:

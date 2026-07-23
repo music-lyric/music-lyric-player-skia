@@ -6,7 +6,8 @@
 #ifndef MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_EFFECT_CONFIG_GEN_H_
 #define MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_EFFECT_CONFIG_GEN_H_
 
-#include <optional>
+#include "utils/config/access.h"
+#include "utils/config/property.h"
 
 namespace music_lyric_player::rendering::config::effect {
 	/**
@@ -20,19 +21,33 @@ namespace music_lyric_player::rendering::config::effect {
 		 *
 		 * @default false
 		 */
-		bool enabled = false;
+		::music_lyric_player::utils::config::Property<bool> enabled = false;
 		/**
 		 * Scale ratio of the farthest line.
 		 *
 		 * @default 0.65
 		 */
-		double min = 0.65;
+		::music_lyric_player::utils::config::Property<double> min = 0.65;
 		/**
 		 * Scale ratio of the active line.
 		 *
 		 * @default 1.0
 		 */
-		double max = 1.0;
+		::music_lyric_player::utils::config::Property<double> max = 1.0;
+
+		bool operator==(const ScaleConfig&) const = default;
+
+		friend void overlay(ScaleConfig& dst, const ScaleConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.enabled.assigned()) dst.enabled = src.enabled.value();
+			if (src.min.assigned()) dst.min = src.min.value();
+			if (src.max.assigned()) dst.max = src.max.value();
+		}
+
+		friend void capture(ScaleConfig& delta, const ScaleConfig& prev, const ScaleConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.enabled == next.enabled)) delta.enabled = next.enabled.value();
+			if (!(prev.min == next.min)) delta.min = next.min.value();
+			if (!(prev.max == next.max)) delta.max = next.max.value();
+		}
 	};
 
 	/**
@@ -46,19 +61,33 @@ namespace music_lyric_player::rendering::config::effect {
 		 *
 		 * @default true
 		 */
-		bool enabled = true;
+		::music_lyric_player::utils::config::Property<bool> enabled = true;
 		/**
 		 * Blur radius of the active line, in `px` — the sharpest state.
 		 *
 		 * @default 0.4
 		 */
-		double min = 0.4;
+		::music_lyric_player::utils::config::Property<double> min = 0.4;
 		/**
 		 * Blur radius of the farthest line, in `px` — the most blurred state.
 		 *
 		 * @default 4.5
 		 */
-		double max = 4.5;
+		::music_lyric_player::utils::config::Property<double> max = 4.5;
+
+		bool operator==(const BlurConfig&) const = default;
+
+		friend void overlay(BlurConfig& dst, const BlurConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.enabled.assigned()) dst.enabled = src.enabled.value();
+			if (src.min.assigned()) dst.min = src.min.value();
+			if (src.max.assigned()) dst.max = src.max.value();
+		}
+
+		friend void capture(BlurConfig& delta, const BlurConfig& prev, const BlurConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.enabled == next.enabled)) delta.enabled = next.enabled.value();
+			if (!(prev.min == next.min)) delta.min = next.min.value();
+			if (!(prev.max == next.max)) delta.max = next.max.value();
+		}
 	};
 
 	/**
@@ -75,117 +104,19 @@ namespace music_lyric_player::rendering::config::effect {
 		 * Blur effect: blurs lines farther from the active one.
 		 */
 		BlurConfig blur;
-	};
 
-	struct ScaleConfigPatch {
-		::std::optional<bool> enabled;
-		::std::optional<double> min;
-		::std::optional<double> max;
-	};
+		bool operator==(const Root&) const = default;
 
-	struct BlurConfigPatch {
-		::std::optional<bool> enabled;
-		::std::optional<double> min;
-		::std::optional<double> max;
-	};
-
-	struct RootPatch {
-		ScaleConfigPatch scale;
-		BlurConfigPatch blur;
-	};
-
-	struct ScaleConfigChange {
-		bool enabled = false;
-		bool min = false;
-		bool max = false;
-		bool any = false;
-	};
-
-	struct BlurConfigChange {
-		bool enabled = false;
-		bool min = false;
-		bool max = false;
-		bool any = false;
-	};
-
-	struct RootChange {
-		ScaleConfigChange scale;
-		BlurConfigChange blur;
-		bool any = false;
-	};
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(ScaleConfig& cfg, const ScaleConfigPatch& patch) {
-		if (patch.enabled.has_value()) {
-			cfg.enabled = *patch.enabled;
+		friend void overlay(Root& dst, const Root& src, ::music_lyric_player::utils::config::Access key) {
+			overlay(dst.scale, src.scale, key);
+			overlay(dst.blur, src.blur, key);
 		}
-		if (patch.min.has_value()) {
-			cfg.min = *patch.min;
-		}
-		if (patch.max.has_value()) {
-			cfg.max = *patch.max;
-		}
-	}
 
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(BlurConfig& cfg, const BlurConfigPatch& patch) {
-		if (patch.enabled.has_value()) {
-			cfg.enabled = *patch.enabled;
+		friend void capture(Root& delta, const Root& prev, const Root& next, ::music_lyric_player::utils::config::Access key) {
+			capture(delta.scale, prev.scale, next.scale, key);
+			capture(delta.blur, prev.blur, next.blur, key);
 		}
-		if (patch.min.has_value()) {
-			cfg.min = *patch.min;
-		}
-		if (patch.max.has_value()) {
-			cfg.max = *patch.max;
-		}
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(Root& cfg, const RootPatch& patch) {
-		apply(cfg.scale, patch.scale);
-		apply(cfg.blur, patch.blur);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline ScaleConfigChange diff(const ScaleConfig& prev, const ScaleConfig& next) {
-		ScaleConfigChange change;
-		change.enabled = prev.enabled != next.enabled;
-		change.min = prev.min != next.min;
-		change.max = prev.max != next.max;
-		change.any = change.enabled || change.min || change.max;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline BlurConfigChange diff(const BlurConfig& prev, const BlurConfig& next) {
-		BlurConfigChange change;
-		change.enabled = prev.enabled != next.enabled;
-		change.min = prev.min != next.min;
-		change.max = prev.max != next.max;
-		change.any = change.enabled || change.min || change.max;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline RootChange diff(const Root& prev, const Root& next) {
-		RootChange change;
-		change.scale = diff(prev.scale, next.scale);
-		change.blur = diff(prev.blur, next.blur);
-		change.any = change.scale.any || change.blur.any;
-		return change;
-	}
+	};
 
 } // namespace music_lyric_player::rendering::config::effect
 

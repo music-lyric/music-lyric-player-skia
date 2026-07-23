@@ -6,9 +6,10 @@
 #ifndef MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_LINE_NORMAL_MAIN_SYLLABLE_CONFIG_GEN_H_
 #define MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_LINE_NORMAL_MAIN_SYLLABLE_CONFIG_GEN_H_
 
-#include <optional>
-
 #include "rendering/config/common/index.gen.h"
+
+#include "utils/config/access.h"
+#include "utils/config/property.h"
 
 namespace music_lyric_player::rendering::config::line::normal::main::syllable {
 	/**
@@ -20,19 +21,33 @@ namespace music_lyric_player::rendering::config::line::normal::main::syllable {
 		 *
 		 * @default true
 		 */
-		bool enabled = true;
+		::music_lyric_player::utils::config::Property<bool> enabled = true;
 		/**
 		 * Starting vertical offset in logical pixels.
 		 *
 		 * @default 0.0
 		 */
-		double from = 0.0;
+		::music_lyric_player::utils::config::Property<double> from = 0.0;
 		/**
 		 * Ending vertical offset in logical pixels.
 		 *
 		 * @default -2.0
 		 */
-		double to = -2.0;
+		::music_lyric_player::utils::config::Property<double> to = -2.0;
+
+		bool operator==(const FloatConfig&) const = default;
+
+		friend void overlay(FloatConfig& dst, const FloatConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.enabled.assigned()) dst.enabled = src.enabled.value();
+			if (src.from.assigned()) dst.from = src.from.value();
+			if (src.to.assigned()) dst.to = src.to.value();
+		}
+
+		friend void capture(FloatConfig& delta, const FloatConfig& prev, const FloatConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.enabled == next.enabled)) delta.enabled = next.enabled.value();
+			if (!(prev.from == next.from)) delta.from = next.from.value();
+			if (!(prev.to == next.to)) delta.to = next.to.value();
+		}
 	};
 
 	/**
@@ -46,7 +61,7 @@ namespace music_lyric_player::rendering::config::line::normal::main::syllable {
 		 * @minimum 0
 		 * @maximum 2
 		 */
-		double normal = 0.5;
+		::music_lyric_player::utils::config::Property<double> normal = 0.5;
 		/**
 		 * Feather multiplier for the first word.
 		 *
@@ -54,7 +69,7 @@ namespace music_lyric_player::rendering::config::line::normal::main::syllable {
 		 * @minimum 0
 		 * @maximum 5
 		 */
-		double first = 1.5;
+		::music_lyric_player::utils::config::Property<double> first = 1.5;
 		/**
 		 * Feather multiplier for the last word.
 		 *
@@ -62,7 +77,21 @@ namespace music_lyric_player::rendering::config::line::normal::main::syllable {
 		 * @minimum 0
 		 * @maximum 5
 		 */
-		double last = 0.5;
+		::music_lyric_player::utils::config::Property<double> last = 0.5;
+
+		bool operator==(const MaskFeatherConfig&) const = default;
+
+		friend void overlay(MaskFeatherConfig& dst, const MaskFeatherConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.normal.assigned()) dst.normal = src.normal.value();
+			if (src.first.assigned()) dst.first = src.first.value();
+			if (src.last.assigned()) dst.last = src.last.value();
+		}
+
+		friend void capture(MaskFeatherConfig& delta, const MaskFeatherConfig& prev, const MaskFeatherConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.normal == next.normal)) delta.normal = next.normal.value();
+			if (!(prev.first == next.first)) delta.first = next.first.value();
+			if (!(prev.last == next.last)) delta.last = next.last.value();
+		}
 	};
 
 	/**
@@ -74,11 +103,23 @@ namespace music_lyric_player::rendering::config::line::normal::main::syllable {
 		 *
 		 * @default true
 		 */
-		bool enabled = true;
+		::music_lyric_player::utils::config::Property<bool> enabled = true;
 		/**
 		 * Soft-edge sizing of the reveal boundary.
 		 */
 		MaskFeatherConfig feather;
+
+		bool operator==(const MaskConfig&) const = default;
+
+		friend void overlay(MaskConfig& dst, const MaskConfig& src, ::music_lyric_player::utils::config::Access key) {
+			if (src.enabled.assigned()) dst.enabled = src.enabled.value();
+			overlay(dst.feather, src.feather, key);
+		}
+
+		friend void capture(MaskConfig& delta, const MaskConfig& prev, const MaskConfig& next, ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.enabled == next.enabled)) delta.enabled = next.enabled.value();
+			capture(delta.feather, prev.feather, next.feather, key);
+		}
 	};
 
 	/**
@@ -93,6 +134,18 @@ namespace music_lyric_player::rendering::config::line::normal::main::syllable {
 		 * Karaoke color reveal mask.
 		 */
 		MaskConfig mask;
+
+		bool operator==(const WordAnimationConfig&) const = default;
+
+		friend void overlay(WordAnimationConfig& dst, const WordAnimationConfig& src, ::music_lyric_player::utils::config::Access key) {
+			overlay(dst.floating, src.floating, key);
+			overlay(dst.mask, src.mask, key);
+		}
+
+		friend void capture(WordAnimationConfig& delta, const WordAnimationConfig& prev, const WordAnimationConfig& next, ::music_lyric_player::utils::config::Access key) {
+			capture(delta.floating, prev.floating, next.floating, key);
+			capture(delta.mask, prev.mask, next.mask, key);
+		}
 	};
 
 	/**
@@ -103,6 +156,16 @@ namespace music_lyric_player::rendering::config::line::normal::main::syllable {
 		 * Float and reveal animations of the word.
 		 */
 		WordAnimationConfig animation;
+
+		bool operator==(const WordConfig&) const = default;
+
+		friend void overlay(WordConfig& dst, const WordConfig& src, ::music_lyric_player::utils::config::Access key) {
+			overlay(dst.animation, src.animation, key);
+		}
+
+		friend void capture(WordConfig& delta, const WordConfig& prev, const WordConfig& next, ::music_lyric_player::utils::config::Access key) {
+			capture(delta.animation, prev.animation, next.animation, key);
+		}
 	};
 
 	/**
@@ -110,220 +173,32 @@ namespace music_lyric_player::rendering::config::line::normal::main::syllable {
 	 */
 	struct Root {
 		/**
-		 * Font of the karaoke main content.
+		 * Font of the karaoke main content; inherits the base line font when unset.
 		 */
 		::music_lyric_player::rendering::config::common::FontConfig font;
 		/**
-		 * Inactive and active styles of the karaoke main content.
+		 * Inactive, active, and played styles of the karaoke main content; inherit the base line styles when unset.
 		 */
 		::music_lyric_player::rendering::config::common::StateStyleConfig style;
 		/**
 		 * Timed word rendering and animation settings.
 		 */
 		WordConfig word;
-	};
 
-	struct FloatConfigPatch {
-		::std::optional<bool> enabled;
-		::std::optional<double> from;
-		::std::optional<double> to;
-	};
+		bool operator==(const Root&) const = default;
 
-	struct MaskFeatherConfigPatch {
-		::std::optional<double> normal;
-		::std::optional<double> first;
-		::std::optional<double> last;
-	};
-
-	struct MaskConfigPatch {
-		::std::optional<bool> enabled;
-		MaskFeatherConfigPatch feather;
-	};
-
-	struct WordAnimationConfigPatch {
-		FloatConfigPatch floating;
-		MaskConfigPatch mask;
-	};
-
-	struct WordConfigPatch {
-		WordAnimationConfigPatch animation;
-	};
-
-	struct RootPatch {
-		::music_lyric_player::rendering::config::common::FontConfigPatch font;
-		::music_lyric_player::rendering::config::common::StateStyleConfigPatch style;
-		WordConfigPatch word;
-	};
-
-	struct FloatConfigChange {
-		bool enabled = false;
-		bool from = false;
-		bool to = false;
-		bool any = false;
-	};
-
-	struct MaskFeatherConfigChange {
-		bool normal = false;
-		bool first = false;
-		bool last = false;
-		bool any = false;
-	};
-
-	struct MaskConfigChange {
-		bool enabled = false;
-		MaskFeatherConfigChange feather;
-		bool any = false;
-	};
-
-	struct WordAnimationConfigChange {
-		FloatConfigChange floating;
-		MaskConfigChange mask;
-		bool any = false;
-	};
-
-	struct WordConfigChange {
-		WordAnimationConfigChange animation;
-		bool any = false;
-	};
-
-	struct RootChange {
-		::music_lyric_player::rendering::config::common::FontConfigChange font;
-		::music_lyric_player::rendering::config::common::StateStyleConfigChange style;
-		WordConfigChange word;
-		bool any = false;
-	};
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(FloatConfig& cfg, const FloatConfigPatch& patch) {
-		if (patch.enabled.has_value()) {
-			cfg.enabled = *patch.enabled;
+		friend void overlay(Root& dst, const Root& src, ::music_lyric_player::utils::config::Access key) {
+			overlay(dst.font, src.font, key);
+			overlay(dst.style, src.style, key);
+			overlay(dst.word, src.word, key);
 		}
-		if (patch.from.has_value()) {
-			cfg.from = *patch.from;
+
+		friend void capture(Root& delta, const Root& prev, const Root& next, ::music_lyric_player::utils::config::Access key) {
+			capture(delta.font, prev.font, next.font, key);
+			capture(delta.style, prev.style, next.style, key);
+			capture(delta.word, prev.word, next.word, key);
 		}
-		if (patch.to.has_value()) {
-			cfg.to = *patch.to;
-		}
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(MaskFeatherConfig& cfg, const MaskFeatherConfigPatch& patch) {
-		if (patch.normal.has_value()) {
-			cfg.normal = *patch.normal;
-		}
-		if (patch.first.has_value()) {
-			cfg.first = *patch.first;
-		}
-		if (patch.last.has_value()) {
-			cfg.last = *patch.last;
-		}
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(MaskConfig& cfg, const MaskConfigPatch& patch) {
-		if (patch.enabled.has_value()) {
-			cfg.enabled = *patch.enabled;
-		}
-		apply(cfg.feather, patch.feather);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(WordAnimationConfig& cfg, const WordAnimationConfigPatch& patch) {
-		apply(cfg.floating, patch.floating);
-		apply(cfg.mask, patch.mask);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(WordConfig& cfg, const WordConfigPatch& patch) {
-		apply(cfg.animation, patch.animation);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(Root& cfg, const RootPatch& patch) {
-		apply(cfg.font, patch.font);
-		apply(cfg.style, patch.style);
-		apply(cfg.word, patch.word);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline FloatConfigChange diff(const FloatConfig& prev, const FloatConfig& next) {
-		FloatConfigChange change;
-		change.enabled = prev.enabled != next.enabled;
-		change.from = prev.from != next.from;
-		change.to = prev.to != next.to;
-		change.any = change.enabled || change.from || change.to;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline MaskFeatherConfigChange diff(const MaskFeatherConfig& prev, const MaskFeatherConfig& next) {
-		MaskFeatherConfigChange change;
-		change.normal = prev.normal != next.normal;
-		change.first = prev.first != next.first;
-		change.last = prev.last != next.last;
-		change.any = change.normal || change.first || change.last;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline MaskConfigChange diff(const MaskConfig& prev, const MaskConfig& next) {
-		MaskConfigChange change;
-		change.enabled = prev.enabled != next.enabled;
-		change.feather = diff(prev.feather, next.feather);
-		change.any = change.enabled || change.feather.any;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline WordAnimationConfigChange diff(const WordAnimationConfig& prev, const WordAnimationConfig& next) {
-		WordAnimationConfigChange change;
-		change.floating = diff(prev.floating, next.floating);
-		change.mask = diff(prev.mask, next.mask);
-		change.any = change.floating.any || change.mask.any;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline WordConfigChange diff(const WordConfig& prev, const WordConfig& next) {
-		WordConfigChange change;
-		change.animation = diff(prev.animation, next.animation);
-		change.any = change.animation.any;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline RootChange diff(const Root& prev, const Root& next) {
-		RootChange change;
-		change.font = diff(prev.font, next.font);
-		change.style = diff(prev.style, next.style);
-		change.word = diff(prev.word, next.word);
-		change.any = change.font.any || change.style.any || change.word.any;
-		return change;
-	}
+	};
 
 } // namespace music_lyric_player::rendering::config::line::normal::main::syllable
 

@@ -9,6 +9,9 @@
 #include "rendering/config/common/index.gen.h"
 #include "rendering/config/line/normal/main/index.gen.h"
 
+#include "utils/config/access.h"
+#include "utils/config/property.h"
+
 namespace music_lyric_player::rendering::config::line::normal {
 	/**
 	 * Appearance shared by the main vocal line and its annotation sub-lines.
@@ -22,6 +25,18 @@ namespace music_lyric_player::rendering::config::line::normal {
 		 * Inactive and active styles shared by normal lyric lines.
 		 */
 		::music_lyric_player::rendering::config::common::StateStyleConfig style;
+
+		bool operator==(const Base&) const = default;
+
+		friend void overlay(Base& dst, const Base& src, ::music_lyric_player::utils::config::Access key) {
+			overlay(dst.font, src.font, key);
+			overlay(dst.style, src.style, key);
+		}
+
+		friend void capture(Base& delta, const Base& prev, const Base& next, ::music_lyric_player::utils::config::Access key) {
+			capture(delta.font, prev.font, next.font, key);
+			capture(delta.style, prev.style, next.style, key);
+		}
 	};
 
 	/**
@@ -36,67 +51,19 @@ namespace music_lyric_player::rendering::config::line::normal {
 		 * Rendering mode and settings of the main vocal content.
 		 */
 		::music_lyric_player::rendering::config::line::normal::main::Root main;
+
+		bool operator==(const Root&) const = default;
+
+		friend void overlay(Root& dst, const Root& src, ::music_lyric_player::utils::config::Access key) {
+			overlay(dst.base, src.base, key);
+			overlay(dst.main, src.main, key);
+		}
+
+		friend void capture(Root& delta, const Root& prev, const Root& next, ::music_lyric_player::utils::config::Access key) {
+			capture(delta.base, prev.base, next.base, key);
+			capture(delta.main, prev.main, next.main, key);
+		}
 	};
-
-	struct BasePatch {
-		::music_lyric_player::rendering::config::common::FontConfigPatch font;
-		::music_lyric_player::rendering::config::common::StateStyleConfigPatch style;
-	};
-
-	struct RootPatch {
-		BasePatch base;
-		::music_lyric_player::rendering::config::line::normal::main::RootPatch main;
-	};
-
-	struct BaseChange {
-		::music_lyric_player::rendering::config::common::FontConfigChange font;
-		::music_lyric_player::rendering::config::common::StateStyleConfigChange style;
-		bool any = false;
-	};
-
-	struct RootChange {
-		BaseChange base;
-		::music_lyric_player::rendering::config::line::normal::main::RootChange main;
-		bool any = false;
-	};
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(Base& cfg, const BasePatch& patch) {
-		apply(cfg.font, patch.font);
-		apply(cfg.style, patch.style);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(Root& cfg, const RootPatch& patch) {
-		apply(cfg.base, patch.base);
-		apply(cfg.main, patch.main);
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline BaseChange diff(const Base& prev, const Base& next) {
-		BaseChange change;
-		change.font = diff(prev.font, next.font);
-		change.style = diff(prev.style, next.style);
-		change.any = change.font.any || change.style.any;
-		return change;
-	}
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline RootChange diff(const Root& prev, const Root& next) {
-		RootChange change;
-		change.base = diff(prev.base, next.base);
-		change.main = diff(prev.main, next.main);
-		change.any = change.base.any || change.main.any;
-		return change;
-	}
 
 } // namespace music_lyric_player::rendering::config::line::normal
 

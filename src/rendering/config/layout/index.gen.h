@@ -6,8 +6,10 @@
 #ifndef MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_LAYOUT_CONFIG_GEN_H_
 #define MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_LAYOUT_CONFIG_GEN_H_
 
-#include <optional>
 #include <string>
+
+#include "utils/config/access.h"
+#include "utils/config/property.h"
 
 namespace music_lyric_player::rendering::config::layout {
 	/**
@@ -28,7 +30,7 @@ namespace music_lyric_player::rendering::config::layout {
 		 *
 		 * @default Align::Left
 		 */
-		Align align = Align::Left;
+		::music_lyric_player::utils::config::Property<Align> align = Align::Left;
 		/**
 		 * Vertical spacing between adjacent lines.
 		 * A `%` value is relative to the viewport height.
@@ -39,42 +41,20 @@ namespace music_lyric_player::rendering::config::layout {
 		 * @example "16px"
 		 * @example "2%"
 		 */
-		::std::string gap = "16px";
-	};
+		::music_lyric_player::utils::config::Property<::std::string> gap = "16px";
 
-	struct RootPatch {
-		::std::optional<Align> align;
-		::std::optional<::std::string> gap;
-	};
+		bool operator==(const Root&) const = default;
 
-	struct RootChange {
-		bool align = false;
-		bool gap = false;
-		bool any = false;
-	};
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(Root& cfg, const RootPatch& patch) {
-		if (patch.align.has_value()) {
-			cfg.align = *patch.align;
+		friend void overlay(Root& dst, const Root& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.align.assigned()) dst.align = src.align.value();
+			if (src.gap.assigned()) dst.gap = src.gap.value();
 		}
-		if (patch.gap.has_value()) {
-			cfg.gap = *patch.gap;
-		}
-	}
 
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline RootChange diff(const Root& prev, const Root& next) {
-		RootChange change;
-		change.align = prev.align != next.align;
-		change.gap = prev.gap != next.gap;
-		change.any = change.align || change.gap;
-		return change;
-	}
+		friend void capture(Root& delta, const Root& prev, const Root& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.align == next.align)) delta.align = next.align.value();
+			if (!(prev.gap == next.gap)) delta.gap = next.gap.value();
+		}
+	};
 
 } // namespace music_lyric_player::rendering::config::layout
 

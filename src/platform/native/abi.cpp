@@ -9,14 +9,15 @@
 #include <type_traits>
 #include <vector>
 
-#include "include/core/SkFontMgr.h"
 #include "backend/font/font.h"
 #include "backend/gpu/surface.h"
+#include "include/core/SkFontMgr.h"
+#include "music_lyric_model.h"
 #include "playback/player.h"
 #include "rendering/config/config.gen.glaze.h"
 #include "rendering/config/index.h"
 #include "rendering/renderer.h"
-#include "music_lyric_model.h"
+#include "utils/config/property.glaze.h"
 
 namespace {
 	/**
@@ -69,11 +70,11 @@ struct music_lyric_player_handle {
  */
 struct music_lyric_player_renderer_handle {
 	std::unique_ptr<music_lyric_player::backend::gpu::Surface> surface;
-	music_lyric_player::rendering::Renderer                       renderer;
+	music_lyric_player::rendering::Renderer                    renderer;
 
 	music_lyric_player_renderer_handle(music_lyric_player::playback::Player& player, void* window)
-		: surface(music_lyric_player::backend::gpu::createWindowSurface({window})),
-		  renderer(player, music_lyric_player::backend::font::createFontMgr(), player.clock()) {}
+	    : surface(music_lyric_player::backend::gpu::createWindowSurface({window})),
+	      renderer(player, music_lyric_player::backend::font::createFontMgr(), player.clock()) {}
 };
 
 music_lyric_player_handle* music_lyric_player_create(void) {
@@ -87,7 +88,7 @@ void music_lyric_player_destroy(music_lyric_player_handle* player) {
 void music_lyric_player_update_lyric(music_lyric_player_handle* player, const uint8_t* data, size_t size) {
 	guardVoid([&] {
 		const music_lyric_model::parsed::Info info = music_lyric_model::parsed::decodeParsedInfo(
-		    std::vector<std::uint8_t>(data, data + size));
+			std::vector<std::uint8_t>(data, data + size));
 		player->player.updateLyric(info);
 	});
 }
@@ -135,7 +136,8 @@ size_t music_lyric_player_current_index(const music_lyric_player_handle* player,
 			std::copy_n(indices.begin(), std::min(capacity, indices.size()), out);
 		}
 		return indices.size();
-	}, size_t{0});
+	},
+		size_t{0});
 }
 
 double music_lyric_player_convert_content_time(const music_lyric_player_handle* player, double content_time) {
@@ -169,7 +171,8 @@ music_lyric_player_renderer_handle* music_lyric_player_renderer_create(music_lyr
 			return nullptr;
 		}
 		return handle.release();
-	}, nullptr);
+	},
+		nullptr);
 }
 
 void music_lyric_player_renderer_destroy(music_lyric_player_renderer_handle* renderer) {
@@ -196,8 +199,9 @@ void music_lyric_player_renderer_update_config_json(music_lyric_player_renderer_
 		if (renderer == nullptr || json == nullptr) {
 			return;
 		}
-		// Glaze reflects the sparse patch struct directly: present keys set their optional, absent keys stay unset.
-		music_lyric_player::rendering::config::RootPatch patch;
+		// Glaze reads the partial JSON straight into a Config: present keys set their leaf (and mark it assigned);
+		// Absent keys keep the schema default (still unset), so it doubles as a sparse patch.
+		music_lyric_player::rendering::config::Root patch;
 		if (const glz::error_ctx error = glz::read_json(patch, std::string_view(json))) {
 			reportAbiException("malformed config json");
 			return;

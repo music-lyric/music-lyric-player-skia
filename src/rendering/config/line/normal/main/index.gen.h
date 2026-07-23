@@ -6,9 +6,10 @@
 #ifndef MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_LINE_NORMAL_MAIN_CONFIG_GEN_H_
 #define MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_LINE_NORMAL_MAIN_CONFIG_GEN_H_
 
-#include <optional>
-
 #include "rendering/config/line/normal/main/syllable.gen.h"
+
+#include "utils/config/access.h"
+#include "utils/config/property.h"
 
 namespace music_lyric_player::rendering::config::line::normal::main {
 	/**
@@ -28,44 +29,24 @@ namespace music_lyric_player::rendering::config::line::normal::main {
 		 *
 		 * @default Use::Syllable
 		 */
-		Use use = Use::Syllable;
+		::music_lyric_player::utils::config::Property<Use> use = Use::Syllable;
 		/**
 		 * Word-timed karaoke rendering settings.
 		 */
 		::music_lyric_player::rendering::config::line::normal::main::syllable::Root syllable;
-	};
 
-	struct RootPatch {
-		::std::optional<Use> use;
-		::music_lyric_player::rendering::config::line::normal::main::syllable::RootPatch syllable;
-	};
+		bool operator==(const Root&) const = default;
 
-	struct RootChange {
-		bool use = false;
-		::music_lyric_player::rendering::config::line::normal::main::syllable::RootChange syllable;
-		bool any = false;
-	};
-
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline void apply(Root& cfg, const RootPatch& patch) {
-		if (patch.use.has_value()) {
-			cfg.use = *patch.use;
+		friend void overlay(Root& dst, const Root& src, ::music_lyric_player::utils::config::Access key) {
+			if (src.use.assigned()) dst.use = src.use.value();
+			overlay(dst.syllable, src.syllable, key);
 		}
-		apply(cfg.syllable, patch.syllable);
-	}
 
-	/**
-	 * Called by the config Manager and the parent aggregate, not part of the public API.
-	 */
-	inline RootChange diff(const Root& prev, const Root& next) {
-		RootChange change;
-		change.use = prev.use != next.use;
-		change.syllable = diff(prev.syllable, next.syllable);
-		change.any = change.use || change.syllable.any;
-		return change;
-	}
+		friend void capture(Root& delta, const Root& prev, const Root& next, ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.use == next.use)) delta.use = next.use.value();
+			capture(delta.syllable, prev.syllable, next.syllable, key);
+		}
+	};
 
 } // namespace music_lyric_player::rendering::config::line::normal::main
 

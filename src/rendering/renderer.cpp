@@ -46,7 +46,7 @@ namespace music_lyric_player::rendering {
 		this->linesListener  = this->player.onLinesUpdate.add([this](const std::vector<int>&, int firstIndex, bool) {
 			handleLinesUpdate(firstIndex);
 		});
-		this->configListener = this->config.onUpdate.add([this](const config::RootChange&, const config::Root&) {
+		this->configListener = this->config.onUpdate.add([this](const config::Root&, const config::Root&) {
 			handleConfigUpdate();
 		});
 

@@ -26,7 +26,8 @@
 #include "rendering/utils/color/parse.h"
 #include "rendering/utils/length.h"
 #include "rendering/utils/shaping/font.h"
-#include "rendering/utils/shaping/iterator.h"
+#include "rendering/utils/shaping/glyph.h"
+#include "rendering/utils/shaping/shaper.h"
 
 namespace music_lyric_player::rendering::components::line::normal::main::syllable {
 	namespace {
@@ -48,99 +49,6 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		double wordDuration(const music_lyric_model::common::WordNormal& info) {
 			return std::max(static_cast<double>(music_lyric_model::common::getWordDuration(info)), 0.0);
 		}
-
-		/**
-		 * Shapes one run stream into a single text blob while capturing its advance width and line metrics.
-		 * It mirrors Skia's own blob run handler but also reports width and typographic ascent / descent for layout.
-		 */
-		class BlobRunHandler final : public SkShaper::RunHandler {
-		public:
-			/**
-			 * Caches the source utf8 so run buffers can copy their per-glyph cluster text.
-			 */
-			explicit BlobRunHandler(const char* utf8)
-			    : utf8(utf8) {}
-
-			/**
-			 * Builds the accumulated text blob once shaping has finished.
-			 */
-			sk_sp<SkTextBlob> makeBlob() {
-				return this->builder.make();
-			}
-
-			/**
-			 * Returns the shaped advance width in logical pixels.
-			 */
-			float width() const {
-				return this->maxWidth;
-			}
-
-			/**
-			 * Returns the distance from the top to the baseline in logical pixels.
-			 */
-			float ascent() const {
-				return -this->lineAscent;
-			}
-
-			/**
-			 * Returns the distance from the baseline to the bottom in logical pixels.
-			 */
-			float descent() const {
-				return this->lineDescent;
-			}
-
-			void beginLine() override {
-				this->position    = {0.0f, 0.0f};
-				this->lineAscent  = 0.0f;
-				this->lineDescent = 0.0f;
-			}
-
-			void runInfo(const RunInfo& info) override {
-				SkFontMetrics metrics;
-				info.fFont.getMetrics(&metrics);
-				this->lineAscent  = std::min(this->lineAscent, metrics.fAscent);
-				this->lineDescent = std::max(this->lineDescent, metrics.fDescent);
-			}
-
-			void commitRunInfo() override {
-				this->position.fY -= this->lineAscent;
-			}
-
-			Buffer runBuffer(const RunInfo& info) override {
-				const int glyphCount = static_cast<int>(info.glyphCount);
-				const int textCount  = static_cast<int>(info.utf8Range.size());
-
-				const SkTextBlobBuilder::RunBuffer& run = this->builder.allocRunTextPos(info.fFont, glyphCount, textCount);
-				if (run.utf8text && this->utf8) {
-					std::memcpy(run.utf8text, this->utf8 + info.utf8Range.begin(), static_cast<std::size_t>(textCount));
-				}
-				this->clusters      = run.clusters;
-				this->glyphCount    = glyphCount;
-				this->clusterOffset = static_cast<int>(info.utf8Range.begin());
-				return {run.glyphs, run.points(), nullptr, run.clusters, this->position};
-			}
-
-			void commitRunBuffer(const RunInfo& info) override {
-				for (int i = 0; i < this->glyphCount; ++i) {
-					this->clusters[i] -= static_cast<uint32_t>(this->clusterOffset);
-				}
-				this->position += info.fAdvance;
-				this->maxWidth = std::max(this->maxWidth, this->position.fX);
-			}
-
-			void commitLine() override {}
-
-		private:
-			SkTextBlobBuilder builder;
-			const char*       utf8          = nullptr;
-			uint32_t*         clusters      = nullptr;
-			int               glyphCount    = 0;
-			int               clusterOffset = 0;
-			SkPoint           position      = {0.0f, 0.0f};
-			float             maxWidth      = 0.0f;
-			float             lineAscent    = 0.0f;
-			float             lineDescent   = 0.0f;
-		};
 	} // namespace
 
 	Word::Word(const music_lyric_model::common::WordNormal& info, bool hasSpaceBefore)
@@ -164,23 +72,29 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 		const config::Root& cfg  = context.config;
 		const float         size = static_cast<float>(std::max(resolveLength(cfg.line.normal.main.syllable.font.size, config::Default.line.normal.main.syllable.font.size), 1.0));
-		const SkFont        font = rendering::utils::shaping::buildBodyFont(context.fontMgr, cfg.line.normal.main.syllable.font.family.value(), size);
+		const SkFont        font = utils::shaping::buildBodyFont(context.fontMgr, cfg.line.normal.main.syllable.font.family.value(), size);
 
 		const char*       utf8  = this->text.c_str();
 		const std::size_t bytes = this->text.size();
 
-		const rendering::utils::shaping::ShapingIterators iterators = rendering::utils::shaping::makeShapingIterators(context.unicode, context.fontMgr, font, utf8, bytes);
-		if (!iterators) {
+		const utils::shaping::ShapedText shaped = utils::shaping::shapeText(*context.shaper, context.unicode, context.fontMgr, font, utf8, bytes, kUnboundedWidth);
+		if (shaped.lines.empty()) {
 			return;
 		}
 
-		BlobRunHandler handler(utf8);
-		context.shaper->shape(utf8, bytes, *iterators.font, *iterators.bidi, *iterators.script, *iterators.language, kUnboundedWidth, &handler);
+		// The word is shaped unbounded, so it is one line; the blob and metrics are rebuilt verbatim from the captured glyphs.
+		SkTextBlobBuilder builder;
+		float             maxWidth = 0.0f;
+		for (const utils::shaping::ShapedLine& line : shaped.lines) {
+			utils::shaping::appendLine(builder, line, utf8);
+			maxWidth = std::max(maxWidth, line.width);
+		}
 
-		this->blob             = handler.makeBlob();
-		this->measuredWidth    = std::ceil(std::max(handler.width(), 1.0f) + kWidthEpsilon);
-		this->measuredBaseline = handler.ascent();
-		this->measuredHeight   = handler.ascent() + handler.descent();
+		const utils::shaping::ShapedLine& last = shaped.lines.back();
+		this->blob             = builder.make();
+		this->measuredWidth    = std::ceil(std::max(maxWidth, 1.0f) + kWidthEpsilon);
+		this->measuredBaseline = last.ascent;
+		this->measuredHeight   = last.ascent + last.descent;
 	}
 
 	void Word::setPosition(float x, float y) {

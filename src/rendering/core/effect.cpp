@@ -36,8 +36,8 @@ namespace music_lyric_player::rendering::core {
 		if (offset == 0 || !effect.scale.enabled) {
 			return 1.0f;
 		}
-		const double min = ::std::max(effect.scale.min, 0.0);
-		const double max = ::std::max(effect.scale.max, min);
+		const double min = ::std::max(effect.scale.min.value(), 0.0);
+		const double max = ::std::max(effect.scale.max.value(), min);
 		return static_cast<float>(round2(min + (max - min) * gaussian(offset)));
 	}
 
@@ -46,8 +46,8 @@ namespace music_lyric_player::rendering::core {
 		if (offset == 0 || !effect.blur.enabled) {
 			return 0.0f;
 		}
-		const double min = ::std::max(effect.blur.min, 0.0);
-		const double max = ::std::max(effect.blur.max, min);
+		const double min = ::std::max(effect.blur.min.value(), 0.0);
+		const double max = ::std::max(effect.blur.max.value(), min);
 		return static_cast<float>(round2(min + (max - min) * (1.0 - gaussian(offset))));
 	}
 

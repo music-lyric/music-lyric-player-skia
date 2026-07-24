@@ -52,6 +52,17 @@ namespace music_lyric_player::utils::config {
 		}
 
 		/**
+		 * Overrides the value from a string literal and marks the leaf set.
+		 * A dedicated overload keeps a literal from being an ambiguous match between the value and copy assignments.
+		 */
+		Property& operator=(const char* value)
+		    requires std::is_same_v<T, std::string> {
+			this->stored = value;
+			this->isSet  = true;
+			return *this;
+		}
+
+		/**
 		 * Compares values only, ignoring the presence flag.
 		 */
 		friend bool operator==(const Property& a, const Property& b) {

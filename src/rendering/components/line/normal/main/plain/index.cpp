@@ -22,39 +22,15 @@
 #include "include/core/SkTextBlob.h"
 #include "include/core/SkTypeface.h"
 #include "modules/skshaper/include/SkShaper.h"
-#include "modules/skshaper/include/SkShaper_harfbuzz.h"
-#include "modules/skshaper/include/SkShaper_skunicode.h"
-#include "modules/skunicode/include/SkUnicode.h"
 #include "music_lyric_model.h"
 #include "rendering/common/context.h"
 #include "rendering/utils/length.h"
+#include "rendering/utils/shaping/font.h"
+#include "rendering/utils/shaping/iterator.h"
 
 namespace music_lyric_player::rendering::components::line::normal::main::plain {
 	namespace {
 		using Align = config::layout::Align;
-
-		/**
-		 * Builds the plain body font with baseline snapping disabled so it matches the timed word path.
-		 * Per-glyph fallback inherits the same flags, so minority-script glyphs share the same metrics.
-		 */
-		SkFont buildPlainFont(const common::RenderContext& context, float size) {
-			const config::Root& cfg = context.config;
-
-			sk_sp<SkTypeface> typeface;
-			if (!cfg.line.normal.main.syllable.font.family.value().empty()) {
-				typeface = context.fontMgr->matchFamilyStyle(cfg.line.normal.main.syllable.font.family.value().c_str(), SkFontStyle::Normal());
-			}
-			if (!typeface) {
-				typeface = context.fontMgr->matchFamilyStyle(nullptr, SkFontStyle::Normal());
-			}
-
-			SkFont font(typeface, static_cast<SkScalar>(size));
-			font.setSubpixel(true);
-			font.setBaselineSnap(false);
-			font.setEdging(SkFont::Edging::kAntiAlias);
-			font.setHinting(SkFontHinting::kNone);
-			return font;
-		}
 
 		/**
 		 * Computes the horizontal alignment offset that shifts a shaped line of the given width inside the block.
@@ -183,21 +159,18 @@ namespace music_lyric_player::rendering::components::line::normal::main::plain {
 
 		const config::Root& cfg  = context.config;
 		const float         size = static_cast<float>(std::max(resolveLength(cfg.line.normal.main.syllable.font.size, config::Default.line.normal.main.syllable.font.size), 1.0));
-		const SkFont        font = buildPlainFont(context, size);
+		const SkFont        font = rendering::utils::shaping::buildBodyFont(context.fontMgr, cfg.line.normal.main.syllable.font.family.value(), size);
 
 		const char*       utf8  = this->text.c_str();
 		const std::size_t bytes = this->text.size();
 
-		std::unique_ptr<SkShaper::FontRunIterator>     fontIter   = SkShaper::MakeFontMgrRunIterator(utf8, bytes, font, context.fontMgr);
-		std::unique_ptr<SkShaper::BiDiRunIterator>     bidiIter   = SkShapers::unicode::BidiRunIterator(context.unicode, utf8, bytes, 0);
-		std::unique_ptr<SkShaper::ScriptRunIterator>   scriptIter = SkShapers::HB::ScriptRunIterator(utf8, bytes);
-		std::unique_ptr<SkShaper::LanguageRunIterator> langIter   = std::make_unique<SkShaper::TrivialLanguageRunIterator>("", bytes);
-		if (!fontIter || !bidiIter || !scriptIter || !langIter) {
+		const rendering::utils::shaping::ShapingIterators iterators = rendering::utils::shaping::makeShapingIterators(context.unicode, context.fontMgr, font, utf8, bytes);
+		if (!iterators) {
 			return;
 		}
 
 		MultilineBlobRunHandler handler(utf8, this->width, cfg.layout.align);
-		context.shaper->shape(utf8, bytes, *fontIter, *bidiIter, *scriptIter, *langIter, this->width, &handler);
+		context.shaper->shape(utf8, bytes, *iterators.font, *iterators.bidi, *iterators.script, *iterators.language, this->width, &handler);
 
 		std::vector<ShapedLine> shaped = handler.takeLines();
 		this->lines.reserve(shaped.size());

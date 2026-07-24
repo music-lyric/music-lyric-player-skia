@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -53,18 +54,19 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 		const auto& source = music_lyric_model::parsed::getParsedLineWords(info);
 		this->words.reserve(source.size());
-		bool hasSpace = false;
+		uint32_t spaces = 0;
 		for (const music_lyric_model::common::Word& item : source) {
 			if (music_lyric_model::common::isWordSpace(item)) {
-				hasSpace = true;
+				const music_lyric_model::common::WordSpace* space = music_lyric_model::common::asWordSpace(item);
+				spaces += space ? space->count : 0;
 				continue;
 			}
 			const music_lyric_model::common::WordNormal* normal = music_lyric_model::common::asWordNormal(item);
 			if (normal == nullptr) {
 				continue;
 			}
-			this->words.push_back(std::make_unique<Word>(*normal, hasSpace));
-			hasSpace = false;
+			this->words.push_back(std::make_unique<Word>(*normal, spaces));
+			spaces = 0;
 		}
 	}
 
@@ -90,7 +92,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		std::vector<Row> rows;
 		Row              row;
 		for (const std::unique_ptr<Word>& item : this->words) {
-			float gap = !row.entries.empty() && item->hasSpaceBefore() ? spaceWidth : 0.0f;
+			float gap = !row.entries.empty() ? static_cast<float>(item->spacesBefore()) * spaceWidth : 0.0f;
 			if (!row.entries.empty() && row.width + gap + item->width() > this->width) {
 				rows.push_back(std::move(row));
 				row = Row{};

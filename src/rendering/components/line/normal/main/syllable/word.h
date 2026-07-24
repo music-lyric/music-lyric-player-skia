@@ -2,6 +2,7 @@
 #define MUSIC_LYRIC_PLAYER_RENDERING_COMPONENTS_LINE_NORMAL_MAIN_SYLLABLE_WORD_H_
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 
 #include "include/core/SkColor.h"
@@ -25,7 +26,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		/**
 		 * Copies the word text and timing needed for frame-independent animation sampling.
 		 */
-		Word(const music_lyric_model::common::WordNormal& info, bool hasSpaceBefore);
+		Word(const music_lyric_model::common::WordNormal& info, uint32_t spacesBefore);
 
 		/**
 		 * Destroys the cached fragment group where its concrete type is complete.
@@ -54,9 +55,9 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		animation::Mask::Input maskInput() const;
 
 		/**
-		 * Returns whether an explicit lyric space precedes this word.
+		 * Returns the number of explicit lyric spaces preceding this word.
 		 */
-		bool hasSpaceBefore() const;
+		uint32_t spacesBefore() const;
 
 		/**
 		 * Returns the laid-out word width.
@@ -87,7 +88,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		std::string text;
 		double      start;
 		double      duration;
-		bool        spaceBefore;
+		uint32_t    spaceCount;
 
 		animation::Float floating;
 

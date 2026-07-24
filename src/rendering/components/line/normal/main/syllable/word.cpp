@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColor.h"
@@ -38,11 +39,11 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		}
 	} // namespace
 
-	Word::Word(const music_lyric_model::common::WordNormal& info, bool hasSpaceBefore)
+	Word::Word(const music_lyric_model::common::WordNormal& info, uint32_t spacesBefore)
 	    : text(info.content),
 	      start(wordStart(info)),
 	      duration(wordDuration(info)),
-	      spaceBefore(hasSpaceBefore),
+	      spaceCount(spacesBefore),
 	      floating(this->start, this->duration) {}
 
 	Word::~Word() = default;
@@ -146,8 +147,8 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		return animation::Mask::Input{this->start, this->duration, this->measuredWidth, this->measuredHeight};
 	}
 
-	bool Word::hasSpaceBefore() const {
-		return this->spaceBefore;
+	uint32_t Word::spacesBefore() const {
+		return this->spaceCount;
 	}
 
 	float Word::width() const {

@@ -69,19 +69,21 @@ namespace music_lyric_player::rendering::components::line::base {
 		}
 
 		/**
-		 * Advances the shared inactive-to-active tint to `now` and returns it, easing across `active` flips.
+		 * Advances the shared line tint to `now` and returns it, easing across normal / played / active changes.
 		 * The first call seeds the colour without animating; a stable state tracks config colour edits without restarting the ease.
+		 * `played` selects the dimmer played tint for a line already sung; callers without a played state leave it unset.
 		 */
-		SkColor stateColor(double now, bool active, SkColor normalColor, SkColor activeColor) const {
-			const SkColor target = active ? activeColor : normalColor;
+		SkColor stateColor(double now, bool active, SkColor normalColor, SkColor activeColor, bool played = false, SkColor playedColor = SK_ColorTRANSPARENT) const {
+			const SkColor target = active ? activeColor : (played ? playedColor : normalColor);
+			const int     state  = active ? 2 : (played ? 1 : 0);
 			if (!this->colorReady) {
 				this->colorTween.snap(target);
-				this->active     = active;
+				this->colorState = state;
 				this->colorReady = true;
-			} else if (active != this->active) {
+			} else if (state != this->colorState) {
 				this->colorTween.setDuration(kStateColorDuration);
 				this->colorTween.retarget(now, target);
-				this->active = active;
+				this->colorState = state;
 			} else {
 				this->colorTween.setTarget(target);
 			}
@@ -97,7 +99,7 @@ namespace music_lyric_player::rendering::components::line::base {
 		static constexpr double kStateColorDuration = 300.0;
 
 		mutable animation::Tween<SkColor> colorTween;
-		mutable bool                      active     = false; // last state the tint was resolved for
+		mutable int                       colorState = 0;     // last state the tint was resolved for: 0 normal / 1 played / 2 active
 		mutable bool                      colorReady = false; // whether the tint tween has been seeded
 	};
 } // namespace music_lyric_player::rendering::components::line::base

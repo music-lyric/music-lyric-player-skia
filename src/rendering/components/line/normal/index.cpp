@@ -93,9 +93,12 @@ namespace music_lyric_player::rendering::components::line::normal {
 		if (this->syllableElement) {
 			this->syllableElement->paint(canvas, x, y, now, active, played, context);
 		} else if (this->plainElement) {
+			const SkColor playedColor = utils::color::resolve(cfg.line.normal.main.syllable.style.played.color, config::Default.line.normal.main.syllable.style.played.color);
 			const SkColor normalStyle = utils::color::withOpacity(normalColor, cfg.line.normal.main.syllable.style.normal.opacity);
 			const SkColor activeStyle = utils::color::withOpacity(activeColor, cfg.line.normal.main.syllable.style.active.opacity);
-			this->plainElement->paint(canvas, x, y, this->stateColor(now, active, normalStyle, activeStyle));
+			// The played tint mirrors the web `.plain` `apply-line-style('main-syllable')` `[played]` variant so a sung plain line dims to the same level as the timed path.
+			const SkColor playedStyle = utils::color::withOpacity(playedColor, cfg.line.normal.main.syllable.style.played.opacity);
+			this->plainElement->paint(canvas, x, y, this->stateColor(now, active, normalStyle, activeStyle, played, playedStyle));
 		}
 
 		if (useLayer) {

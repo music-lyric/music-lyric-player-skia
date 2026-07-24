@@ -2,13 +2,11 @@
 #define MUSIC_LYRIC_PLAYER_RENDERING_COMPONENTS_LINE_NORMAL_MAIN_PLAIN_INDEX_H_
 
 #include <string>
-#include <vector>
 
 #include "include/core/SkColor.h"
-#include "include/core/SkRefCnt.h"
+#include "rendering/utils/fragment/group.h"
 
 class SkCanvas;
-class SkTextBlob;
 
 #include "music_lyric_model.h"
 
@@ -18,8 +16,8 @@ namespace music_lyric_player::rendering::common {
 
 namespace music_lyric_player::rendering::components::line::normal::main::plain {
 	/**
-	 * A plain normal-line body that self-shapes the complete line into per-line cached text blobs.
-	 * It wraps the text to the available width and bakes the alignment offset into each line at layout time.
+	 * A plain normal-line body that self-shapes the complete line into a shared fragment group.
+	 * It wraps the text to the available width and bakes the alignment offset into each fragment origin at layout time.
 	 */
 	class Element {
 	public:
@@ -29,7 +27,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::plain {
 		explicit Element(const music_lyric_model::parsed::Line& info);
 
 		/**
-		 * Destroys the cached blobs where the blob type is complete.
+		 * Destroys the cached fragment group where its concrete type is complete.
 		 */
 		~Element();
 
@@ -49,19 +47,10 @@ namespace music_lyric_player::rendering::components::line::normal::main::plain {
 		float height() const;
 
 	private:
-		/**
-		 * One shaped and wrapped line whose glyph positions already sit at their block-absolute baseline.
-		 * The alignment offset is applied along x at paint time.
-		 */
-		struct PaintLine {
-			sk_sp<SkTextBlob> blob;
-			float             offsetX = 0.0f;
-		};
-
-		std::string            text;
-		std::vector<PaintLine> lines;
-		float                  width          = 0.0f;
-		float                  measuredHeight = 0.0f;
+		std::string                    text;
+		utils::fragment::FragmentGroup group;
+		float                          width          = 0.0f;
+		float                          measuredHeight = 0.0f;
 	};
 } // namespace music_lyric_player::rendering::components::line::normal::main::plain
 

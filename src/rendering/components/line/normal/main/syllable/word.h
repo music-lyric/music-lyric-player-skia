@@ -5,11 +5,10 @@
 #include <string>
 
 #include "include/core/SkColor.h"
-#include "include/core/SkRefCnt.h"
 #include "rendering/components/line/normal/main/syllable/animation/index.h"
+#include "rendering/utils/fragment/group.h"
 
 class SkCanvas;
-class SkTextBlob;
 
 #include "music_lyric_model.h"
 
@@ -29,7 +28,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		Word(const music_lyric_model::common::WordNormal& info, bool hasSpaceBefore);
 
 		/**
-		 * Destroys the cached paragraph where its concrete type is complete.
+		 * Destroys the cached fragment group where its concrete type is complete.
 		 */
 		~Word();
 
@@ -76,9 +75,9 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 	private:
 		/**
-		 * Paints the cached word blob at the word position in the supplied state color.
+		 * Paints the cached word group at the word position in the supplied state color.
 		 */
-		void paintBlob(SkCanvas* canvas, float x, float y, SkColor color) const;
+		void paintGroup(SkCanvas* canvas, float x, float y, SkColor color) const;
 
 		/**
 		 * Reveals the word by wiping alpha from the unsung color to the sung color across its width.
@@ -92,12 +91,12 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 		animation::Float floating;
 
-		sk_sp<SkTextBlob> blob;
-		float             measuredWidth    = 0.0f;
-		float             measuredHeight   = 0.0f;
-		float             measuredBaseline = 0.0f;
-		float             x                = 0.0f;
-		float             y                = 0.0f;
+		utils::fragment::FragmentGroup group;
+		float                          measuredWidth    = 0.0f;
+		float                          measuredHeight   = 0.0f;
+		float                          measuredBaseline = 0.0f;
+		float                          x                = 0.0f;
+		float                          y                = 0.0f;
 	};
 } // namespace music_lyric_player::rendering::components::line::normal::main::syllable
 

@@ -3,30 +3,17 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <cstring>
-#include <memory>
 
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColor.h"
 #include "include/core/SkFont.h"
-#include "include/core/SkFontMetrics.h"
-#include "include/core/SkFontMgr.h"
-#include "include/core/SkFontStyle.h"
-#include "include/core/SkFontTypes.h"
-#include "include/core/SkPaint.h"
-#include "include/core/SkPoint.h"
 #include "include/core/SkRect.h"
-#include "include/core/SkScalar.h"
-#include "include/core/SkTextBlob.h"
-#include "include/core/SkTypeface.h"
-#include "modules/skshaper/include/SkShaper.h"
 #include "music_lyric_model.h"
 #include "rendering/common/context.h"
 #include "rendering/utils/color/parse.h"
+#include "rendering/utils/fragment/builder.h"
 #include "rendering/utils/length.h"
 #include "rendering/utils/shaping/font.h"
-#include "rendering/utils/shaping/glyph.h"
 #include "rendering/utils/shaping/shaper.h"
 
 namespace music_lyric_player::rendering::components::line::normal::main::syllable {
@@ -64,7 +51,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		this->measuredWidth    = 0.0f;
 		this->measuredHeight   = 0.0f;
 		this->measuredBaseline = 0.0f;
-		this->blob             = nullptr;
+		this->group            = {};
 
 		if (!context.shaper || !context.fontMgr || this->text.empty()) {
 			return;
@@ -78,23 +65,14 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		const std::size_t bytes = this->text.size();
 
 		const utils::shaping::ShapedText shaped = utils::shaping::shapeText(*context.shaper, context.unicode, context.fontMgr, font, utf8, bytes, kUnboundedWidth);
-		if (shaped.lines.empty()) {
+		// The word is shaped unbounded, so makeTextGroup collapses it to one fragment; ceil/epsilon stay component-local for row packing.
+		this->group            = utils::fragment::makeTextGroup(shaped, utf8);
+		if (!this->group) {
 			return;
 		}
-
-		// The word is shaped unbounded, so it is one line; the blob and metrics are rebuilt verbatim from the captured glyphs.
-		SkTextBlobBuilder builder;
-		float             maxWidth = 0.0f;
-		for (const utils::shaping::ShapedLine& line : shaped.lines) {
-			utils::shaping::appendLine(builder, line, utf8);
-			maxWidth = std::max(maxWidth, line.width);
-		}
-
-		const utils::shaping::ShapedLine& last = shaped.lines.back();
-		this->blob             = builder.make();
-		this->measuredWidth    = std::ceil(std::max(maxWidth, 1.0f) + kWidthEpsilon);
-		this->measuredBaseline = last.ascent;
-		this->measuredHeight   = last.ascent + last.descent;
+		this->measuredWidth    = std::ceil(std::max(this->group.advance, 1.0f) + kWidthEpsilon);
+		this->measuredBaseline = this->group.ascent;
+		this->measuredHeight   = this->group.height;
 	}
 
 	void Word::setPosition(float x, float y) {
@@ -102,32 +80,27 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		this->y = y;
 	}
 
-	void Word::paintBlob(SkCanvas* canvas, float x, float y, SkColor color) const {
-		if (!this->blob) {
-			return;
-		}
-		SkPaint paint;
-		paint.setAntiAlias(true);
-		paint.setColor(color);
-		canvas->drawTextBlob(this->blob, x, y, paint);
+	void Word::paintGroup(SkCanvas* canvas, float x, float y, SkColor color) const {
+		this->group.paint(canvas, x, y, color);
 	}
 
 	void Word::paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor unsungColor, SkColor sungColor) const {
-		if (!this->blob) {
+		if (!this->group) {
 			return;
 		}
 
+		// Use the ceil'd layout box (not group.bounds) so the mask saveLayer size stays bit-identical to today.
 		const SkRect textBounds = SkRect::MakeXYWH(x, y, this->measuredWidth, this->measuredHeight);
 		const SkRect drawBounds = textBounds.makeOutset(kGlyphOutset, kGlyphOutset);
 		canvas->saveLayer(&drawBounds, nullptr);
 		// Opaque coverage: the mask supplies the alpha, so the base glyph layer stays fully opaque here.
-		this->paintBlob(canvas, x, y, SK_ColorWHITE);
+		this->paintGroup(canvas, x, y, SK_ColorWHITE);
 		animation::Mask::apply(canvas, drawBounds, textBounds, progress, feather, unsungColor, sungColor);
 		canvas->restore();
 	}
 
 	void Word::paint(SkCanvas* canvas, float lineX, float lineY, double now, bool active, bool maskEnabled, float maskProgress, float maskFeather, float inactiveOpacity, const common::RenderContext& context) const {
-		if (!this->blob) {
+		if (!this->group) {
 			return;
 		}
 
@@ -150,7 +123,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 		// Inactive lines paint the whole word in the normal state color; the opacity is eased by the owning element so a deactivating line fades out (web `.word` `transition: opacity 0.8s ease`) instead of snapping.
 		if (!active) {
-			this->paintBlob(canvas, drawX, drawY, utils::color::withOpacity(normalColor, inactiveOpacity));
+			this->paintGroup(canvas, drawX, drawY, utils::color::withOpacity(normalColor, inactiveOpacity));
 			return;
 		}
 
@@ -159,11 +132,11 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		const SkColor unsungColor = utils::color::withOpacity(activeColor, normalOpacity);
 
 		if (!maskEnabled || maskProgress >= 1.0f) {
-			this->paintBlob(canvas, drawX, drawY, sungColor);
+			this->paintGroup(canvas, drawX, drawY, sungColor);
 			return;
 		}
 		if (maskProgress <= 0.0f) {
-			this->paintBlob(canvas, drawX, drawY, unsungColor);
+			this->paintGroup(canvas, drawX, drawY, unsungColor);
 			return;
 		}
 		this->paintReveal(canvas, drawX, drawY, maskProgress, maskFeather, unsungColor, sungColor);

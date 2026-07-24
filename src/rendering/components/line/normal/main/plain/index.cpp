@@ -3,30 +3,18 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
-#include <cstdint>
-#include <cstring>
-#include <memory>
 #include <utility>
-#include <vector>
 
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColor.h"
 #include "include/core/SkFont.h"
-#include "include/core/SkFontMetrics.h"
-#include "include/core/SkFontMgr.h"
-#include "include/core/SkFontStyle.h"
-#include "include/core/SkFontTypes.h"
-#include "include/core/SkPaint.h"
-#include "include/core/SkPoint.h"
-#include "include/core/SkScalar.h"
-#include "include/core/SkTextBlob.h"
-#include "include/core/SkTypeface.h"
-#include "modules/skshaper/include/SkShaper.h"
+#include "include/core/SkRect.h"
 #include "music_lyric_model.h"
 #include "rendering/common/context.h"
+#include "rendering/utils/fragment/builder.h"
+#include "rendering/utils/fragment/glyph.h"
 #include "rendering/utils/length.h"
 #include "rendering/utils/shaping/font.h"
-#include "rendering/utils/shaping/glyph.h"
 #include "rendering/utils/shaping/shaper.h"
 
 namespace music_lyric_player::rendering::components::line::normal::main::plain {
@@ -57,7 +45,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::plain {
 	void Element::layout(float width, const common::RenderContext& context) {
 		this->width          = std::max(width, 1.0f);
 		this->measuredHeight = 0.0f;
-		this->lines.clear();
+		this->group          = {};
 
 		if (!context.shaper || !context.fontMgr || !context.unicode || this->text.empty()) {
 			return;
@@ -72,30 +60,28 @@ namespace music_lyric_player::rendering::components::line::normal::main::plain {
 
 		const utils::shaping::ShapedText shaped = utils::shaping::shapeText(*context.shaper, context.unicode, context.fontMgr, font, utf8, bytes, this->width);
 
-		// Each wrapped line becomes its own blob; the captured positions already carry the block-absolute baseline, so only the horizontal alignment offset is resolved here.
+		// One fragment per wrapped line; alignment offset is baked into origin.x so paint is a single group call.
 		const Align align = cfg.layout.align;
-		this->lines.reserve(shaped.lines.size());
+		this->group.fragments.reserve(shaped.lines.size());
+		float maxWidth = 0.0f;
 		for (const utils::shaping::ShapedLine& line : shaped.lines) {
-			SkTextBlobBuilder builder;
-			utils::shaping::appendLine(builder, line, utf8);
-			this->lines.push_back({builder.make(), alignOffset(align, this->width, line.width)});
+			utils::fragment::FragmentGroup lineGroup = utils::fragment::makeLineGroup(line, utf8);
+			if (lineGroup.fragments.empty()) {
+				continue;
+			}
+			utils::fragment::GlyphFragment fragment = std::move(lineGroup.fragments.front());
+			fragment.origin.fX                      = alignOffset(align, this->width, line.width);
+			this->group.fragments.push_back(std::move(fragment));
+			maxWidth = std::max(maxWidth, line.width);
 			this->measuredHeight += line.ascent + line.descent;
 		}
+		this->group.advance = maxWidth;
+		this->group.height  = this->measuredHeight;
+		this->group.bounds  = SkRect::MakeXYWH(0.0f, 0.0f, maxWidth, this->measuredHeight);
 	}
 
 	void Element::paint(SkCanvas* canvas, float x, float y, SkColor color) const {
-		if (this->lines.empty()) {
-			return;
-		}
-
-		SkPaint paint;
-		paint.setAntiAlias(true);
-		paint.setColor(color);
-		for (const PaintLine& line : this->lines) {
-			if (line.blob) {
-				canvas->drawTextBlob(line.blob, x + line.offsetX, y, paint);
-			}
-		}
+		this->group.paint(canvas, x, y, color);
 	}
 
 	float Element::height() const {

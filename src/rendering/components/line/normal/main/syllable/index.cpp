@@ -4,13 +4,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <utility>
 #include <vector>
 
 #include "music_lyric_model.h"
 #include "rendering/common/context.h"
 #include "rendering/components/line/normal/main/syllable/word.h"
 #include "rendering/utils/animation/easing.h"
+#include "rendering/utils/layout/inline_flow.h"
 #include "rendering/utils/length.h"
 
 namespace music_lyric_player::rendering::components::line::normal::main::syllable {
@@ -32,18 +32,6 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		double lineDuration(const music_lyric_model::parsed::Line& info) {
 			return std::max(static_cast<double>(music_lyric_model::parsed::getParsedLineDuration(info)), 0.0);
 		}
-
-		struct RowEntry {
-			Word* word = nullptr;
-			float x    = 0.0f;
-		};
-
-		struct Row {
-			std::vector<RowEntry> entries;
-			float                 width   = 0.0f;
-			float                 ascent  = 0.0f;
-			float                 descent = 0.0f;
-		};
 	} // namespace
 
 	Element::Element(const music_lyric_model::parsed::Line& info)
@@ -87,48 +75,25 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		}
 		this->mask.update(maskInputs);
 
-		const float      fontSize   = static_cast<float>(std::max(resolveLength(context.config.line.normal.main.syllable.font.size, config::Default.line.normal.main.syllable.font.size), 0.0));
-		const float      spaceWidth = fontSize * 0.3f;
-		std::vector<Row> rows;
-		Row              row;
+		const float fontSize   = static_cast<float>(std::max(resolveLength(context.config.line.normal.main.syllable.font.size, config::Default.line.normal.main.syllable.font.size), 0.0));
+		const float spaceWidth = fontSize * 0.3f;
+
+		std::vector<utils::layout::InlineCell> cells;
+		cells.reserve(this->words.size());
 		for (const std::unique_ptr<Word>& item : this->words) {
-			float gap = !row.entries.empty() ? static_cast<float>(item->spacesBefore()) * spaceWidth : 0.0f;
-			if (!row.entries.empty() && row.width + gap + item->width() > this->width) {
-				rows.push_back(std::move(row));
-				row = Row{};
-				gap = 0.0f;
-			}
-
-			row.entries.push_back(RowEntry{item.get(), row.width + gap});
-			row.width += gap + item->width();
-			row.ascent  = std::max(row.ascent, item->baseline());
-			row.descent = std::max(row.descent, item->height() - item->baseline());
-		}
-		if (!row.entries.empty()) {
-			rows.push_back(std::move(row));
+			utils::layout::InlineCell cell;
+			cell.advance = item->width();
+			cell.gap     = static_cast<float>(item->spacesBefore()) * spaceWidth;
+			cell.ascent  = item->baseline();
+			cell.descent = item->height() - item->baseline();
+			cells.push_back(cell);
 		}
 
-		float rowY = 0.0f;
-		for (Row& current : rows) {
-			float offsetX = 0.0f;
-			switch (context.config.layout.align) {
-			case config::layout::Align::Center:
-				offsetX = (this->width - current.width) * 0.5f;
-				break;
-			case config::layout::Align::Right:
-				offsetX = this->width - current.width;
-				break;
-			case config::layout::Align::Left:
-			default:
-				break;
-			}
-
-			for (const RowEntry& entry : current.entries) {
-				entry.word->setPosition(offsetX + entry.x, rowY + current.ascent - entry.word->baseline());
-			}
-			rowY += current.ascent + current.descent;
+		const utils::layout::InlineFlowLayout flow = utils::layout::layoutInlineFlow(cells, this->width, context.config.layout.align.value());
+		for (std::size_t i = 0; i < this->words.size(); ++i) {
+			this->words[i]->setPosition(flow.placements[i].x, flow.placements[i].y);
 		}
-		this->measuredHeight = rowY;
+		this->measuredHeight = flow.height;
 	}
 
 	void Element::paint(SkCanvas* canvas, float x, float y, double now, bool active, bool played, const common::RenderContext& context) const {

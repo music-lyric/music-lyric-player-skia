@@ -18,6 +18,7 @@ target_link_libraries(music_lyric_player_playback PUBLIC
 add_library(music_lyric_player_rendering
 	rendering/components/container/index.cpp
 	rendering/components/line/normal/index.cpp
+	rendering/components/line/normal/annotation/index.cpp
 	rendering/components/line/normal/main/plain/index.cpp
 	rendering/components/line/normal/main/syllable/index.cpp
 	rendering/components/line/normal/main/syllable/word.cpp

@@ -13,6 +13,10 @@ namespace music_lyric_player::rendering::common {
 	struct RenderContext;
 } // namespace music_lyric_player::rendering::common
 
+namespace music_lyric_player::rendering::components::line::normal::annotation {
+	class Row;
+} // namespace music_lyric_player::rendering::components::line::normal::annotation
+
 namespace music_lyric_player::rendering::components::line::normal::main::plain {
 	class Element;
 } // namespace music_lyric_player::rendering::components::line::normal::main::plain
@@ -53,11 +57,20 @@ namespace music_lyric_player::rendering::components::line::normal {
 		 */
 		void selectBody(bool useSyllable);
 
-		const music_lyric_model::parsed::Line& info;
-		bool                                   syllableEnable;
-		bool                                   syllableMode = false;
+		const music_lyric_model::parsed::Line&   info;
+		bool                                     syllableEnable;
+		bool                                     syllableMode = false;
 		std::unique_ptr<main::plain::Element>    plainElement;
 		std::unique_ptr<main::syllable::Element> syllableElement;
+
+		// The optional romanization and translation sub-lines, stacked above and below the main content; null when hidden or empty.
+		std::unique_ptr<annotation::Row> romanRow;
+		std::unique_ptr<annotation::Row> translateRow;
+
+		// Vertical extents of the three stacked rows, summed into `measuredHeight`; drive the fixed `roman / main / translate` stack offsets.
+		float mainHeight      = 0.0f;
+		float romanHeight     = 0.0f;
+		float translateHeight = 0.0f;
 
 		// The line-wide base opacity, eased across every state change over 0.6s, mirroring the web `.normal` `transition: opacity 0.6s ease`; it multiplies the whole line the way CSS opacity composites onto the children.
 		mutable animation::Tween<float> baseOpacity;

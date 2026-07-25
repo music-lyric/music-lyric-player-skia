@@ -3,7 +3,8 @@
   "file": "index.gen.h",
   "imports": [
     { "as": "common", "schema": "../../common/index.schema.json" },
-    { "as": "main", "schema": "main/index.schema.json" }
+    { "as": "main", "schema": "main/index.schema.json" },
+    { "as": "annotation", "schema": "annotation/index.schema.json" }
   ],
   "items": [
     {
@@ -35,6 +36,11 @@
           "name": "main",
           "nested": "main.Root",
           "comment": "Rendering mode and settings of the main vocal content."
+        },
+        {
+          "name": "annotation",
+          "nested": "annotation.Root",
+          "comment": "Translation and romanization sub-lines beneath the main content."
         }
       ]
     }

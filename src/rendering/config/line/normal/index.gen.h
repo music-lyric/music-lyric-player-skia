@@ -7,6 +7,7 @@
 #define MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_LINE_NORMAL_CONFIG_GEN_H_
 
 #include "rendering/config/common/index.gen.h"
+#include "rendering/config/line/normal/annotation/index.gen.h"
 #include "rendering/config/line/normal/main/index.gen.h"
 
 #include "utils/config/access.h"
@@ -51,17 +52,23 @@ namespace music_lyric_player::rendering::config::line::normal {
 		 * Rendering mode and settings of the main vocal content.
 		 */
 		::music_lyric_player::rendering::config::line::normal::main::Root main;
+		/**
+		 * Translation and romanization sub-lines beneath the main content.
+		 */
+		::music_lyric_player::rendering::config::line::normal::annotation::Root annotation;
 
 		bool operator==(const Root&) const = default;
 
 		friend void overlay(Root& dst, const Root& src, ::music_lyric_player::utils::config::Access key) {
 			overlay(dst.base, src.base, key);
 			overlay(dst.main, src.main, key);
+			overlay(dst.annotation, src.annotation, key);
 		}
 
 		friend void capture(Root& delta, const Root& prev, const Root& next, ::music_lyric_player::utils::config::Access key) {
 			capture(delta.base, prev.base, next.base, key);
 			capture(delta.main, prev.main, next.main, key);
+			capture(delta.annotation, prev.annotation, next.annotation, key);
 		}
 	};
 

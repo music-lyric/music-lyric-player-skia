@@ -1,0 +1,108 @@
+{
+  "namespace": "music_lyric_player::rendering::config::line::normal::annotation",
+  "file": "index.gen.h",
+  "imports": [
+    { "as": "common", "schema": "../../../common/index.schema.json" }
+  ],
+  "items": [
+    {
+      "name": "Base",
+      "comment": "Appearance shared by the annotation sub-lines beneath the main vocal line.",
+      "fields": [
+        {
+          "name": "font",
+          "nested": "common.FontConfig",
+          "defaults": {
+            "size": "\"60%\""
+          },
+          "comment": "Annotation font; the family stays empty to inherit the main line, and a `%` size renders relative to it so the rows track its size."
+        },
+        {
+          "name": "style",
+          "nested": "common.StateStyleConfig",
+          "defaults": {
+            "normal": "::music_lyric_player::rendering::config::common::StyleConfig{ .color = \"\", .opacity = 0.4 }",
+            "active": "::music_lyric_player::rendering::config::common::StyleConfig{ .color = \"\", .opacity = 0.6 }",
+            "played": "::music_lyric_player::rendering::config::common::StyleConfig{ .color = \"\", .opacity = 0.4 }"
+          },
+          "comment": "Annotation state styles; the colors stay empty to inherit the main line, while the dimmer opacities let the rows recede beneath it."
+        }
+      ]
+    },
+    {
+      "name": "Roman",
+      "comment": "Romanization sub-line.",
+      "fields": [
+        {
+          "name": "visible",
+          "type": "bool",
+          "default": "true",
+          "comment": "Whether the romanization row shows."
+        },
+        {
+          "name": "font",
+          "nested": "common.FontConfig",
+          "inheritFrom": "line.normal.annotation.base.font",
+          "comment": "Row font; inherits the annotation base when unset."
+        },
+        {
+          "name": "style",
+          "nested": "common.StateStyleConfig",
+          "inheritFrom": "line.normal.annotation.base.style",
+          "comment": "Row styles; inherit the annotation base when unset."
+        }
+      ]
+    },
+    {
+      "name": "Translate",
+      "comment": "Translation sub-line.",
+      "fields": [
+        {
+          "name": "visible",
+          "type": "bool",
+          "default": "true",
+          "comment": "Whether the translation row shows."
+        },
+        {
+          "name": "font",
+          "nested": "common.FontConfig",
+          "inheritFrom": "line.normal.annotation.base.font",
+          "comment": "Row font; inherits the annotation base when unset."
+        },
+        {
+          "name": "style",
+          "nested": "common.StateStyleConfig",
+          "inheritFrom": "line.normal.annotation.base.style",
+          "comment": "Row styles; inherit the annotation base when unset."
+        }
+      ]
+    },
+    {
+      "name": "Root",
+      "comment": "Annotation sub-lines beneath the main vocal line.",
+      "fields": [
+        {
+          "name": "visible",
+          "type": "bool",
+          "default": "true",
+          "comment": "Master switch; when false both rows hide regardless of their own visible."
+        },
+        {
+          "name": "base",
+          "nested": "Base",
+          "comment": "Shared base inherited by all annotation rows."
+        },
+        {
+          "name": "roman",
+          "nested": "Roman",
+          "comment": "Romanization row overrides."
+        },
+        {
+          "name": "translate",
+          "nested": "Translate",
+          "comment": "Translation row overrides."
+        }
+      ]
+    }
+  ]
+}

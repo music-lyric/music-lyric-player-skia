@@ -89,6 +89,54 @@ namespace music_lyric_player::rendering::config {
 			if (!overrides.line.normal.main.syllable.style.played.opacity.assigned()) {
 				out.line.normal.main.syllable.style.played.opacity = out.line.normal.base.style.played.opacity.value();
 			}
+			if (!overrides.line.normal.annotation.roman.font.family.assigned()) {
+				out.line.normal.annotation.roman.font.family = out.line.normal.annotation.base.font.family.value();
+			}
+			if (!overrides.line.normal.annotation.roman.font.size.assigned()) {
+				out.line.normal.annotation.roman.font.size = out.line.normal.annotation.base.font.size.value();
+			}
+			if (!overrides.line.normal.annotation.roman.style.normal.color.assigned()) {
+				out.line.normal.annotation.roman.style.normal.color = out.line.normal.annotation.base.style.normal.color.value();
+			}
+			if (!overrides.line.normal.annotation.roman.style.normal.opacity.assigned()) {
+				out.line.normal.annotation.roman.style.normal.opacity = out.line.normal.annotation.base.style.normal.opacity.value();
+			}
+			if (!overrides.line.normal.annotation.roman.style.active.color.assigned()) {
+				out.line.normal.annotation.roman.style.active.color = out.line.normal.annotation.base.style.active.color.value();
+			}
+			if (!overrides.line.normal.annotation.roman.style.active.opacity.assigned()) {
+				out.line.normal.annotation.roman.style.active.opacity = out.line.normal.annotation.base.style.active.opacity.value();
+			}
+			if (!overrides.line.normal.annotation.roman.style.played.color.assigned()) {
+				out.line.normal.annotation.roman.style.played.color = out.line.normal.annotation.base.style.played.color.value();
+			}
+			if (!overrides.line.normal.annotation.roman.style.played.opacity.assigned()) {
+				out.line.normal.annotation.roman.style.played.opacity = out.line.normal.annotation.base.style.played.opacity.value();
+			}
+			if (!overrides.line.normal.annotation.translate.font.family.assigned()) {
+				out.line.normal.annotation.translate.font.family = out.line.normal.annotation.base.font.family.value();
+			}
+			if (!overrides.line.normal.annotation.translate.font.size.assigned()) {
+				out.line.normal.annotation.translate.font.size = out.line.normal.annotation.base.font.size.value();
+			}
+			if (!overrides.line.normal.annotation.translate.style.normal.color.assigned()) {
+				out.line.normal.annotation.translate.style.normal.color = out.line.normal.annotation.base.style.normal.color.value();
+			}
+			if (!overrides.line.normal.annotation.translate.style.normal.opacity.assigned()) {
+				out.line.normal.annotation.translate.style.normal.opacity = out.line.normal.annotation.base.style.normal.opacity.value();
+			}
+			if (!overrides.line.normal.annotation.translate.style.active.color.assigned()) {
+				out.line.normal.annotation.translate.style.active.color = out.line.normal.annotation.base.style.active.color.value();
+			}
+			if (!overrides.line.normal.annotation.translate.style.active.opacity.assigned()) {
+				out.line.normal.annotation.translate.style.active.opacity = out.line.normal.annotation.base.style.active.opacity.value();
+			}
+			if (!overrides.line.normal.annotation.translate.style.played.color.assigned()) {
+				out.line.normal.annotation.translate.style.played.color = out.line.normal.annotation.base.style.played.color.value();
+			}
+			if (!overrides.line.normal.annotation.translate.style.played.opacity.assigned()) {
+				out.line.normal.annotation.translate.style.played.opacity = out.line.normal.annotation.base.style.played.opacity.value();
+			}
 		}
 	};
 

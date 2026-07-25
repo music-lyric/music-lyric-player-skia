@@ -3,20 +3,44 @@
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <optional>
+#include <string>
 
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColor.h"
+#include "include/core/SkFont.h"
 #include "include/core/SkRect.h"
+#include "music_lyric_model.h"
 #include "rendering/common/context.h"
+#include "rendering/components/line/normal/annotation/index.h"
 #include "rendering/components/line/normal/main/plain/index.h"
 #include "rendering/components/line/normal/main/syllable/index.h"
 #include "rendering/utils/animation/easing.h"
 #include "rendering/utils/color/parse.h"
+#include "rendering/utils/length.h"
+#include "rendering/utils/shaping/font.h"
 
 namespace music_lyric_player::rendering::components::line::normal {
 	namespace {
 		// The base opacity fade length; mirrors the web `.normal` `transition: opacity 0.6s ease`.
 		constexpr double kBaseFadeDurationMs = 600.0;
+
+		/**
+		 * Rebuilds and lays out one annotation row for the current relayout.
+		 * The row is dropped when hidden or empty, while its `%` font size resolves against `baseFontPx` so it tracks its normal-line base parent.
+		 */
+		void layoutAnnotationRow(std::unique_ptr<annotation::Row>& row, bool show, const std::optional<std::string>& text, const config::common::FontConfig& font, const std::string& fallbackFamily, const std::string& fallbackSize, float baseFontPx, float width, const common::RenderContext& context) {
+			if (!show || !text || text->empty()) {
+				row.reset();
+				return;
+			}
+
+			row                       = std::make_unique<annotation::Row>(*text);
+			const float        size   = static_cast<float>(std::max(resolveLength(font.size.value(), fallbackSize, baseFontPx), 1.0));
+			const std::string& family = font.family.value().empty() ? fallbackFamily : font.family.value();
+			const SkFont       skFont = utils::shaping::buildBodyFont(context.fontMgr, family, size);
+			row->layout(width, context, skFont, context.config.layout.align.value());
+		}
 	} // namespace
 
 	Element::Element(int index, const music_lyric_model::parsed::Line& info, bool isSyllable)
@@ -52,13 +76,33 @@ namespace music_lyric_player::rendering::components::line::normal {
 		this->selectBody(this->syllableEnable && context.config.line.normal.main.use == Use::Syllable);
 		if (this->syllableElement) {
 			this->syllableElement->layout(this->width, context);
-			this->measuredHeight = this->syllableElement->height();
+			this->mainHeight = this->syllableElement->height();
 		} else if (this->plainElement) {
 			this->plainElement->layout(this->width, context);
-			this->measuredHeight = this->plainElement->height();
+			this->mainHeight = this->plainElement->height();
 		} else {
-			this->measuredHeight = 0.0f;
+			this->mainHeight = 0.0f;
 		}
+
+		// Stack the optional romanization and translation sub-lines above and below the main content.
+		const config::Root& cfg    = context.config;
+		const auto&         normal = cfg.line.normal;
+		const auto&         ann    = normal.annotation;
+
+		const bool showRoman     = ann.visible.value() && ann.roman.visible.value();
+		const bool showTranslate = ann.visible.value() && ann.translate.visible.value();
+
+		// The line-base pixel size is the reference a `%` annotation size scales against, matching the web inheritance chain.
+		const float        baseFontPx     = static_cast<float>(std::max(resolveLength(normal.base.font.size.value(), config::Default.line.normal.base.font.size.value()), 1.0));
+		const std::string& fallbackFamily = normal.base.font.family.value();
+		const std::string& fallbackSize   = config::Default.line.normal.annotation.base.font.size.value();
+
+		layoutAnnotationRow(this->romanRow, showRoman, showRoman ? music_lyric_model::parsed::getParsedLineRoman(this->info) : std::nullopt, ann.roman.font, fallbackFamily, fallbackSize, baseFontPx, this->width, context);
+		layoutAnnotationRow(this->translateRow, showTranslate, showTranslate ? music_lyric_model::parsed::getParsedLineTranslation(this->info) : std::nullopt, ann.translate.font, fallbackFamily, fallbackSize, baseFontPx, this->width, context);
+
+		this->romanHeight     = this->romanRow ? this->romanRow->height() : 0.0f;
+		this->translateHeight = this->translateRow ? this->translateRow->height() : 0.0f;
+		this->measuredHeight  = this->romanHeight + this->mainHeight + this->translateHeight;
 	}
 
 	void Element::paint(SkCanvas* canvas, float x, float y, double now, bool active, bool played, const common::RenderContext& context) const {
@@ -90,15 +134,26 @@ namespace music_lyric_player::rendering::components::line::normal {
 			canvas->saveLayerAlpha(&bounds, static_cast<U8CPU>(alpha));
 		}
 
+		// Fixed web-default stack order: romanization on top, main line, translation beneath.
+		const auto& ann = cfg.line.normal.annotation;
+		if (this->romanRow) {
+			this->romanRow->paint(canvas, x, y, now, active, played, ann.roman.style, cfg.line.normal.base.style);
+		}
+
+		const float mainY = this->romanHeight;
 		if (this->syllableElement) {
-			this->syllableElement->paint(canvas, x, y, now, active, played, context);
+			this->syllableElement->paint(canvas, x, y + mainY, now, active, played, context);
 		} else if (this->plainElement) {
 			const SkColor playedColor = utils::color::resolve(cfg.line.normal.main.syllable.style.played.color, config::Default.line.normal.main.syllable.style.played.color);
 			const SkColor normalStyle = utils::color::withOpacity(normalColor, cfg.line.normal.main.syllable.style.normal.opacity);
 			const SkColor activeStyle = utils::color::withOpacity(activeColor, cfg.line.normal.main.syllable.style.active.opacity);
 			// The played tint mirrors the web `.plain` `apply-line-style('main-syllable')` `[played]` variant so a sung plain line dims to the same level as the timed path.
 			const SkColor playedStyle = utils::color::withOpacity(playedColor, cfg.line.normal.main.syllable.style.played.opacity);
-			this->plainElement->paint(canvas, x, y, this->stateColor(now, active, normalStyle, activeStyle, played, playedStyle));
+			this->plainElement->paint(canvas, x, y + mainY, this->stateColor(now, active, normalStyle, activeStyle, played, playedStyle));
+		}
+
+		if (this->translateRow) {
+			this->translateRow->paint(canvas, x, y + mainY + this->mainHeight, now, active, played, ann.translate.style, cfg.line.normal.base.style);
 		}
 
 		if (useLayer) {

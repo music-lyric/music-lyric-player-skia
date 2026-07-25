@@ -17,13 +17,13 @@ namespace music_lyric_player::rendering::config::line::normal::annotation {
 	 */
 	struct Base {
 		/**
-		 * Annotation font; the family stays empty to inherit the main line, and a `%` size renders relative to it so the rows track its size.
+		 * Annotation font; the family inherits the normal-line base, while the explicit `%` size renders relative to that parent.
 		 */
 		::music_lyric_player::rendering::config::common::FontConfig font = ::music_lyric_player::rendering::config::common::FontConfig{ .size = "60%" };
 		/**
-		 * Annotation state styles; the colors stay empty to inherit the main line, while the dimmer opacities let the rows recede beneath it.
+		 * Annotation state styles; colors inherit the normal-line base, while explicit dimmer opacities let the rows recede beneath it.
 		 */
-		::music_lyric_player::rendering::config::common::StateStyleConfig style = ::music_lyric_player::rendering::config::common::StateStyleConfig{ .normal = ::music_lyric_player::rendering::config::common::StyleConfig{ .color = "", .opacity = 0.4 }, .active = ::music_lyric_player::rendering::config::common::StyleConfig{ .color = "", .opacity = 0.6 }, .played = ::music_lyric_player::rendering::config::common::StyleConfig{ .color = "", .opacity = 0.4 } };
+		::music_lyric_player::rendering::config::common::StateStyleConfig style = ::music_lyric_player::rendering::config::common::StateStyleConfig{ .normal = ::music_lyric_player::rendering::config::common::StyleConfig{ .opacity = 0.4 }, .active = ::music_lyric_player::rendering::config::common::StyleConfig{ .opacity = 0.6 }, .played = ::music_lyric_player::rendering::config::common::StyleConfig{ .opacity = 0.4 } };
 
 		bool operator==(const Base&) const = default;
 

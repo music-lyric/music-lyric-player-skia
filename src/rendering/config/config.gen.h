@@ -89,6 +89,18 @@ namespace music_lyric_player::rendering::config {
 			if (!overrides.line.normal.main.syllable.style.played.opacity.assigned()) {
 				out.line.normal.main.syllable.style.played.opacity = out.line.normal.base.style.played.opacity.value();
 			}
+			if (!overrides.line.normal.annotation.base.font.family.assigned()) {
+				out.line.normal.annotation.base.font.family = out.line.normal.base.font.family.value();
+			}
+			if (!overrides.line.normal.annotation.base.style.normal.color.assigned()) {
+				out.line.normal.annotation.base.style.normal.color = out.line.normal.base.style.normal.color.value();
+			}
+			if (!overrides.line.normal.annotation.base.style.active.color.assigned()) {
+				out.line.normal.annotation.base.style.active.color = out.line.normal.base.style.active.color.value();
+			}
+			if (!overrides.line.normal.annotation.base.style.played.color.assigned()) {
+				out.line.normal.annotation.base.style.played.color = out.line.normal.base.style.played.color.value();
+			}
 			if (!overrides.line.normal.annotation.roman.font.family.assigned()) {
 				out.line.normal.annotation.roman.font.family = out.line.normal.annotation.base.font.family.value();
 			}

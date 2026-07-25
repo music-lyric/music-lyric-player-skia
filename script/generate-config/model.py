@@ -1,4 +1,3 @@
-"""Schema data model, leaf helpers and the shared constants used across the generator."""
 
 SKIP_DIRS = {"build", "third-party", ".history", ".git", "node_modules", ".turbo", ".vscode", ".claude"}
 
@@ -68,6 +67,27 @@ def resolve_nested(module, value):
         type_str = f"::{target.namespace}::{struct}"
         return target, target.by_name[struct], type_str
     return module, module.by_name[value], value
+
+
+def resolve_field_path(module, cfg, path):
+    """Resolve a dotted field path under `cfg` into its owning module, field definition and C++ type."""
+    parts = path.split(".")
+    if not parts or any(not part for part in parts):
+        raise SchemaError(f"invalid field path '{path}'")
+
+    current_module, current_cfg = module, cfg
+    for index, part in enumerate(parts):
+        field = next((candidate for candidate in current_cfg["fields"] if candidate["name"] == part), None)
+        if field is None:
+            raise SchemaError(f"field path '{path}' has no field '{part}'")
+        if index == len(parts) - 1:
+            if is_nested(field):
+                target_module, target_cfg, type_str = resolve_nested(current_module, field["nested"])
+                return target_module, target_cfg, field, type_str
+            return current_module, current_cfg, field, leaf_type(field)
+        if not is_nested(field):
+            raise SchemaError(f"field path '{path}' traverses leaf '{part}'")
+        current_module, current_cfg, _ = resolve_nested(current_module, field["nested"])
 
 
 def include_path_for(out_path):

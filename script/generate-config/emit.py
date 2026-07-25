@@ -1,4 +1,3 @@
-"""C++ header emission: enum blocks, the unified config struct with its hidden overlay / capture / resolve machinery, inheritance resolution and the full header body."""
 
 from model import (
     ACCESS_INCLUDE,
@@ -77,6 +76,37 @@ def note(field, inline):
     return f"  // {comment}" if inline and isinstance(comment, str) and comment else ""
 
 
+def nested_default_expression(module, field):
+    """Build a nested config default expression, supporting leaf overrides at arbitrary dotted depths."""
+    target_module, target_cfg, type_str = resolve_nested(module, field["nested"])
+    overrides = field.get("defaults")
+    if not overrides:
+        return None
+
+    root = {}
+    for path, value in overrides.items():
+        node = root
+        parts = path.split(".")
+        for part in parts[:-1]:
+            node = node.setdefault(part, {})
+        node[parts[-1]] = value
+
+    def render(current_module, current_cfg, current_type, values):
+        initializers = []
+        for name, value in values.items():
+            target_field = next(candidate for candidate in current_cfg["fields"] if candidate["name"] == name)
+            if isinstance(value, dict):
+                child_module, child_cfg, child_type = resolve_nested(current_module, target_field["nested"])
+                rendered = render(child_module, child_cfg, child_type, value)
+            else:
+                rendered = value
+            initializers.append(f".{name} = {rendered}")
+        qualified_type = current_type if current_type.startswith("::") or current_module is module else f"::{current_module.namespace}::{current_type}"
+        return f"{qualified_type}{{ {', '.join(initializers)} }}"
+
+    return render(target_module, target_cfg, type_str, root)
+
+
 def gen_struct(cfg, module):
     """Emit the struct; leaves carry their defaults and the machinery rides along as hidden friends."""
     out = [jsdoc(cfg.get("comment"), "\t") + f"\tstruct {cfg['name']} {{"]
@@ -84,13 +114,9 @@ def gen_struct(cfg, module):
         above = field_doc(field, "\t\t", module.inline)
         if is_nested(field):
             _, _, type_str = resolve_nested(module, field["nested"])
-            overrides = field.get("defaults")
-            if overrides:
-                # C++20 designated initialisers; unlisted sub-fields keep their in-class defaults.
-                inits = ", ".join(f".{key} = {value}" for key, value in overrides.items())
-                out.append(
-                    f"{above}\t\t{type_str} {field['name']} = {type_str}{{ {inits} }};{note(field, module.inline)}"
-                )
+            default_expression = nested_default_expression(module, field)
+            if default_expression:
+                out.append(f"{above}\t\t{type_str} {field['name']} = {default_expression};{note(field, module.inline)}")
             else:
                 out.append(f"{above}\t\t{type_str} {field['name']};{note(field, module.inline)}")
         else:
@@ -160,6 +186,11 @@ def walk_leaves(module, cfg, prefix=""):
     return leaves
 
 
+def explicit_default_paths(field):
+    """Return the leaf paths whose inherited values are replaced by defaults declared on the consumer field."""
+    return set(field.get("defaults", {}))
+
+
 def resolve_path(root_module, path):
     """Resolve a dotted absolute path from `Root` to the (module, cfg) it names; raises on a missing or leaf segment."""
     module, cfg = root_module, root_module.by_name["Root"]
@@ -174,7 +205,7 @@ def resolve_path(root_module, path):
 
 
 def collect_inherit_edges(root_module):
-    """Collect every `inheritFrom` edge under `Root` as (consumer, source, type_module, type_cfg), validated and ordered; rejects a self / descendant / type-mismatched source."""
+    """Collect every `inheritFrom` edge and its sticky default leaves, validate them, then order the edges."""
     edges = []
 
     def walk(module, cfg, prefix):
@@ -192,7 +223,7 @@ def collect_inherit_edges(root_module):
                     raise SchemaError(
                         f"inheritFrom '{source}' resolves to '{source_cfg['name']}' but field '{path}' is '{target_cfg['name']}'; the inherited source must be the same type"
                     )
-                edges.append((path, source, target_module, target_cfg))
+                edges.append((path, source, target_module, target_cfg, explicit_default_paths(field)))
             walk(target_module, target_cfg, path + ".")
 
     walk(root_module, root_module.by_name["Root"], "")
@@ -239,8 +270,10 @@ def gen_resolve(module):
         "\t\t\toverlay(out, overrides, key);",
     ]
     # Topologically ordered, so every source is resolved before a consumer reads it.
-    for consumer, source, type_module, type_cfg in edges:
+    for consumer, source, type_module, type_cfg, defaults in edges:
         for leaf in walk_leaves(type_module, type_cfg):
+            if leaf in defaults:
+                continue
             out.append(f"\t\t\tif (!overrides.{consumer}.{leaf}.assigned()) {{")
             out.append(f"\t\t\t\tout.{consumer}.{leaf} = out.{source}.{leaf}.value();")
             out.append("\t\t\t}")

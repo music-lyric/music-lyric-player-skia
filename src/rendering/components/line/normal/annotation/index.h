@@ -40,9 +40,8 @@ namespace music_lyric_player::rendering::components::line::normal::annotation {
 
 		/**
 		 * Eases the row tint across the normal / played / active states and paints the wrapped paragraph at (`x`, `y`).
-		 * `style` is the resolved row style; `baseStyle` supplies inherited colors left unset by the annotation chain.
 		 */
-		void paint(SkCanvas* canvas, float x, float y, double now, bool active, bool played, const config::common::StateStyleConfig& style, const config::common::StateStyleConfig& baseStyle) const;
+		void paint(SkCanvas* canvas, float x, float y, double now, bool active, bool played, const config::common::StateStyleConfig& style) const;
 
 		/**
 		 * Returns the laid-out block height in logical pixels; valid after `layout`.

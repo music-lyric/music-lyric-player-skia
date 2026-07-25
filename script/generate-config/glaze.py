@@ -1,4 +1,3 @@
-"""Glaze enum-name meta header generation (enums serialize by name, not integer, on the JSON wire)."""
 
 from pathlib import Path
 

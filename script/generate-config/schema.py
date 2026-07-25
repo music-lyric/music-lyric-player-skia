@@ -1,9 +1,8 @@
-"""Schema normalisation (mix / root expansion), structural validation and import resolution."""
 
 import copy
 import json
 
-from model import KIND_NOTES, Module, SchemaError, is_nested, is_valid_comment
+from model import KIND_NOTES, Module, SchemaError, is_nested, is_valid_comment, resolve_field_path, resolve_nested
 
 
 def expand_mix(schema):
@@ -238,7 +237,7 @@ def validate_structure(schema):
                     and all(isinstance(k, str) and isinstance(v, str) for k, v in overrides.items())
                 ):
                     raise SchemaError(
-                        f"{at} ('{field_name}').defaults must be a non-empty object of field -> C++ literal string"
+                        f"{at} ('{field_name}').defaults must be a non-empty object of field path -> C++ literal string"
                     )
                 if "inheritFrom" in field and (not isinstance(field["inheritFrom"], str) or not field["inheritFrom"]):
                     raise SchemaError(
@@ -300,21 +299,35 @@ def validate_structure(schema):
 
 
 def validate_refs(module):
-    """Verify every dotted `nested` target resolves to a struct in the named import."""
+    """Verify every dotted nested target and nested default field path resolves with the expected type."""
     for cfg in module.items:
         for field in cfg["fields"]:
-            if not is_nested(field) or "." not in field["nested"]:
+            if not is_nested(field):
                 continue
-            alias, _, struct = field["nested"].partition(".")
-            target = module.imports.get(alias)
-            if target is None:
-                raise SchemaError(
-                    f"config '{cfg['name']}' nests '{field['nested']}', but import '{alias}' failed to load"
-                )
-            if struct not in target.by_name:
-                raise SchemaError(
-                    f"config '{cfg['name']}' nests '{field['nested']}', but '{struct}' is not defined in that schema"
-                )
+            if "." in field["nested"]:
+                alias, _, struct = field["nested"].partition(".")
+                target = module.imports.get(alias)
+                if target is None:
+                    raise SchemaError(
+                        f"config '{cfg['name']}' nests '{field['nested']}', but import '{alias}' failed to load"
+                    )
+                if struct not in target.by_name:
+                    raise SchemaError(
+                        f"config '{cfg['name']}' nests '{field['nested']}', but '{struct}' is not defined in that schema"
+                    )
+
+            target_module, target_cfg, _ = resolve_nested(module, field["nested"])
+            for path in field.get("defaults", {}):
+                try:
+                    _, _, target_field, _ = resolve_field_path(target_module, target_cfg, path)
+                except SchemaError as error:
+                    raise SchemaError(
+                        f"config '{cfg['name']}' field '{field['name']}'.defaults path '{path}' is invalid: {error}"
+                    ) from error
+                if is_nested(target_field):
+                    raise SchemaError(
+                        f"config '{cfg['name']}' field '{field['name']}'.defaults path '{path}' resolves to a nested config; only leaves can have defaults"
+                    )
 
 
 def load_module(path, cache, loading=None):

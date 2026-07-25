@@ -17,10 +17,10 @@ namespace music_lyric_player::rendering::components::line::normal::annotation {
 		constexpr double kStateColorDuration = 300.0;
 
 		/**
-		 * Resolves one render state into its tinted color: parses the color with a fallback, then scales its alpha by the state opacity.
+		 * Resolves one render state into its tinted color, then scales its alpha by the state opacity.
 		 */
-		SkColor stateStyle(const config::common::StyleConfig& style, const config::common::StyleConfig& fallback) {
-			return utils::color::withOpacity(utils::color::resolve(style.color, fallback.color), style.opacity);
+		SkColor stateStyle(const config::common::StyleConfig& style) {
+			return utils::color::withOpacity(utils::color::resolve(style.color), style.opacity);
 		}
 	} // namespace
 
@@ -46,15 +46,14 @@ namespace music_lyric_player::rendering::components::line::normal::annotation {
 		this->measuredHeight = result.height;
 	}
 
-	void Row::paint(SkCanvas* canvas, float x, float y, double now, bool active, bool played, const config::common::StateStyleConfig& style, const config::common::StateStyleConfig& baseStyle) const {
+	void Row::paint(SkCanvas* canvas, float x, float y, double now, bool active, bool played, const config::common::StateStyleConfig& style) const {
 		if (this->group.fragments.empty()) {
 			return;
 		}
 
-		// Annotation opacity belongs to its own style, while an unset color follows the normal-line base through `baseStyle`.
-		const SkColor normalColor = stateStyle(style.normal, baseStyle.normal);
-		const SkColor activeColor = stateStyle(style.active, baseStyle.active);
-		const SkColor playedColor = stateStyle(style.played, baseStyle.played);
+		const SkColor normalColor = stateStyle(style.normal);
+		const SkColor activeColor = stateStyle(style.active);
+		const SkColor playedColor = stateStyle(style.played);
 
 		const SkColor target = active ? activeColor : (played ? playedColor : normalColor);
 		const int     state  = active ? 2 : (played ? 1 : 0);

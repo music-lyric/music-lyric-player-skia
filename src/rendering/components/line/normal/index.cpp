@@ -27,18 +27,17 @@ namespace music_lyric_player::rendering::components::line::normal {
 
 		/**
 		 * Rebuilds and lays out one annotation row for the current relayout.
-		 * The row is dropped when hidden or empty, while its `%` font size resolves against `baseFontPx` so it tracks its normal-line base parent.
+		 * The row is dropped when hidden or empty, while its `%` font size resolves against `baseFontPx`.
 		 */
-		void layoutAnnotationRow(std::unique_ptr<annotation::Row>& row, bool show, const std::optional<std::string>& text, const config::common::FontConfig& font, const std::string& fallbackFamily, const std::string& fallbackSize, float baseFontPx, float width, const common::RenderContext& context) {
+		void layoutAnnotationRow(std::unique_ptr<annotation::Row>& row, bool show, const std::optional<std::string>& text, const config::common::FontConfig& font, const std::string& fallbackSize, float baseFontPx, float width, const common::RenderContext& context) {
 			if (!show || !text || text->empty()) {
 				row.reset();
 				return;
 			}
 
-			row                       = std::make_unique<annotation::Row>(*text);
-			const float        size   = static_cast<float>(std::max(resolveLength(font.size.value(), fallbackSize, baseFontPx), 1.0));
-			const std::string& family = font.family.value().empty() ? fallbackFamily : font.family.value();
-			const SkFont       skFont = utils::shaping::buildBodyFont(context.fontMgr, family, size);
+			row                 = std::make_unique<annotation::Row>(*text);
+			const float  size   = static_cast<float>(std::max(resolveLength(font.size.value(), fallbackSize, baseFontPx), 1.0));
+			const SkFont skFont = utils::shaping::buildBodyFont(context.fontMgr, font.family.value(), size);
 			row->layout(width, context, skFont, context.config.layout.align.value());
 		}
 	} // namespace
@@ -93,12 +92,11 @@ namespace music_lyric_player::rendering::components::line::normal {
 		const bool showTranslate = ann.visible.value() && ann.translate.visible.value();
 
 		// The line-base pixel size is the reference a `%` annotation size scales against, matching the web inheritance chain.
-		const float        baseFontPx     = static_cast<float>(std::max(resolveLength(normal.base.font.size.value(), config::Default.line.normal.base.font.size.value()), 1.0));
-		const std::string& fallbackFamily = normal.base.font.family.value();
-		const std::string& fallbackSize   = config::Default.line.normal.annotation.base.font.size.value();
+		const float        baseFontPx   = static_cast<float>(std::max(resolveLength(normal.base.font.size.value(), config::Default.line.normal.base.font.size.value()), 1.0));
+		const std::string& fallbackSize = config::Default.line.normal.annotation.base.font.size.value();
 
-		layoutAnnotationRow(this->romanRow, showRoman, showRoman ? music_lyric_model::parsed::getParsedLineRoman(this->info) : std::nullopt, ann.roman.font, fallbackFamily, fallbackSize, baseFontPx, this->width, context);
-		layoutAnnotationRow(this->translateRow, showTranslate, showTranslate ? music_lyric_model::parsed::getParsedLineTranslation(this->info) : std::nullopt, ann.translate.font, fallbackFamily, fallbackSize, baseFontPx, this->width, context);
+		layoutAnnotationRow(this->romanRow, showRoman, showRoman ? music_lyric_model::parsed::getParsedLineRoman(this->info) : std::nullopt, ann.roman.font, fallbackSize, baseFontPx, this->width, context);
+		layoutAnnotationRow(this->translateRow, showTranslate, showTranslate ? music_lyric_model::parsed::getParsedLineTranslation(this->info) : std::nullopt, ann.translate.font, fallbackSize, baseFontPx, this->width, context);
 
 		this->romanHeight     = this->romanRow ? this->romanRow->height() : 0.0f;
 		this->translateHeight = this->translateRow ? this->translateRow->height() : 0.0f;
@@ -137,7 +135,7 @@ namespace music_lyric_player::rendering::components::line::normal {
 		// Fixed web-default stack order: romanization on top, main line, translation beneath.
 		const auto& ann = cfg.line.normal.annotation;
 		if (this->romanRow) {
-			this->romanRow->paint(canvas, x, y, now, active, played, ann.roman.style, cfg.line.normal.base.style);
+			this->romanRow->paint(canvas, x, y, now, active, played, ann.roman.style);
 		}
 
 		const float mainY = this->romanHeight;
@@ -153,7 +151,7 @@ namespace music_lyric_player::rendering::components::line::normal {
 		}
 
 		if (this->translateRow) {
-			this->translateRow->paint(canvas, x, y + mainY + this->mainHeight, now, active, played, ann.translate.style, cfg.line.normal.base.style);
+			this->translateRow->paint(canvas, x, y + mainY + this->mainHeight, now, active, played, ann.translate.style);
 		}
 
 		if (useLayer) {

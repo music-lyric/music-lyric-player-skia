@@ -12,20 +12,22 @@
         {
           "name": "font",
           "nested": "common.FontConfig",
+          "inheritFrom": "line.normal.base.font",
           "defaults": {
             "size": "\"60%\""
           },
-          "comment": "Annotation font; the family stays empty to inherit the main line, and a `%` size renders relative to it so the rows track its size."
+          "comment": "Annotation font; the family inherits the normal-line base, while the explicit `%` size renders relative to that parent."
         },
         {
           "name": "style",
           "nested": "common.StateStyleConfig",
+          "inheritFrom": "line.normal.base.style",
           "defaults": {
-            "normal": "::music_lyric_player::rendering::config::common::StyleConfig{ .color = \"\", .opacity = 0.4 }",
-            "active": "::music_lyric_player::rendering::config::common::StyleConfig{ .color = \"\", .opacity = 0.6 }",
-            "played": "::music_lyric_player::rendering::config::common::StyleConfig{ .color = \"\", .opacity = 0.4 }"
+            "normal.opacity": "0.4",
+            "active.opacity": "0.6",
+            "played.opacity": "0.4"
           },
-          "comment": "Annotation state styles; the colors stay empty to inherit the main line, while the dimmer opacities let the rows recede beneath it."
+          "comment": "Annotation state styles; colors inherit the normal-line base, while explicit dimmer opacities let the rows recede beneath it."
         }
       ]
     },

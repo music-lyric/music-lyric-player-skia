@@ -59,16 +59,20 @@ namespace music_lyric_player::rendering::utils::color {
 	/**
 	 * Resolves a CSS-style colour string into a packed ARGB `SkColor`.
 	 * Accepts `#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`, `rgb(r, g, b)` with 0..255 channels, or `rgba(r, g, b, a)` with `a` in 0..1.
-	 * On failure, resolves `fallback` the same way — typically the config default; if that also fails, returns transparent.
+	 * Returns transparent when parsing fails.
+	 */
+	inline SkColor resolve(const ::std::string& value) {
+		return detail::parse(value).value_or(SK_ColorTRANSPARENT);
+	}
+
+	/**
+	 * Resolves a CSS-style colour string and falls back to another value when parsing fails.
 	 */
 	inline SkColor resolve(const ::std::string& value, const ::std::string& fallback) {
 		if (const ::std::optional<SkColor> parsed = detail::parse(value)) {
 			return *parsed;
 		}
-		if (const ::std::optional<SkColor> parsed = detail::parse(fallback)) {
-			return *parsed;
-		}
-		return SK_ColorTRANSPARENT;
+		return resolve(fallback);
 	}
 
 	/**
@@ -76,7 +80,8 @@ namespace music_lyric_player::rendering::utils::color {
 	 * An opacity of `1` leaves the color unchanged; `0` makes it fully transparent.
 	 */
 	inline SkColor withOpacity(SkColor color, double opacity) {
-		const double scale = opacity < 0.0 ? 0.0 : opacity > 1.0 ? 1.0 : opacity;
+		const double scale = opacity < 0.0 ? 0.0 : opacity > 1.0 ? 1.0
+									 : opacity;
 		const U8CPU  alpha = static_cast<U8CPU>(SkColorGetA(color) * scale + 0.5);
 		return SkColorSetA(color, alpha);
 	}

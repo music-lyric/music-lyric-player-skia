@@ -6,6 +6,8 @@
 #ifndef MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_LINE_NORMAL_CONFIG_GEN_H_
 #define MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_LINE_NORMAL_CONFIG_GEN_H_
 
+#include <string>
+
 #include "rendering/config/common/index.gen.h"
 #include "rendering/config/line/normal/annotation/index.gen.h"
 #include "rendering/config/line/normal/main/index.gen.h"
@@ -19,6 +21,12 @@ namespace music_lyric_player::rendering::config::line::normal {
 	 */
 	struct Base {
 		/**
+		 * Preferred BCP-47 tag shared by the line and inherited by its annotation rows when they set none; used to choose among coexisting translations or romanizations.
+		 *
+		 * @default "zh-hans"
+		 */
+		::music_lyric_player::utils::config::Property<::std::string> language = "zh-hans";
+		/**
 		 * Font shared by every line.
 		 */
 		::music_lyric_player::rendering::config::common::FontConfig font;
@@ -30,11 +38,13 @@ namespace music_lyric_player::rendering::config::line::normal {
 		bool operator==(const Base&) const = default;
 
 		friend void overlay(Base& dst, const Base& src, ::music_lyric_player::utils::config::Access key) {
+			if (src.language.assigned()) dst.language = src.language.value();
 			overlay(dst.font, src.font, key);
 			overlay(dst.style, src.style, key);
 		}
 
 		friend void capture(Base& delta, const Base& prev, const Base& next, ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.language == next.language)) delta.language = next.language.value();
 			capture(delta.font, prev.font, next.font, key);
 			capture(delta.style, prev.style, next.style, key);
 		}

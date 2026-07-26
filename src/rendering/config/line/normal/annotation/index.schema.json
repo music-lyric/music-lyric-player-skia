@@ -42,6 +42,13 @@
           "comment": "Whether the romanization row shows."
         },
         {
+          "name": "language",
+          "type": "::std::string",
+          "default": "\"\"",
+          "inheritFrom": "line.normal.base.language",
+          "comment": "Preferred BCP-47 tag for the romanization; inherits the line base when left empty."
+        },
+        {
           "name": "font",
           "nested": "common.FontConfig",
           "inheritFrom": "line.normal.annotation.base.font",
@@ -64,6 +71,13 @@
           "type": "bool",
           "default": "true",
           "comment": "Whether the translation row shows."
+        },
+        {
+          "name": "language",
+          "type": "::std::string",
+          "default": "\"\"",
+          "inheritFrom": "line.normal.base.language",
+          "comment": "Preferred BCP-47 tag for the translation; inherits the line base when left empty."
         },
         {
           "name": "font",

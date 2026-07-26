@@ -101,6 +101,9 @@ namespace music_lyric_player::rendering::config {
 			if (!overrides.line.normal.annotation.base.style.played.color.assigned()) {
 				out.line.normal.annotation.base.style.played.color = out.line.normal.base.style.played.color.value();
 			}
+			if (!overrides.line.normal.annotation.roman.language.assigned()) {
+				out.line.normal.annotation.roman.language = out.line.normal.base.language.value();
+			}
 			if (!overrides.line.normal.annotation.roman.font.family.assigned()) {
 				out.line.normal.annotation.roman.font.family = out.line.normal.annotation.base.font.family.value();
 			}
@@ -124,6 +127,9 @@ namespace music_lyric_player::rendering::config {
 			}
 			if (!overrides.line.normal.annotation.roman.style.played.opacity.assigned()) {
 				out.line.normal.annotation.roman.style.played.opacity = out.line.normal.annotation.base.style.played.opacity.value();
+			}
+			if (!overrides.line.normal.annotation.translate.language.assigned()) {
+				out.line.normal.annotation.translate.language = out.line.normal.base.language.value();
 			}
 			if (!overrides.line.normal.annotation.translate.font.family.assigned()) {
 				out.line.normal.annotation.translate.font.family = out.line.normal.annotation.base.font.family.value();

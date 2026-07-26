@@ -12,6 +12,12 @@
       "comment": "Appearance shared by the main vocal line and its annotation sub-lines.",
       "fields": [
         {
+          "name": "language",
+          "type": "::std::string",
+          "default": "\"zh-hans\"",
+          "comment": "Preferred BCP-47 tag shared by the line and inherited by its annotation rows when they set none; used to choose among coexisting translations or romanizations."
+        },
+        {
           "name": "font",
           "nested": "common.FontConfig",
           "comment": "Font shared by every line."

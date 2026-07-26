@@ -26,6 +26,17 @@ namespace music_lyric_player::rendering::components::line::normal {
 		constexpr double kBaseFadeDurationMs = 600.0;
 
 		/**
+		 * Converts a resolved language tag into the optional the model getters expect.
+		 * An empty tag means no preference, so the getter picks the first available content.
+		 */
+		std::optional<std::string> toLanguage(const std::string& tag) {
+			if (tag.empty()) {
+				return std::nullopt;
+			}
+			return tag;
+		}
+
+		/**
 		 * Rebuilds and lays out one annotation row for the current relayout.
 		 * The row is dropped when hidden or empty, while its `%` font size resolves against `baseFontPx`.
 		 */
@@ -95,8 +106,8 @@ namespace music_lyric_player::rendering::components::line::normal {
 		const float        baseFontPx   = static_cast<float>(std::max(resolveLength(normal.base.font.size.value(), config::Default.line.normal.base.font.size.value()), 1.0));
 		const std::string& fallbackSize = config::Default.line.normal.annotation.base.font.size.value();
 
-		layoutAnnotationRow(this->romanRow, showRoman, showRoman ? music_lyric_model::parsed::getParsedLineRoman(this->info) : std::nullopt, ann.roman.font, fallbackSize, baseFontPx, this->width, context);
-		layoutAnnotationRow(this->translateRow, showTranslate, showTranslate ? music_lyric_model::parsed::getParsedLineTranslation(this->info) : std::nullopt, ann.translate.font, fallbackSize, baseFontPx, this->width, context);
+		layoutAnnotationRow(this->romanRow, showRoman, showRoman ? music_lyric_model::parsed::getParsedLineRoman(this->info, toLanguage(ann.roman.language.value())) : std::nullopt, ann.roman.font, fallbackSize, baseFontPx, this->width, context);
+		layoutAnnotationRow(this->translateRow, showTranslate, showTranslate ? music_lyric_model::parsed::getParsedLineTranslation(this->info, toLanguage(ann.translate.language.value())) : std::nullopt, ann.translate.font, fallbackSize, baseFontPx, this->width, context);
 
 		this->romanHeight     = this->romanRow ? this->romanRow->height() : 0.0f;
 		this->translateHeight = this->translateRow ? this->translateRow->height() : 0.0f;

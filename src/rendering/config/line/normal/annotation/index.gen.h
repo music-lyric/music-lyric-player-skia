@@ -6,6 +6,8 @@
 #ifndef MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_LINE_NORMAL_ANNOTATION_CONFIG_GEN_H_
 #define MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_LINE_NORMAL_ANNOTATION_CONFIG_GEN_H_
 
+#include <string>
+
 #include "rendering/config/common/index.gen.h"
 
 #include "utils/config/access.h"
@@ -49,6 +51,12 @@ namespace music_lyric_player::rendering::config::line::normal::annotation {
 		 */
 		::music_lyric_player::utils::config::Property<bool> visible = true;
 		/**
+		 * Preferred BCP-47 tag for the romanization; inherits the line base when left empty.
+		 *
+		 * @default ""
+		 */
+		::music_lyric_player::utils::config::Property<::std::string> language = "";
+		/**
 		 * Row font; inherits the annotation base when unset.
 		 */
 		::music_lyric_player::rendering::config::common::FontConfig font;
@@ -61,12 +69,14 @@ namespace music_lyric_player::rendering::config::line::normal::annotation {
 
 		friend void overlay(Roman& dst, const Roman& src, ::music_lyric_player::utils::config::Access key) {
 			if (src.visible.assigned()) dst.visible = src.visible.value();
+			if (src.language.assigned()) dst.language = src.language.value();
 			overlay(dst.font, src.font, key);
 			overlay(dst.style, src.style, key);
 		}
 
 		friend void capture(Roman& delta, const Roman& prev, const Roman& next, ::music_lyric_player::utils::config::Access key) {
 			if (!(prev.visible == next.visible)) delta.visible = next.visible.value();
+			if (!(prev.language == next.language)) delta.language = next.language.value();
 			capture(delta.font, prev.font, next.font, key);
 			capture(delta.style, prev.style, next.style, key);
 		}
@@ -83,6 +93,12 @@ namespace music_lyric_player::rendering::config::line::normal::annotation {
 		 */
 		::music_lyric_player::utils::config::Property<bool> visible = true;
 		/**
+		 * Preferred BCP-47 tag for the translation; inherits the line base when left empty.
+		 *
+		 * @default ""
+		 */
+		::music_lyric_player::utils::config::Property<::std::string> language = "";
+		/**
 		 * Row font; inherits the annotation base when unset.
 		 */
 		::music_lyric_player::rendering::config::common::FontConfig font;
@@ -95,12 +111,14 @@ namespace music_lyric_player::rendering::config::line::normal::annotation {
 
 		friend void overlay(Translate& dst, const Translate& src, ::music_lyric_player::utils::config::Access key) {
 			if (src.visible.assigned()) dst.visible = src.visible.value();
+			if (src.language.assigned()) dst.language = src.language.value();
 			overlay(dst.font, src.font, key);
 			overlay(dst.style, src.style, key);
 		}
 
 		friend void capture(Translate& delta, const Translate& prev, const Translate& next, ::music_lyric_player::utils::config::Access key) {
 			if (!(prev.visible == next.visible)) delta.visible = next.visible.value();
+			if (!(prev.language == next.language)) delta.language = next.language.value();
 			capture(delta.font, prev.font, next.font, key);
 			capture(delta.style, prev.style, next.style, key);
 		}

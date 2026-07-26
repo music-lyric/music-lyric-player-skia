@@ -4,6 +4,8 @@
 #include <optional>
 #include <string>
 
+#include "rendering/config/index.h"
+
 class SkCanvas;
 struct GLFWwindow;
 struct ImGuiContext;
@@ -24,6 +26,9 @@ namespace example {
 		std::string trackName;
 		std::string lyricName;
 		std::string activeText;
+		// The resolved config the settings editor displays, and the sparse override store its edits accumulate into.
+		const music_lyric_player::rendering::config::Root* config    = nullptr;
+		music_lyric_player::rendering::config::Root*       overrides = nullptr;
 	};
 
 	/**
@@ -38,6 +43,12 @@ namespace example {
 		std::optional<float>  volume;
 		// True on the frame the volume drag ends, so the host persists the level without writing every frame.
 		bool volumeCommitted = false;
+		// A settings field changed a leaf, so the host merges the override store into the renderer.
+		bool settingsChanged = false;
+		// A settings edit finished, so the host mirrors the override store to disk.
+		bool settingsCommitted = false;
+		// The user dropped every override, so the host clears the store and restores its own defaults.
+		bool settingsReset = false;
 	};
 
 	/**

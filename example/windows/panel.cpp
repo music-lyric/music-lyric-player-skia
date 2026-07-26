@@ -13,6 +13,7 @@
 #include "include/core/SkColor.h"
 #include "include/core/SkPaint.h"
 #include "include/core/SkRect.h"
+#include "settings.h"
 
 namespace example {
 	namespace {
@@ -214,6 +215,14 @@ namespace example {
 				ImGui::Spacing();
 				ImGui::TextUnformatted("Current line");
 				ImGui::TextWrapped("%s", state.activeText.empty() ? "-" : state.activeText.c_str());
+			}
+
+			// The editor is last: it is by far the tallest section, so the transport controls stay reachable above it.
+			if (state.config != nullptr && state.overrides != nullptr && ImGui::CollapsingHeader("Settings")) {
+				const SettingsEdit edit   = drawSettings(*state.config, *state.overrides);
+				actions.settingsChanged   = edit.changed;
+				actions.settingsCommitted = edit.committed;
+				actions.settingsReset     = edit.reset;
 			}
 
 			ImGui::End();

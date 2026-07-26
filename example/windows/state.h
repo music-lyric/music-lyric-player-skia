@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "rendering/config/index.h"
+
 namespace example {
 	/**
 	 * The audio half of the persisted session.
@@ -26,6 +28,8 @@ namespace example {
 	struct AppState {
 		AudioState audio;
 		LyricState lyric;
+		// Only the leaves the settings editor overrode: a sparse config the demo merges back over its own defaults.
+		music_lyric_player::rendering::config::Root settings;
 	};
 
 	/**

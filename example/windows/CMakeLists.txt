@@ -32,6 +32,7 @@ add_executable(music_lyric_player_example_windows
 	main.cpp
 	miniaudio.cpp
 	panel.cpp
+	settings.cpp
 	state.cpp
 	text.cpp
 	window.cpp

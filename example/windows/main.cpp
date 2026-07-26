@@ -73,32 +73,36 @@ int main() {
 
 	// DirectWrite cannot resolve a generic "sans-serif" family, so pick a concrete system family covering CJK and latin.
 	// Colours follow the web playground: a white lyric area, left-aligned, with the web default line styling.
-	renderer.config.modify([](music_lyric_player::rendering::config::Root& cfg) {
-		cfg.layout.align                                              = music_lyric_player::rendering::config::layout::Align::Left;
-		cfg.layout.gap                                                = "45px";
-		cfg.container.backgroundColor                                 = "#ffffff";
-		cfg.line.normal.base.font.size                                = "42px";
-		cfg.line.normal.base.font.family                              = "MiSans";
-		// The web default is black text dimmed by state; skia otherwise defaults these to white for a dark frame.
-		cfg.line.normal.base.style.normal.color                       = "#000000";
-		cfg.line.normal.base.style.normal.opacity                     = 0.6;
-		cfg.line.normal.base.style.active.color                       = "#000000";
-		cfg.line.normal.base.style.active.opacity                     = 1.0;
-		cfg.line.normal.base.style.played.color                       = "#000000";
-		cfg.line.normal.base.style.played.opacity                     = 0.4;
-		cfg.line.interlude.style.normal.color                         = "#000000";
-		cfg.line.interlude.style.normal.opacity                       = 0.2;
-		cfg.line.interlude.style.active.color                         = "#000000";
-		cfg.line.interlude.style.active.opacity                       = 0.8;
-		cfg.scroll.anchor                                             = 0.35;
-		cfg.scroll.animation.mode                                     = music_lyric_player::rendering::config::scroll::Mode::Stagger;
-		cfg.scroll.animation.stagger.duration                         = 500;
-		cfg.scroll.animation.stagger.easing                           = "ease";
-		cfg.scroll.animation.stagger.step                             = 40;
-		cfg.scroll.animation.stagger.range                            = 4;
-		cfg.line.normal.main.syllable.word.animation.mask.enabled     = true;
-		cfg.line.normal.main.syllable.word.animation.floating.enabled = true;
-	});
+	// Re-applied whenever the settings editor drops every override, so resetting lands on the demo's look rather than the library's dark defaults.
+	const auto applyDefaults = [&renderer]() {
+		renderer.config.modify([](music_lyric_player::rendering::config::Root& cfg) {
+			cfg.layout.align                 = music_lyric_player::rendering::config::layout::Align::Left;
+			cfg.layout.gap                   = "45px";
+			cfg.container.backgroundColor    = "#ffffff";
+			cfg.line.normal.base.font.size   = "50px";
+			cfg.line.normal.base.font.family = "MiSans";
+			// The web default is black text dimmed by state; skia otherwise defaults these to white for a dark frame.
+			cfg.line.normal.base.style.normal.color                       = "#000000";
+			cfg.line.normal.base.style.normal.opacity                     = 0.6;
+			cfg.line.normal.base.style.active.color                       = "#000000";
+			cfg.line.normal.base.style.active.opacity                     = 1.0;
+			cfg.line.normal.base.style.played.color                       = "#000000";
+			cfg.line.normal.base.style.played.opacity                     = 0.4;
+			cfg.line.interlude.style.normal.color                         = "#000000";
+			cfg.line.interlude.style.normal.opacity                       = 0.2;
+			cfg.line.interlude.style.active.color                         = "#000000";
+			cfg.line.interlude.style.active.opacity                       = 0.8;
+			cfg.scroll.anchor                                             = 0.35;
+			cfg.scroll.animation.mode                                     = music_lyric_player::rendering::config::scroll::Mode::Stagger;
+			cfg.scroll.animation.stagger.duration                         = 500;
+			cfg.scroll.animation.stagger.easing                           = "ease";
+			cfg.scroll.animation.stagger.step                             = 40;
+			cfg.scroll.animation.stagger.range                            = 4;
+			cfg.line.normal.main.syllable.word.animation.mask.enabled     = true;
+			cfg.line.normal.main.syllable.word.animation.floating.enabled = true;
+		});
+	};
+	applyDefaults();
 
 	example::ControlPanel panel;
 	if (!panel.init(window.handle(), surface->devicePixelRatio())) {
@@ -107,8 +111,10 @@ int main() {
 
 	example::AppState state = example::loadState();
 	audio.setVolume(state.audio.volume);
+	// The editor's overrides land on top of the demo defaults, so a look tweaked in the panel survives a restart.
+	renderer.config.merge(state.settings);
 
-	bool        paused     = false;
+	bool        paused = false;
 	std::string trackLabel;
 	std::string lyricLabel;
 
@@ -278,8 +284,8 @@ int main() {
 		}
 
 		example::PanelState view;
-		view.hasAudio   = audio.loaded();
-		view.hasLyric   = !player.currentInfo().lines.empty();
+		view.hasAudio = audio.loaded();
+		view.hasLyric = !player.currentInfo().lines.empty();
 		// Playing means the timeline is actually advancing: a loaded track follows the device, otherwise the wall-clock lyric follows the pause flag.
 		view.playing    = !paused && (view.hasAudio || view.hasLyric);
 		view.positionMs = player.currentTime();
@@ -290,6 +296,8 @@ int main() {
 		view.trackName  = trackLabel;
 		view.lyricName  = lyricLabel;
 		view.activeText = activeLineText(player);
+		view.config     = &renderer.config.current();
+		view.overrides  = &state.settings;
 
 		example::PanelActions actions;
 		surface->renderFrame([&](SkCanvas* canvas) {
@@ -311,6 +319,20 @@ int main() {
 		});
 
 		// Applied once the frame is done, so a seek or a modal file dialog never runs mid-paint.
+		if (actions.settingsReset) {
+			// Dropping the store alone would leave the renderer holding the old values, so the whole chain is rebuilt from the defaults.
+			state.settings = {};
+			renderer.config.reset();
+			applyDefaults();
+			persist();
+		}
+		if (actions.settingsChanged) {
+			// The store already carries every override, and merging only folds in its assigned leaves, so re-merging is idempotent.
+			renderer.config.merge(state.settings);
+		}
+		if (actions.settingsCommitted) {
+			persist();
+		}
 		if (actions.volume) {
 			audio.setVolume(*actions.volume);
 		}

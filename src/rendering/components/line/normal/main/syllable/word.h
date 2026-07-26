@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include "include/core/SkColor.h"
 #include "rendering/components/line/normal/main/syllable/animation/index.h"
@@ -76,7 +77,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 	private:
 		/**
-		 * Paints the cached word group at the word position in the supplied state color.
+		 * Paints the cached word blob — or its per-character cells when the emphasize split is active — at the word position in the supplied state color.
 		 */
 		void paintGroup(SkCanvas* canvas, float x, float y, SkColor color) const;
 
@@ -89,15 +90,18 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		double      start;
 		double      duration;
 		uint32_t    spaceCount;
+		bool        stressed;
 
 		animation::Float floating;
 
-		utils::fragment::FragmentGroup group;
-		float                          measuredWidth    = 0.0f;
-		float                          measuredHeight   = 0.0f;
-		float                          measuredBaseline = 0.0f;
-		float                          x                = 0.0f;
-		float                          y                = 0.0f;
+		utils::fragment::FragmentGroup              group;
+		std::vector<utils::fragment::FragmentGroup> cells;
+		bool                                        useCells         = false;
+		float                                       measuredWidth    = 0.0f;
+		float                                       measuredHeight   = 0.0f;
+		float                                       measuredBaseline = 0.0f;
+		float                                       x                = 0.0f;
+		float                                       y                = 0.0f;
 	};
 } // namespace music_lyric_player::rendering::components::line::normal::main::syllable
 

@@ -3,8 +3,12 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <utility>
+#include <vector>
 
+#include "include/core/SkPoint.h"
 #include "include/core/SkRect.h"
 #include "include/core/SkTextBlob.h"
 
@@ -113,6 +117,85 @@ namespace music_lyric_player::rendering::utils::fragment {
 		fragment.textEnd   = textEnd;
 		group.fragments.push_back(std::move(fragment));
 		return group;
+	}
+
+	/**
+	 * Splits a shaped text into per-cluster fragment groups for the emphasize per-character animation.
+	 * Glyphs keep their absolute in-word positions and every origin stays {0,0}, so painting all groups at the word origin issues the same draw parameters as the single-blob path.
+	 * Each group's bounds record the cluster's x start and advance inside the word box, which the animation uses to find the cell center.
+	 * Spaces form their own clusters and RTL runs group in visual order, mirroring the web per-character split without re-shaping.
+	 */
+	inline std::vector<FragmentGroup> makeClusterGroups(const shaping::ShapedText& text, const char* utf8) {
+		std::vector<FragmentGroup> groups;
+		for (const shaping::ShapedLine& line : text.lines) {
+			// One pending cell per cluster boundary, collected in visual order across the line's runs.
+			struct Cell {
+				const shaping::ShapedRun* run;
+				std::size_t               first;
+				std::size_t               count;
+				uint32_t                  cluster;
+				float                     xStart;
+			};
+			std::vector<Cell> cells;
+			for (const shaping::ShapedRun& run : line.runs) {
+				for (std::size_t i = 0; i < run.glyphs.size(); ++i) {
+					const shaping::ShapedGlyph& glyph = run.glyphs[i];
+					if (cells.empty() || cells.back().run != &run || cells.back().cluster != glyph.cluster) {
+						cells.push_back(Cell{&run, i, 0, glyph.cluster, glyph.position.fX});
+					}
+					++cells.back().count;
+				}
+			}
+
+			const float height = line.ascent + line.descent;
+			for (std::size_t c = 0; c < cells.size(); ++c) {
+				const Cell& cell    = cells[c];
+				const float nextX   = c + 1 < cells.size() ? cells[c + 1].xStart : line.width;
+				const float advance = std::max(nextX - cell.xStart, 0.0f);
+
+				// The cluster's utf8 range ends at the run's next larger cluster offset, or at the run end for the run's logically last cluster.
+				std::size_t textEnd = cell.run->utf8Begin + cell.run->utf8Size;
+				for (const shaping::ShapedGlyph& other : cell.run->glyphs) {
+					if (other.cluster > cell.cluster && other.cluster < textEnd) {
+						textEnd = other.cluster;
+					}
+				}
+
+				FragmentGroup group;
+				group.advance = advance;
+				group.ascent  = line.ascent;
+				group.descent = line.descent;
+				group.height  = height;
+				group.bounds  = SkRect::MakeXYWH(cell.xStart, 0.0f, advance, height);
+
+				SkTextBlobBuilder builder;
+				const int         glyphCount = static_cast<int>(cell.count);
+				const int         textCount  = static_cast<int>(textEnd - cell.cluster);
+
+				const SkTextBlobBuilder::RunBuffer& buffer = builder.allocRunTextPos(cell.run->font, glyphCount, textCount);
+				if (buffer.utf8text && utf8) {
+					std::memcpy(buffer.utf8text, utf8 + cell.cluster, static_cast<std::size_t>(textCount));
+				}
+				SkPoint* points = buffer.points();
+				for (std::size_t i = 0; i < cell.count; ++i) {
+					const shaping::ShapedGlyph& glyph = cell.run->glyphs[cell.first + i];
+					buffer.glyphs[i]   = glyph.glyph;
+					points[i]          = glyph.position;
+					buffer.clusters[i] = glyph.cluster - cell.cluster;
+				}
+
+				GlyphFragment fragment;
+				fragment.blob      = builder.make();
+				fragment.origin    = {0.0f, 0.0f};
+				fragment.bounds    = group.bounds;
+				fragment.advance   = advance;
+				fragment.textStart = cell.cluster;
+				fragment.textEnd   = textEnd;
+				group.fragments.push_back(std::move(fragment));
+				groups.push_back(std::move(group));
+			}
+		}
+		return groups;
 	}
 } // namespace music_lyric_player::rendering::utils::fragment
 

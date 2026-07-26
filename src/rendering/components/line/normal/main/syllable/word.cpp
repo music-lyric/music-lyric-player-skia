@@ -70,6 +70,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 	      start(wordStart(info)),
 	      duration(wordDuration(info)),
 	      spaceCount(spacesBefore),
+	      stressed(info.stress),
 	      floating(this->start, this->duration) {}
 
 	Word::~Word() = default;
@@ -79,6 +80,8 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		this->measuredHeight   = 0.0f;
 		this->measuredBaseline = 0.0f;
 		this->group            = {};
+		this->cells.clear();
+		this->useCells = false;
 
 		if (!context.shaper || !context.fontMgr || this->text.empty()) {
 			return;
@@ -101,6 +104,14 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		this->measuredWidth    = std::ceil(std::max(this->group.advance, 1.0f) + kWidthEpsilon);
 		this->measuredBaseline = this->group.ascent;
 		this->measuredHeight   = this->group.height;
+
+		// The per-character split only happens for stressed words with at least one emphasize sub-effect enabled, so plain words keep the single cached blob.
+		const auto& emphasize = cfg.line.normal.main.syllable.word.animation.emphasize;
+		this->useCells        = this->stressed && emphasize.enabled.value() && (emphasize.effects.main.enabled.value() || emphasize.effects.glow.enabled.value() || emphasize.effects.floating.enabled.value());
+		if (this->useCells) {
+			this->cells    = utils::fragment::makeClusterGroups(shaped, utf8);
+			this->useCells = !this->cells.empty();
+		}
 	}
 
 	void Word::setPosition(float x, float y) {
@@ -109,6 +120,13 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 	}
 
 	void Word::paintGroup(SkCanvas* canvas, float x, float y, SkColor color) const {
+		// Cells keep their absolute in-word glyph positions, so painting every cell at the word origin issues the same draw parameters as the single blob.
+		if (this->useCells) {
+			for (const utils::fragment::FragmentGroup& cell : this->cells) {
+				cell.paint(canvas, x, y, color);
+			}
+			return;
+		}
 		this->group.paint(canvas, x, y, color);
 	}
 

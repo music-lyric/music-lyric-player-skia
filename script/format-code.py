@@ -5,11 +5,12 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SOURCES = (os.path.join(ROOT, "src"),)
+SOURCES = (os.path.join(ROOT, "src"), os.path.join(ROOT, "include"), os.path.join(ROOT, "example"))
 
 EXCLUDES = {}
 
-# Generated files carry their own `// clang-format off`; skip them here too.
+EXCLUDE_DIRS = {"third-party"}
+
 EXCLUDE_SUFFIXES = (".gen.h",)
 
 EXTENSIONS = (".cpp", ".h")
@@ -17,7 +18,8 @@ EXTENSIONS = (".cpp", ".h")
 
 def handle(path: str, formater: str):
     files = []
-    for dirpath, _, filenames in os.walk(path):
+    for dirpath, dirnames, filenames in os.walk(path):
+        dirnames[:] = [name for name in dirnames if name not in EXCLUDE_DIRS]
         for name in filenames:
             if name in EXCLUDES or name.endswith(EXCLUDE_SUFFIXES) or not name.endswith(EXTENSIONS):
                 continue

@@ -41,8 +41,11 @@ DerivePointerAlignment: false
 PointerAlignment: Left
 ReferenceAlignment: Left
 
-ColumnLimit: 0
+# Wrapped calls place each argument on its own line, one continuation tab in (not under the open bracket), so indentation remains tab-width independent.
+ColumnLimit: 180
 AlignAfterOpenBracket: DontAlign
+# Comments are written one sentence per line and must never be re-split, so the limit does not apply to them.
+ReflowComments: Never
 BinPackArguments: false
 BinPackParameters: false
 AllowAllArgumentsOnNextLine: false
@@ -66,7 +69,8 @@ AlignConsecutiveMacros:
 AlignTrailingComments:
   Kind: Always
   OverEmptyLines: 0
-AlignArrayOfStructures: Left
+# Don't column-pad cells in array literals — it's noisy in numeric tables and breaks clang-format indentation when the last item has no comma.
+AlignArrayOfStructures: None
 
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
@@ -89,7 +93,10 @@ SeparateDefinitionBlocks: Leave
 SortIncludes: CaseSensitive
 IncludeBlocks: Regroup
 IncludeCategories:
+  # System headers, both the extensionless C++ ones and the C ones that keep their suffix.
   - Regex: '^<[^./]+>'
+    Priority: 1
+  - Regex: '^<[^/]+\.h>'
     Priority: 1
   - Regex: '^<.*/.*>'
     Priority: 2

@@ -42,8 +42,7 @@ namespace music_lyric_player::utils {
 			for (const Entry& entry : snapshot) {
 				try {
 					entry.fn(args...);
-				} catch (...) {
-				}
+				} catch (...) {}
 			}
 		}
 

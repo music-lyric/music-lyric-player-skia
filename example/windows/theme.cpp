@@ -30,8 +30,8 @@ namespace example::theme {
 			"C:\\Windows\\Fonts\\simhei.ttf",
 		};
 
-		Metrics  scaled;
-		ImFont*  boldFace = nullptr;
+		Metrics scaled;
+		ImFont* boldFace = nullptr;
 
 		/**
 		 * Multiplies every length the stylesheet declares by `scale`, since the panel lays out in physical pixels.
@@ -142,54 +142,54 @@ namespace example::theme {
 		void applyStyle() {
 			ImGuiStyle& style = ImGui::GetStyle();
 
-			style.WindowPadding     = ImVec2(scaled.framePadding, scaled.framePadding);
-			style.WindowRounding    = 0.0f;
-			style.WindowBorderSize  = 0.0f;
-			style.ChildRounding     = scaled.radiusMd;
-			style.ChildBorderSize   = 1.0f;
-			style.PopupRounding     = scaled.radiusMd;
-			style.PopupBorderSize   = 1.0f;
+			style.WindowPadding    = ImVec2(scaled.framePadding, scaled.framePadding);
+			style.WindowRounding   = 0.0f;
+			style.WindowBorderSize = 0.0f;
+			style.ChildRounding    = scaled.radiusMd;
+			style.ChildBorderSize  = 1.0f;
+			style.PopupRounding    = scaled.radiusMd;
+			style.PopupBorderSize  = 1.0f;
 			// A frame is exactly one control tall, so the vertical padding is whatever the type leaves over.
-			style.FramePadding      = ImVec2(10.0f * scaled.scale, (scaled.controlHeight - scaled.fontBody) * 0.5f);
-			style.FrameRounding     = scaled.radiusSm;
-			style.FrameBorderSize   = 1.0f;
-			style.ItemSpacing       = ImVec2(8.0f * scaled.scale, 6.0f * scaled.scale);
-			style.ItemInnerSpacing  = ImVec2(6.0f * scaled.scale, 6.0f * scaled.scale);
-			style.CellPadding       = ImVec2(0.0f, 2.0f * scaled.scale);
-			style.IndentSpacing     = scaled.sectionIndent;
-			style.ScrollbarSize     = 10.0f * scaled.scale;
-			style.ScrollbarRounding = scaled.radiusFull;
-			style.GrabMinSize       = scaled.sliderThumb;
-			style.GrabRounding      = scaled.radiusFull;
-			style.TabRounding       = scaled.radiusSm;
+			style.FramePadding        = ImVec2(10.0f * scaled.scale, (scaled.controlHeight - scaled.fontBody) * 0.5f);
+			style.FrameRounding       = scaled.radiusSm;
+			style.FrameBorderSize     = 1.0f;
+			style.ItemSpacing         = ImVec2(8.0f * scaled.scale, 6.0f * scaled.scale);
+			style.ItemInnerSpacing    = ImVec2(6.0f * scaled.scale, 6.0f * scaled.scale);
+			style.CellPadding         = ImVec2(0.0f, 2.0f * scaled.scale);
+			style.IndentSpacing       = scaled.sectionIndent;
+			style.ScrollbarSize       = 10.0f * scaled.scale;
+			style.ScrollbarRounding   = scaled.radiusFull;
+			style.GrabMinSize         = scaled.sliderThumb;
+			style.GrabRounding        = scaled.radiusFull;
+			style.TabRounding         = scaled.radiusSm;
 			style.SelectableTextAlign = ImVec2(0.0f, 0.5f);
 			style.ButtonTextAlign     = ImVec2(0.5f, 0.5f);
 			style.DisabledAlpha       = 0.5f;
 
-			ImVec4* colors = style.Colors;
-			colors[ImGuiCol_Text]           = toVec4(color::text);
-			colors[ImGuiCol_TextDisabled]   = toVec4(color::textMuted);
-			colors[ImGuiCol_WindowBg]       = toVec4(color::background);
-			colors[ImGuiCol_ChildBg]        = toVec4(color::backgroundSubtle);
-			colors[ImGuiCol_PopupBg]        = toVec4(color::background);
-			colors[ImGuiCol_Border]         = toVec4(color::border);
-			colors[ImGuiCol_BorderShadow]   = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+			ImVec4* colors                = style.Colors;
+			colors[ImGuiCol_Text]         = toVec4(color::text);
+			colors[ImGuiCol_TextDisabled] = toVec4(color::textMuted);
+			colors[ImGuiCol_WindowBg]     = toVec4(color::background);
+			colors[ImGuiCol_ChildBg]      = toVec4(color::backgroundSubtle);
+			colors[ImGuiCol_PopupBg]      = toVec4(color::background);
+			colors[ImGuiCol_Border]       = toVec4(color::border);
+			colors[ImGuiCol_BorderShadow] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
 			// A control keeps its white fill through every state; the stylesheet moves its border instead,
 			// which the style table cannot express, so hover and focus lean on the faintest brand tints.
-			colors[ImGuiCol_FrameBg]        = toVec4(color::background);
-			colors[ImGuiCol_FrameBgHovered] = toVec4(color::backgroundAlt);
-			colors[ImGuiCol_FrameBgActive]  = toVec4(color::primaryFaint);
-			colors[ImGuiCol_Button]         = toVec4(color::background);
-			colors[ImGuiCol_ButtonHovered]  = toVec4(color::primaryFaint);
-			colors[ImGuiCol_ButtonActive]   = toVec4(color::primarySoft);
-			colors[ImGuiCol_Header]         = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
-			colors[ImGuiCol_HeaderHovered]  = toVec4(color::backgroundAlt);
-			colors[ImGuiCol_HeaderActive]   = toVec4(color::surfaceHover);
-			colors[ImGuiCol_Separator]      = toVec4(color::borderSoft);
-			colors[ImGuiCol_SliderGrab]     = toVec4(color::primary);
-			colors[ImGuiCol_SliderGrabActive] = toVec4(color::primaryStrong);
-			colors[ImGuiCol_CheckMark]        = toVec4(color::primary);
-			colors[ImGuiCol_ScrollbarBg]      = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+			colors[ImGuiCol_FrameBg]              = toVec4(color::background);
+			colors[ImGuiCol_FrameBgHovered]       = toVec4(color::backgroundAlt);
+			colors[ImGuiCol_FrameBgActive]        = toVec4(color::primaryFaint);
+			colors[ImGuiCol_Button]               = toVec4(color::background);
+			colors[ImGuiCol_ButtonHovered]        = toVec4(color::primaryFaint);
+			colors[ImGuiCol_ButtonActive]         = toVec4(color::primarySoft);
+			colors[ImGuiCol_Header]               = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+			colors[ImGuiCol_HeaderHovered]        = toVec4(color::backgroundAlt);
+			colors[ImGuiCol_HeaderActive]         = toVec4(color::surfaceHover);
+			colors[ImGuiCol_Separator]            = toVec4(color::borderSoft);
+			colors[ImGuiCol_SliderGrab]           = toVec4(color::primary);
+			colors[ImGuiCol_SliderGrabActive]     = toVec4(color::primaryStrong);
+			colors[ImGuiCol_CheckMark]            = toVec4(color::primary);
+			colors[ImGuiCol_ScrollbarBg]          = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
 			colors[ImGuiCol_ScrollbarGrab]        = toVec4(color::borderStrong);
 			colors[ImGuiCol_ScrollbarGrabHovered] = toVec4(color::textMuted);
 			colors[ImGuiCol_ScrollbarGrabActive]  = toVec4(color::textMuted);

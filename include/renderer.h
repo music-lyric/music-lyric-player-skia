@@ -14,14 +14,12 @@ namespace music_lyric_player {
 	 */
 	class Renderer {
 	public:
-		explicit Renderer(music_lyric_player_renderer_handle* handle) noexcept
-			: handle(handle) {}
+		explicit Renderer(music_lyric_player_renderer_handle* handle) noexcept : handle(handle) {}
 
 		Renderer(const Renderer&)            = delete;
 		Renderer& operator=(const Renderer&) = delete;
 
-		Renderer(Renderer&& other) noexcept
-			: handle(std::exchange(other.handle, nullptr)) {}
+		Renderer(Renderer&& other) noexcept : handle(std::exchange(other.handle, nullptr)) {}
 
 		Renderer& operator=(Renderer&& other) noexcept {
 			if (this != &other) {

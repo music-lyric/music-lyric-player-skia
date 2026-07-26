@@ -1,10 +1,5 @@
-#!/usr/bin/env python
 """
 Bump the project version, regenerate the change log, then commit and tag the release locally.
-
-The version lives in VERSION.txt at the repo root and is the single source of truth shared with CMake.
-Pass a semantic bump (major | minor | patch) or an explicit --version X.Y.Z, or run with no argument to enter it interactively.
-The commit and tag are created locally and never pushed.
 
 Usage: release.py [major | minor | patch | --version X.Y.Z] [--dry-run]
 """

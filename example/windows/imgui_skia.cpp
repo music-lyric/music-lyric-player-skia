@@ -36,9 +36,9 @@ namespace example {
 		 */
 		SkColor toSkColor(ImU32 color) {
 			return SkColorSetARGB(static_cast<std::uint8_t>((color >> IM_COL32_A_SHIFT) & 0xFF),
-			                      static_cast<std::uint8_t>((color >> IM_COL32_R_SHIFT) & 0xFF),
-			                      static_cast<std::uint8_t>((color >> IM_COL32_G_SHIFT) & 0xFF),
-			                      static_cast<std::uint8_t>((color >> IM_COL32_B_SHIFT) & 0xFF));
+				static_cast<std::uint8_t>((color >> IM_COL32_R_SHIFT) & 0xFF),
+				static_cast<std::uint8_t>((color >> IM_COL32_G_SHIFT) & 0xFF),
+				static_cast<std::uint8_t>((color >> IM_COL32_B_SHIFT) & 0xFF));
 		}
 
 		/**
@@ -66,25 +66,25 @@ namespace example {
 		 */
 		void updateTexture(ImTextureData* texture) {
 			switch (texture->Status) {
-				case ImTextureStatus_WantCreate:
-				case ImTextureStatus_WantUpdates: {
-					// A Skia image is immutable, so a partial update rebuilds the whole atlas; ImGui only asks for one when new glyphs appear.
-					sk_sp<SkImage> image = makeAtlasImage(texture);
-					if (!image) {
-						return;
-					}
-					SkSafeUnref(asImage(texture->GetTexID()));
-					texture->SetTexID(static_cast<ImTextureID>(reinterpret_cast<std::intptr_t>(image.release())));
-					texture->SetStatus(ImTextureStatus_OK);
-					break;
+			case ImTextureStatus_WantCreate:
+			case ImTextureStatus_WantUpdates: {
+				// A Skia image is immutable, so a partial update rebuilds the whole atlas; ImGui only asks for one when new glyphs appear.
+				sk_sp<SkImage> image = makeAtlasImage(texture);
+				if (!image) {
+					return;
 				}
-				case ImTextureStatus_WantDestroy:
-					SkSafeUnref(asImage(texture->GetTexID()));
-					texture->SetTexID(ImTextureID_Invalid);
-					texture->SetStatus(ImTextureStatus_Destroyed);
-					break;
-				default:
-					break;
+				SkSafeUnref(asImage(texture->GetTexID()));
+				texture->SetTexID(static_cast<ImTextureID>(reinterpret_cast<std::intptr_t>(image.release())));
+				texture->SetStatus(ImTextureStatus_OK);
+				break;
+			}
+			case ImTextureStatus_WantDestroy:
+				SkSafeUnref(asImage(texture->GetTexID()));
+				texture->SetTexID(ImTextureID_Invalid);
+				texture->SetStatus(ImTextureStatus_Destroyed);
+				break;
+			default:
+				break;
 			}
 		}
 
@@ -110,14 +110,20 @@ namespace example {
 			const float          textureWidth  = static_cast<float>(image->width());
 			const float          textureHeight = static_cast<float>(image->height());
 			for (int i = 0; i < count; ++i) {
-				const ImDrawVert& vertex = source[i];
+				const ImDrawVert& vertex               = source[i];
 				positions[static_cast<std::size_t>(i)] = SkPoint::Make(vertex.pos.x - origin.x, vertex.pos.y - origin.y);
 				// Skia samples an image shader in texel space, so the normalised coordinates are scaled up here.
 				texCoords[static_cast<std::size_t>(i)] = SkPoint::Make(vertex.uv.x * textureWidth, vertex.uv.y * textureHeight);
 				colors[static_cast<std::size_t>(i)]    = toSkColor(vertex.col);
 			}
 
-			const sk_sp<SkVertices> vertices = SkVertices::MakeCopy(SkVertices::kTriangles_VertexMode, count, positions.data(), texCoords.data(), colors.data(), static_cast<int>(command.ElemCount), list->IdxBuffer.Data + command.IdxOffset);
+			const sk_sp<SkVertices> vertices = SkVertices::MakeCopy(SkVertices::kTriangles_VertexMode,
+				count,
+				positions.data(),
+				texCoords.data(),
+				colors.data(),
+				static_cast<int>(command.ElemCount),
+				list->IdxBuffer.Data + command.IdxOffset);
 			if (!vertices) {
 				return;
 			}
@@ -126,7 +132,8 @@ namespace example {
 			paint.setShader(image->makeShader(SkTileMode::kClamp, SkTileMode::kClamp, SkSamplingOptions(SkFilterMode::kLinear)));
 
 			canvas->save();
-			canvas->clipRect(SkRect::MakeLTRB(command.ClipRect.x - origin.x, command.ClipRect.y - origin.y, command.ClipRect.z - origin.x, command.ClipRect.w - origin.y));
+			canvas->clipRect(
+				SkRect::MakeLTRB(command.ClipRect.x - origin.x, command.ClipRect.y - origin.y, command.ClipRect.z - origin.x, command.ClipRect.w - origin.y));
 			// The vertex colour modulates the atlas texel, which is how ImGui tints glyphs and shapes.
 			canvas->drawVertices(vertices, SkBlendMode::kModulate, paint);
 			canvas->restore();

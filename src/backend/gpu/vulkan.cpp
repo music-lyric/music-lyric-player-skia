@@ -1,5 +1,3 @@
-#include "backend/gpu/surface.h"
-
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
@@ -8,11 +6,13 @@
 #include <utility>
 #include <vector>
 
+#include "backend/gpu/surface.h"
+
 #ifndef WIN32_LEAN_AND_MEAN
-	#define WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
 #endif
 #ifndef NOMINMAX
-	#define NOMINMAX
+#define NOMINMAX
 #endif
 #include <windows.h>
 
@@ -421,8 +421,7 @@ namespace music_lyric_player::backend::gpu {
 
 			VkSurfaceFormatKHR chosen = formats[0];
 			for (const VkSurfaceFormatKHR& format : formats) {
-				if (format.format == VK_FORMAT_B8G8R8A8_UNORM &&
-					format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+				if (format.format == VK_FORMAT_B8G8R8A8_UNORM && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
 					chosen = format;
 					break;
 				}
@@ -435,12 +434,8 @@ namespace music_lyric_player::backend::gpu {
 
 			VkExtent2D extent = capabilities.currentExtent;
 			if (capabilities.currentExtent.width == UINT32_MAX) {
-				extent.width  = std::clamp(static_cast<std::uint32_t>(clientWidth),
-					capabilities.minImageExtent.width,
-					capabilities.maxImageExtent.width);
-				extent.height = std::clamp(static_cast<std::uint32_t>(clientHeight),
-					capabilities.minImageExtent.height,
-					capabilities.maxImageExtent.height);
+				extent.width  = std::clamp(static_cast<std::uint32_t>(clientWidth), capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+				extent.height = std::clamp(static_cast<std::uint32_t>(clientHeight), capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
 			}
 			if (extent.width == 0 || extent.height == 0) {
 				return false; // minimized; acquire skips the frame until the window is restored
@@ -452,8 +447,7 @@ namespace music_lyric_player::backend::gpu {
 				imageCount = capabilities.maxImageCount;
 			}
 
-			VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
-				VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+			VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 			usage &= capabilities.supportedUsageFlags;
 
 			VkSwapchainCreateInfoKHR createInfo{};
@@ -481,9 +475,7 @@ namespace music_lyric_player::backend::gpu {
 			this->swapchainImages.resize(imageCount);
 			vkGetSwapchainImagesKHR(this->shared->device, this->swapchain, &imageCount, this->swapchainImages.data());
 
-			const SkColorType colorType = this->swapchainFormat == VK_FORMAT_B8G8R8A8_UNORM
-				? kBGRA_8888_SkColorType
-				: kRGBA_8888_SkColorType;
+			const SkColorType colorType = this->swapchainFormat == VK_FORMAT_B8G8R8A8_UNORM ? kBGRA_8888_SkColorType : kRGBA_8888_SkColorType;
 
 			this->surfaces.assign(imageCount, nullptr);
 			for (std::uint32_t i = 0; i < imageCount; ++i) {
@@ -498,17 +490,10 @@ namespace music_lyric_player::backend::gpu {
 				imageInfo.fCurrentQueueFamily = VK_QUEUE_FAMILY_IGNORED;
 				imageInfo.fSharingMode        = VK_SHARING_MODE_EXCLUSIVE;
 
-				GrBackendRenderTarget renderTarget = GrBackendRenderTargets::MakeVk(
-					static_cast<int>(extent.width),
-					static_cast<int>(extent.height),
-					imageInfo);
+				GrBackendRenderTarget renderTarget = GrBackendRenderTargets::MakeVk(static_cast<int>(extent.width), static_cast<int>(extent.height), imageInfo);
 
-				this->surfaces[i] = SkSurfaces::WrapBackendRenderTarget(this->shared->context.get(),
-					renderTarget,
-					kTopLeft_GrSurfaceOrigin,
-					colorType,
-					nullptr,
-					nullptr);
+				this->surfaces[i] =
+					SkSurfaces::WrapBackendRenderTarget(this->shared->context.get(), renderTarget, kTopLeft_GrSurfaceOrigin, colorType, nullptr, nullptr);
 				if (this->surfaces[i] == nullptr) {
 					std::fprintf(stderr, "[backend] WrapBackendRenderTarget failed\n");
 					return false;
@@ -559,12 +544,7 @@ namespace music_lyric_player::backend::gpu {
 			}
 
 			std::uint32_t  imageIndex = 0;
-			const VkResult result     = vkAcquireNextImageKHR(this->shared->device,
-				this->swapchain,
-				UINT64_MAX,
-				acquireSemaphore,
-				VK_NULL_HANDLE,
-				&imageIndex);
+			const VkResult result     = vkAcquireNextImageKHR(this->shared->device, this->swapchain, UINT64_MAX, acquireSemaphore, VK_NULL_HANDLE, &imageIndex);
 			if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 				vkDestroySemaphore(this->shared->device, acquireSemaphore, nullptr);
 				this->needRecreate = true;
@@ -591,9 +571,7 @@ namespace music_lyric_player::backend::gpu {
 
 		void WindowSurface::present() {
 			GrFlushInfo                flushInfo{};
-			skgpu::MutableTextureState presentState = skgpu::MutableTextureStates::MakeVulkan(
-				VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-				this->shared->queueFamilyIndex);
+			skgpu::MutableTextureState presentState = skgpu::MutableTextureStates::MakeVulkan(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, this->shared->queueFamilyIndex);
 			this->shared->context->flush(this->currentSurface, flushInfo, &presentState);
 			this->shared->context->submit();
 

@@ -51,8 +51,7 @@ namespace music_lyric_player::rendering::utils::color::detail {
 			const double clamped = *parts[3] <= 0.0 ? 0.0 : (*parts[3] >= 1.0 ? 1.0 : *parts[3]);
 			alpha                = static_cast<int>(clamped * 255.0 + 0.5);
 		}
-		return SkColorSetARGB(
-			static_cast<U8CPU>(alpha),
+		return SkColorSetARGB(static_cast<U8CPU>(alpha),
 			static_cast<U8CPU>(clampChannel(*parts[0])),
 			static_cast<U8CPU>(clampChannel(*parts[1])),
 			static_cast<U8CPU>(clampChannel(*parts[2])));

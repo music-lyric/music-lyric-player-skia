@@ -12,9 +12,7 @@
 #include "include/effects/SkGradient.h"
 
 namespace music_lyric_player::rendering::components::line::normal::main::syllable::animation {
-	Mask::Mask(double lineStart, double lineDuration)
-	    : lineStart(lineStart),
-	      lineDuration(std::max(lineDuration, 0.0)) {}
+	Mask::Mask(double lineStart, double lineDuration) : lineStart(lineStart), lineDuration(std::max(lineDuration, 0.0)) {}
 
 	void Mask::update(const std::vector<Input>& inputs) {
 		this->segments.clear();
@@ -86,10 +84,11 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 			const float feather     = segment.input.height * static_cast<float>(normal);
 			const float positionMin = -(segment.input.width + feather);
-			const float cursor      = -segment.prefix - segment.input.width - 2.0f * feather + advance + feather * static_cast<float>(first) * firstProgress + feather * static_cast<float>(last) * lastProgress;
-			const float position    = std::clamp(cursor, positionMin, 0.0f);
-			frame.progress          = (position - positionMin) / -positionMin;
-			frame.feather           = feather;
+			const float cursor      = -segment.prefix - segment.input.width - 2.0f * feather + advance + feather * static_cast<float>(first) * firstProgress +
+				feather * static_cast<float>(last) * lastProgress;
+			const float position = std::clamp(cursor, positionMin, 0.0f);
+			frame.progress       = (position - positionMin) / -positionMin;
+			frame.feather        = feather;
 		}
 	}
 
@@ -101,7 +100,14 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		return index < this->frames.size() ? this->frames[index].feather : 0.0f;
 	}
 
-	void Mask::apply(SkCanvas* canvas, const SkRect& drawBounds, const SkRect& textBounds, float progress, float feather, SkColor unsungColor, SkColor sungColor, SkBlendMode blend) {
+	void Mask::apply(SkCanvas* canvas,
+		const SkRect&      drawBounds,
+		const SkRect&      textBounds,
+		float              progress,
+		float              feather,
+		SkColor            unsungColor,
+		SkColor            sungColor,
+		SkBlendMode        blend) {
 		progress = std::clamp(progress, 0.0f, 1.0f);
 		feather  = std::max(feather, 0.0f);
 
@@ -112,11 +118,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 			canvas->drawRect(drawBounds, paint);
 
 			canvas->save();
-			canvas->clipRect(SkRect::MakeLTRB(
-				drawBounds.left(),
-				drawBounds.top(),
-				textBounds.left() + textBounds.width() * progress,
-				drawBounds.bottom()));
+			canvas->clipRect(SkRect::MakeLTRB(drawBounds.left(), drawBounds.top(), textBounds.left() + textBounds.width() * progress, drawBounds.bottom()));
 			paint.setColor(sungColor);
 			canvas->drawRect(drawBounds, paint);
 			canvas->restore();
@@ -124,17 +126,12 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		}
 
 		// The transition band is exactly one feather wide and slides so its edges meet the word box, matching the web mask geometry.
-		const float transitionStart = textBounds.left() - feather + progress * (textBounds.width() + feather);
-		const SkPoint points[2]{
-			{transitionStart, textBounds.top()},
-			{transitionStart + feather, textBounds.top()}
-		};
-		const SkColor4f colors[2]{SkColor4f::FromColor(sungColor), SkColor4f::FromColor(unsungColor)};
-		const SkGradient::Interpolation interpolation{
-			SkGradient::Interpolation::InPremul::kNo,
+		const float                     transitionStart = textBounds.left() - feather + progress * (textBounds.width() + feather);
+		const SkPoint                   points[2]{{transitionStart, textBounds.top()}, {transitionStart + feather, textBounds.top()}};
+		const SkColor4f                 colors[2]{SkColor4f::FromColor(sungColor), SkColor4f::FromColor(unsungColor)};
+		const SkGradient::Interpolation interpolation{SkGradient::Interpolation::InPremul::kNo,
 			SkGradient::Interpolation::ColorSpace::kSRGB,
-			SkGradient::Interpolation::HueMethod::kShorter
-		};
+			SkGradient::Interpolation::HueMethod::kShorter};
 		paint.setShader(SkShaders::LinearGradient(points, {{colors, SkTileMode::kClamp}, interpolation}, nullptr));
 		canvas->drawRect(drawBounds, paint);
 	}

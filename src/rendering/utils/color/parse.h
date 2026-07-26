@@ -87,8 +87,7 @@ namespace music_lyric_player::rendering::utils::color {
 	 * An opacity of `1` leaves the color unchanged; `0` makes it fully transparent.
 	 */
 	inline SkColor withOpacity(SkColor color, double opacity) {
-		const double scale = opacity < 0.0 ? 0.0 : opacity > 1.0 ? 1.0
-									 : opacity;
+		const double scale = opacity < 0.0 ? 0.0 : opacity > 1.0 ? 1.0 : opacity;
 		const U8CPU  alpha = static_cast<U8CPU>(SkColorGetA(color) * scale + 0.5);
 		return SkColorSetA(color, alpha);
 	}

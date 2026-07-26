@@ -42,9 +42,7 @@ namespace music_lyric_player::rendering::core {
 			const double distance   = ::std::min(::std::abs(static_cast<double>(offset)), range);
 			const double normalized = distance / range;
 			const bool   trailing   = direction != 0 && offset * direction < 0;
-			const double eased      = trailing
-				     ? (1.0 - normalized) * (1.0 - normalized)
-				     : 1.0 - (1.0 - normalized) * (1.0 - normalized);
+			const double eased      = trailing ? (1.0 - normalized) * (1.0 - normalized) : 1.0 - (1.0 - normalized) * (1.0 - normalized);
 			return {duration, ::std::round(eased * range * step)};
 		}
 		case Mode::Stagger: {

@@ -1,7 +1,6 @@
 #include "window.h"
 
 #include <cstdio>
-
 #include <windows.h>
 
 #include <GLFW/glfw3.h>
@@ -69,29 +68,29 @@ namespace example {
 				return;
 			}
 			switch (key) {
-				case GLFW_KEY_R:
-					self->actions.push_back(InputAction::Restart);
-					break;
-				case GLFW_KEY_L:
-					self->actions.push_back(InputAction::LoadHex);
-					break;
-				case GLFW_KEY_O:
-					self->actions.push_back(InputAction::LoadAudio);
-					break;
-				case GLFW_KEY_P:
-					self->actions.push_back(InputAction::TogglePanel);
-					break;
-				case GLFW_KEY_LEFT:
-					self->actions.push_back(InputAction::SeekBackward);
-					break;
-				case GLFW_KEY_RIGHT:
-					self->actions.push_back(InputAction::SeekForward);
-					break;
-				case GLFW_KEY_SPACE:
-					self->actions.push_back(InputAction::TogglePause);
-					break;
-				default:
-					break;
+			case GLFW_KEY_R:
+				self->actions.push_back(InputAction::Restart);
+				break;
+			case GLFW_KEY_L:
+				self->actions.push_back(InputAction::LoadHex);
+				break;
+			case GLFW_KEY_O:
+				self->actions.push_back(InputAction::LoadAudio);
+				break;
+			case GLFW_KEY_P:
+				self->actions.push_back(InputAction::TogglePanel);
+				break;
+			case GLFW_KEY_LEFT:
+				self->actions.push_back(InputAction::SeekBackward);
+				break;
+			case GLFW_KEY_RIGHT:
+				self->actions.push_back(InputAction::SeekForward);
+				break;
+			case GLFW_KEY_SPACE:
+				self->actions.push_back(InputAction::TogglePause);
+				break;
+			default:
+				break;
 			}
 		});
 

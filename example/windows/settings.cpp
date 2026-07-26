@@ -73,8 +73,8 @@ namespace example {
 				}
 			};
 			auto master = [at](const char* title, const config::Root& current, config::Root& overrides, SettingsEdit& edit) {
-				const bool             value  = at(current).value();
-				const widgets::Master  header = widgets::groupMaster(title, value);
+				const bool            value  = at(current).value();
+				const widgets::Master header = widgets::groupMaster(title, value);
 				if (header.toggled) {
 					at(overrides)  = !value;
 					edit.changed   = true;
@@ -123,19 +123,19 @@ namespace example {
 		Field text(std::string label, At at) {
 			const auto buffer = std::make_shared<TextBuffer>();
 			auto       draw   = [at, buffer](const config::Root& current, config::Root& overrides, SettingsEdit& edit) {
-                // While the box is idle it follows the store, so an override applied elsewhere still shows up.
-                if (!buffer->editing) {
-                    const bool assigned = at(overrides).assigned();
-                    std::snprintf(buffer->data.data(), buffer->data.size(), "%s", assigned ? at(overrides).value().c_str() : "");
-                }
-                ImGui::InputTextWithHint("##value", at(current).value().c_str(), buffer->data.data(), buffer->data.size());
-                buffer->editing = ImGui::IsItemActive();
-                // An emptied box cannot drop the override: a leaf has no way to be unset, and the renderer would keep the merged value anyway.
-                if (ImGui::IsItemDeactivatedAfterEdit() && buffer->data[0] != '\0') {
-                    at(overrides)  = std::string(buffer->data.data());
-                    edit.changed   = true;
-                    edit.committed = true;
-                }
+				// While the box is idle it follows the store, so an override applied elsewhere still shows up.
+				if (!buffer->editing) {
+					const bool assigned = at(overrides).assigned();
+					std::snprintf(buffer->data.data(), buffer->data.size(), "%s", assigned ? at(overrides).value().c_str() : "");
+				}
+				ImGui::InputTextWithHint("##value", at(current).value().c_str(), buffer->data.data(), buffer->data.size());
+				buffer->editing = ImGui::IsItemActive();
+				// An emptied box cannot drop the override: a leaf has no way to be unset, and the renderer would keep the merged value anyway.
+				if (ImGui::IsItemDeactivatedAfterEdit() && buffer->data[0] != '\0') {
+					at(overrides)  = std::string(buffer->data.data());
+					edit.changed   = true;
+					edit.committed = true;
+				}
 			};
 			return Field{std::move(label), nullptr, std::move(draw)};
 		}
@@ -156,23 +156,23 @@ namespace example {
 		Field select(std::string label, At at, std::initializer_list<Option<E>> options) {
 			const std::vector<Option<E>> values(options);
 			auto                         draw = [at, values](const config::Root& current, config::Root& overrides, SettingsEdit& edit) {
-                const E                  value = at(current).value();
-                std::vector<const char*> labels;
-                int                      selected = -1;
-                labels.reserve(values.size());
-                for (std::size_t i = 0; i < values.size(); ++i) {
-                    labels.push_back(values[i].label);
-                    if (values[i].value == value) {
-                        selected = static_cast<int>(i);
-                    }
-                }
+				const E                  value = at(current).value();
+				std::vector<const char*> labels;
+				int                      selected = -1;
+				labels.reserve(values.size());
+				for (std::size_t i = 0; i < values.size(); ++i) {
+					labels.push_back(values[i].label);
+					if (values[i].value == value) {
+						selected = static_cast<int>(i);
+					}
+				}
 
-                const int picked = widgets::select("##value", labels.data(), static_cast<int>(labels.size()), selected, at(overrides).assigned());
-                if (picked >= 0) {
-                    at(overrides)  = values[static_cast<std::size_t>(picked)].value;
-                    edit.changed   = true;
-                    edit.committed = true;
-                }
+				const int picked = widgets::select("##value", labels.data(), static_cast<int>(labels.size()), selected, at(overrides).assigned());
+				if (picked >= 0) {
+					at(overrides)  = values[static_cast<std::size_t>(picked)].value;
+					edit.changed   = true;
+					edit.committed = true;
+				}
 			};
 			return Field{std::move(label), nullptr, std::move(draw)};
 		}
@@ -308,8 +308,8 @@ namespace example {
 		 */
 		std::vector<Section> layoutSections() {
 			std::vector<Field> layout;
-			layout.push_back(select<config::layout::Align>(
-				"Align", [](auto& c) -> auto& { return c.layout.align; },
+			layout.push_back(select<config::layout::Align>("Align",
+				[](auto& c) -> auto& { return c.layout.align; },
 				{{"Left", config::layout::Align::Left}, {"Center", config::layout::Align::Center}, {"Right", config::layout::Align::Right}}));
 			layout.push_back(text("Line gap", [](auto& c) -> auto& { return c.layout.gap; }));
 
@@ -340,9 +340,12 @@ namespace example {
 
 			std::vector<Field> head;
 			head.push_back(number("Anchor", [](auto& c) -> auto& { return c.scroll.anchor; }, 0.0, 1.0, 0.01));
-			head.push_back(select<config::scroll::Mode>(
-				"Mode", [](auto& c) -> auto& { return c.scroll.animation.mode; },
-				{{"Smooth", config::scroll::Mode::Smooth}, {"Ripple", config::scroll::Mode::Ripple}, {"Directional", config::scroll::Mode::Directional}, {"Stagger", config::scroll::Mode::Stagger}}));
+			head.push_back(select<config::scroll::Mode>("Mode",
+				[](auto& c) -> auto& { return c.scroll.animation.mode; },
+				{{"Smooth", config::scroll::Mode::Smooth},
+					{"Ripple", config::scroll::Mode::Ripple},
+					{"Directional", config::scroll::Mode::Directional},
+					{"Stagger", config::scroll::Mode::Stagger}}));
 
 			std::vector<Field> delay;
 			delay.push_back(number("Delay", [smooth](auto& c) -> auto& { return smooth(c).delay; }, 0.0, 1000.0, 10.0));
@@ -365,8 +368,8 @@ namespace example {
 			const auto emphasize = [](auto& c) -> auto& { return c.line.normal.main.syllable.word.animation.emphasize; };
 
 			std::vector<Field> head;
-			head.push_back(select<config::line::normal::main::Use>(
-				"Content", [](auto& c) -> auto& { return c.line.normal.main.use; },
+			head.push_back(select<config::line::normal::main::Use>("Content",
+				[](auto& c) -> auto& { return c.line.normal.main.use; },
 				{{"Syllable", config::line::normal::main::Use::Syllable}, {"Plain", config::line::normal::main::Use::Plain}}));
 
 			std::vector<Field> floating;
@@ -462,7 +465,10 @@ namespace example {
 			std::vector<Section> children;
 			children.push_back(Section{"Normal base", std::move(baseGroups), {}});
 			children.push_back(mainSection());
-			children.push_back(Section{"Normal annotation", std::move(annotationGroups), {annotationRow("Roman", [](auto& c) -> auto& { return c.line.normal.annotation.roman; }), annotationRow("Translate", [](auto& c) -> auto& { return c.line.normal.annotation.translate; })}});
+			children.push_back(Section{"Normal annotation",
+				std::move(annotationGroups),
+				{annotationRow("Roman", [](auto& c) -> auto& { return c.line.normal.annotation.roman; }),
+					annotationRow("Translate", [](auto& c) -> auto& { return c.line.normal.annotation.translate; })}});
 			children.push_back(Section{"Interlude", std::move(interludeGroups), {}});
 			return Section{"Line", {}, std::move(children)};
 		}

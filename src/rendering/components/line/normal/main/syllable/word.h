@@ -48,7 +48,16 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		 * Paints the inactive word, its timed active-color reveal, and its float transform.
 		 * `inactiveOpacity` is the line-wide word opacity used while inactive, eased by the owning element so a deactivating line fades out instead of snapping.
 		 */
-		void paint(SkCanvas* canvas, float lineX, float lineY, double now, bool active, bool maskEnabled, float maskProgress, float maskFeather, float inactiveOpacity, const common::RenderContext& context) const;
+		void paint(SkCanvas*                 canvas,
+			float                        lineX,
+			float                        lineY,
+			double                       now,
+			bool                         active,
+			bool                         maskEnabled,
+			float                        maskProgress,
+			float                        maskFeather,
+			float                        inactiveOpacity,
+			const common::RenderContext& context) const;
 
 		/**
 		 * Returns the timing and measured geometry consumed by the line-wide mask host.
@@ -99,7 +108,15 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		 * Reveals the word by wiping alpha from the unsung color to the sung color across its width.
 		 * A lit glow renders in its own layer beneath the body, wiped by the same band with kDstIn so the halo keeps its color while its alpha follows the mask.
 		 */
-		void paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor unsungColor, SkColor sungColor, const std::vector<animation::Emphasize::Transform>* transforms, const GlowPaint* glow) const;
+		void paintReveal(SkCanvas*                                  canvas,
+			float                                               x,
+			float                                               y,
+			float                                               progress,
+			float                                               feather,
+			SkColor                                             unsungColor,
+			SkColor                                             sungColor,
+			const std::vector<animation::Emphasize::Transform>* transforms,
+			const GlowPaint*                                    glow) const;
 
 		std::string text;
 		double      start;

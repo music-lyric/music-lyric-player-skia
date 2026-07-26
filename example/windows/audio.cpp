@@ -16,9 +16,8 @@
 #define NOMINMAX
 #endif
 
-#include <windows.h>
-
 #include <commdlg.h>
+#include <windows.h>
 
 #include "miniaudio.h"
 
@@ -41,8 +40,7 @@ namespace example {
 		std::uint64_t epoch       = 0;
 	};
 
-	AudioPlayer::AudioPlayer()
-	    : state(std::make_unique<State>()) {}
+	AudioPlayer::AudioPlayer() : state(std::make_unique<State>()) {}
 
 	AudioPlayer::~AudioPlayer() {
 		if (this->state->soundReady) {
@@ -165,8 +163,7 @@ namespace example {
 		return this->state->epoch;
 	}
 
-	PlaybackClock::PlaybackClock(const AudioPlayer& source)
-	    : source(source) {}
+	PlaybackClock::PlaybackClock(const AudioPlayer& source) : source(source) {}
 
 	double PlaybackClock::now() const {
 		// No track yet: keep reporting wall time so the demo behaves as it did before audio existed.
@@ -203,8 +200,8 @@ namespace example {
 		}
 
 		// Interpolate on wall time between the device's coarse updates, without drifting away when it stalls or stepping backwards.
-		double value = std::min(this->anchorAudio + (wallNow - this->anchorWall), this->anchorAudio + kMaxExtrapolationMs);
-		value        = std::max(value, this->lastValue);
+		double value    = std::min(this->anchorAudio + (wallNow - this->anchorWall), this->anchorAudio + kMaxExtrapolationMs);
+		value           = std::max(value, this->lastValue);
 		this->lastValue = value;
 		return value;
 	}

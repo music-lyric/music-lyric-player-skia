@@ -27,7 +27,7 @@ namespace music_lyric_player::utils::config {
 		 * Seeds a string default from a literal without marking the leaf set.
 		 */
 		Property(const char* value)
-		    requires std::is_same_v<T, std::string>
+			requires std::is_same_v<T, std::string>
 		    : stored(value) {}
 
 		operator const T&() const {
@@ -64,7 +64,8 @@ namespace music_lyric_player::utils::config {
 		 * A dedicated overload keeps a literal from being an ambiguous match between the value and copy assignments.
 		 */
 		Property& operator=(const char* value)
-		    requires std::is_same_v<T, std::string> {
+			requires std::is_same_v<T, std::string>
+		{
 			this->stored = value;
 			this->isSet  = true;
 			return *this;

@@ -24,11 +24,10 @@ namespace music_lyric_player::rendering::animation {
 			const float clamped = value < 0.0f ? 0.0f : (value > 255.0f ? 255.0f : value);
 			return static_cast<U8CPU>(clamped + 0.5f);
 		};
-		return SkColorSetARGB(
-		    channel(SkColorGetA(from), SkColorGetA(to)),
-		    channel(SkColorGetR(from), SkColorGetR(to)),
-		    channel(SkColorGetG(from), SkColorGetG(to)),
-		    channel(SkColorGetB(from), SkColorGetB(to)));
+		return SkColorSetARGB(channel(SkColorGetA(from), SkColorGetA(to)),
+			channel(SkColorGetR(from), SkColorGetR(to)),
+			channel(SkColorGetG(from), SkColorGetG(to)),
+			channel(SkColorGetB(from), SkColorGetB(to)));
 	}
 } // namespace music_lyric_player::rendering::animation
 

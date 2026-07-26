@@ -1,7 +1,6 @@
 #include "text.h"
 
 #include <cstddef>
-
 #include <windows.h>
 
 namespace example {

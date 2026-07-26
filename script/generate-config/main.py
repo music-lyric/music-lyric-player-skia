@@ -1,5 +1,5 @@
-#!/usr/bin/env python3
-"""Generate C++ config headers from JSON schema(s).
+"""
+Generate C++ config headers from JSON schema.
 
 Reads each `*.schema.json` (all of them under the project when no path is given) and writes its `file` header alongside: one config struct per node plus a Glaze enum-name meta header for `defaultInstance` roots.
 The schema shape is documented in the `*.schema.json` files themselves.

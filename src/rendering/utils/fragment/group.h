@@ -7,7 +7,6 @@
 #include "include/core/SkColor.h"
 #include "include/core/SkPaint.h"
 #include "include/core/SkRect.h"
-
 #include "rendering/utils/fragment/glyph.h"
 
 namespace music_lyric_player::rendering::utils::fragment {

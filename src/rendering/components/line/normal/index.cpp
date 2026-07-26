@@ -40,24 +40,28 @@ namespace music_lyric_player::rendering::components::line::normal {
 		 * Rebuilds and lays out one annotation row for the current relayout.
 		 * The row is dropped when hidden or empty, while its `%` font size resolves against `baseFontPx`.
 		 */
-		void layoutAnnotationRow(std::unique_ptr<annotation::Row>& row, bool show, const std::optional<std::string>& text, const config::common::FontConfig& font, const std::string& fallbackSize, float baseFontPx, float width, const common::RenderContext& context) {
+		void layoutAnnotationRow(std::unique_ptr<annotation::Row>& row,
+			bool                                               show,
+			const std::optional<std::string>&                  text,
+			const config::common::FontConfig&                  font,
+			const std::string&                                 fallbackSize,
+			float                                              baseFontPx,
+			float                                              width,
+			const common::RenderContext&                       context) {
 			if (!show || !text || text->empty()) {
 				row.reset();
 				return;
 			}
 
-			row                 = std::make_unique<annotation::Row>(*text);
-			const float  size   = static_cast<float>(std::max(resolveLength(font.size.value(), fallbackSize, baseFontPx), 1.0));
+			row              = std::make_unique<annotation::Row>(*text);
+			const float size = static_cast<float>(std::max(resolveLength(font.size.value(), fallbackSize, baseFontPx), 1.0));
 			// Annotation rows never move on their own, so their glyphs stay on the pixel grid.
 			const SkFont skFont = utils::shaping::buildBodyFont(context.fontMgr, font.family.value(), size, false);
 			row->layout(width, context, skFont, context.config.layout.align.value());
 		}
 	} // namespace
 
-	Element::Element(int index, const music_lyric_model::parsed::Line& info, bool isSyllable)
-	    : base::Element(index),
-	      info(info),
-	      syllableEnable(isSyllable) {
+	Element::Element(int index, const music_lyric_model::parsed::Line& info, bool isSyllable) : base::Element(index), info(info), syllableEnable(isSyllable) {
 		// The base opacity eases on every state change with CSS `ease`; unlike the word, it never snaps on activation.
 		this->baseOpacity.setEasing(animation::CubicBezier{0.25f, 0.1f, 0.25f, 1.0f});
 		this->baseOpacity.setDuration(kBaseFadeDurationMs);
@@ -104,11 +108,25 @@ namespace music_lyric_player::rendering::components::line::normal {
 		const bool showTranslate = ann.visible.value() && ann.translate.visible.value();
 
 		// The line-base pixel size is the reference a `%` annotation size scales against, matching the web inheritance chain.
-		const float        baseFontPx   = static_cast<float>(std::max(resolveLength(normal.base.font.size.value(), config::Default.line.normal.base.font.size.value()), 1.0));
+		const float        baseFontPx = static_cast<float>(std::max(resolveLength(normal.base.font.size.value(), config::Default.line.normal.base.font.size.value()), 1.0));
 		const std::string& fallbackSize = config::Default.line.normal.annotation.base.font.size.value();
 
-		layoutAnnotationRow(this->romanRow, showRoman, showRoman ? music_lyric_model::parsed::getParsedLineRoman(this->info, toLanguage(ann.roman.language.value())) : std::nullopt, ann.roman.font, fallbackSize, baseFontPx, this->width, context);
-		layoutAnnotationRow(this->translateRow, showTranslate, showTranslate ? music_lyric_model::parsed::getParsedLineTranslation(this->info, toLanguage(ann.translate.language.value())) : std::nullopt, ann.translate.font, fallbackSize, baseFontPx, this->width, context);
+		layoutAnnotationRow(this->romanRow,
+			showRoman,
+			showRoman ? music_lyric_model::parsed::getParsedLineRoman(this->info, toLanguage(ann.roman.language.value())) : std::nullopt,
+			ann.roman.font,
+			fallbackSize,
+			baseFontPx,
+			this->width,
+			context);
+		layoutAnnotationRow(this->translateRow,
+			showTranslate,
+			showTranslate ? music_lyric_model::parsed::getParsedLineTranslation(this->info, toLanguage(ann.translate.language.value())) : std::nullopt,
+			ann.translate.font,
+			fallbackSize,
+			baseFontPx,
+			this->width,
+			context);
 
 		this->romanHeight     = this->romanRow ? this->romanRow->height() : 0.0f;
 		this->translateHeight = this->translateRow ? this->translateRow->height() : 0.0f;
@@ -154,7 +172,8 @@ namespace music_lyric_player::rendering::components::line::normal {
 		if (this->syllableElement) {
 			this->syllableElement->paint(canvas, x, y + mainY, now, active, played, context);
 		} else if (this->plainElement) {
-			const SkColor playedColor = utils::color::resolve(cfg.line.normal.main.syllable.style.played.color, config::Default.line.normal.main.syllable.style.played.color);
+			const SkColor playedColor =
+				utils::color::resolve(cfg.line.normal.main.syllable.style.played.color, config::Default.line.normal.main.syllable.style.played.color);
 			const SkColor normalStyle = utils::color::withOpacity(normalColor, cfg.line.normal.main.syllable.style.normal.opacity);
 			const SkColor activeStyle = utils::color::withOpacity(activeColor, cfg.line.normal.main.syllable.style.active.opacity);
 			// The played tint mirrors the web `.plain` `apply-line-style('main-syllable')` `[played]` variant so a sung plain line dims to the same level as the timed path.

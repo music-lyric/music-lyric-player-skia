@@ -20,14 +20,12 @@ namespace music_lyric_player {
 		using TimeHook  = std::function<void(double)>;
 		using LinesHook = std::function<void(const std::vector<int>&, int, bool)>;
 
-		explicit Player(music_lyric_player_handle* handle) noexcept
-			: handle(handle) {}
+		explicit Player(music_lyric_player_handle* handle) noexcept : handle(handle) {}
 
 		Player(const Player&)            = delete;
 		Player& operator=(const Player&) = delete;
 
-		Player(Player&& other) noexcept
-			: handle(std::exchange(other.handle, nullptr)), hooks(std::move(other.hooks)) {}
+		Player(Player&& other) noexcept : handle(std::exchange(other.handle, nullptr)), hooks(std::move(other.hooks)) {}
 
 		Player& operator=(Player&& other) noexcept {
 			if (this != &other) {

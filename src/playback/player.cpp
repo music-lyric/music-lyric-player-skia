@@ -93,21 +93,20 @@ namespace music_lyric_player::playback {
 		}
 	} // namespace
 
-	Player::Player()
-	    : Player(defaultClock()) {}
+	Player::Player() : Player(defaultClock()) {}
 
-	Player::Player(const utils::Clock& clock)
-	    : clockRef(clock) {
-		this->configListenerId = this->config.onUpdate.add([this](const config::Root& changes, const config::Root&) {
-			onConfigUpdate(changes);
-		});
+	Player::Player(const utils::Clock& clock) : clockRef(clock) {
+		this->configListenerId = this->config.onUpdate.add([this](const config::Root& changes, const config::Root&) { onConfigUpdate(changes); });
 	}
 
 	void Player::updateLyric(const music_lyric_model::parsed::Info& info) {
 		// Reject parse results whose lyric format version is incompatible, clearing any current lyric.
 		music_lyric_model::parsed::Info target = info;
 		if (!satisfiesCaret(info.version, music_lyric_model::SCHEMA_VERSION)) {
-			std::fprintf(stderr, "[music-lyric-player] ignored lyric with incompatible version \"%s\", expected \"^%s\"\n", info.version.c_str(), music_lyric_model::SCHEMA_VERSION);
+			std::fprintf(stderr,
+				"[music-lyric-player] ignored lyric with incompatible version \"%s\", expected \"^%s\"\n",
+				info.version.c_str(),
+				music_lyric_model::SCHEMA_VERSION);
 			target = music_lyric_model::parsed::Info{};
 		}
 

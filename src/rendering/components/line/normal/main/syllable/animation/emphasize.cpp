@@ -46,11 +46,17 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		return this->fn;
 	}
 
-	Emphasize::Emphasize(double start, double duration)
-	    : start(std::isfinite(start) ? start : 0.0),
-	      duration(std::isfinite(duration) ? std::max(duration, 0.0) : 0.0) {}
+	Emphasize::Emphasize(double start, double duration) : start(std::isfinite(start) ? start : 0.0), duration(std::isfinite(duration) ? std::max(duration, 0.0) : 0.0) {}
 
-	const std::vector<Emphasize::Transform>& Emphasize::sample(double currentTime, double now, bool active, double minDuration, double disableRate, std::size_t cellCount, const MainSettings& main, const FloatSettings& floating, const GlowSettings& glow) const {
+	const std::vector<Emphasize::Transform>& Emphasize::sample(double currentTime,
+		double                                                    now,
+		bool                                                      active,
+		double                                                    minDuration,
+		double                                                    disableRate,
+		std::size_t                                               cellCount,
+		const MainSettings&                                       main,
+		const FloatSettings&                                      floating,
+		const GlowSettings&                                       glow) const {
 		this->transforms.assign(cellCount, Transform{});
 		this->glowRadiusValue = 0.0f;
 
@@ -116,9 +122,9 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 				// Characters fan outward from the word center, so the middle cell stays put while the edges spread the most.
 				const float spread = static_cast<float>(cellCount) * 0.5f - static_cast<float>(i);
 				Transform&  cell   = this->transforms[i];
-				cell.scale = 1.0f + peakScale * factor;
-				cell.dx    = -peakDx * spread * factor;
-				cell.dy    = peakDy * factor;
+				cell.scale         = 1.0f + peakScale * factor;
+				cell.dx            = -peakDx * spread * factor;
+				cell.dy            = peakDy * factor;
 			}
 		}
 		if (floatEnable) {

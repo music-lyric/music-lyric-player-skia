@@ -34,8 +34,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		}
 	} // namespace
 
-	Element::Element(const music_lyric_model::parsed::Line& info)
-	    : mask(lineStart(info), lineDuration(info)) {
+	Element::Element(const music_lyric_model::parsed::Line& info) : mask(lineStart(info), lineDuration(info)) {
 		// CSS `ease` over 0.8s; only deactivation animates.
 		this->wordOpacity.setEasing(::music_lyric_player::rendering::animation::CubicBezier{0.25f, 0.1f, 0.25f, 1.0f});
 		this->wordOpacity.setDuration(kWordFadeDurationMs);
@@ -75,7 +74,8 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		}
 		this->mask.update(maskInputs);
 
-		const float fontSize   = static_cast<float>(std::max(resolveLength(context.config.line.normal.main.syllable.font.size, config::Default.line.normal.main.syllable.font.size), 0.0));
+		const float fontSize =
+			static_cast<float>(std::max(resolveLength(context.config.line.normal.main.syllable.font.size, config::Default.line.normal.main.syllable.font.size), 0.0));
 		const float spaceWidth = fontSize * 0.3f;
 
 		std::vector<utils::layout::InlineCell> cells;

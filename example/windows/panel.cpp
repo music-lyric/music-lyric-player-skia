@@ -18,7 +18,7 @@
 #include "widgets.h"
 
 #ifndef MUSIC_LYRIC_PLAYER_VERSION
-#	define MUSIC_LYRIC_PLAYER_VERSION "dev"
+#define MUSIC_LYRIC_PLAYER_VERSION "dev"
 #endif
 
 namespace example {
@@ -32,9 +32,9 @@ namespace example {
 		 */
 		SkColor toSkColor(ImU32 value) {
 			return SkColorSetARGB(static_cast<std::uint8_t>((value >> IM_COL32_A_SHIFT) & 0xFF),
-			                      static_cast<std::uint8_t>((value >> IM_COL32_R_SHIFT) & 0xFF),
-			                      static_cast<std::uint8_t>((value >> IM_COL32_G_SHIFT) & 0xFF),
-			                      static_cast<std::uint8_t>((value >> IM_COL32_B_SHIFT) & 0xFF));
+				static_cast<std::uint8_t>((value >> IM_COL32_R_SHIFT) & 0xFF),
+				static_cast<std::uint8_t>((value >> IM_COL32_G_SHIFT) & 0xFF),
+				static_cast<std::uint8_t>((value >> IM_COL32_B_SHIFT) & 0xFF));
 		}
 
 		/**
@@ -123,8 +123,11 @@ namespace example {
 			space(metrics.framePadding);
 			widgets::heading("Audio", "mp3 / wav / flac");
 			space(4.0f * metrics.scale);
-			if (widgets::picker("##audio", widgets::Icon::Music, state.hasAudio ? "Replace the track" : "Choose an audio file",
-			                    state.hasAudio ? state.trackName.c_str() : "No file loaded", state.hasAudio)) {
+			if (widgets::picker("##audio",
+				    widgets::Icon::Music,
+				    state.hasAudio ? "Replace the track" : "Choose an audio file",
+				    state.hasAudio ? state.trackName.c_str() : "No file loaded",
+				    state.hasAudio)) {
 				actions.openAudio = true;
 			}
 			widgets::endInset();
@@ -140,8 +143,11 @@ namespace example {
 			space(metrics.framePadding);
 			widgets::heading("Lyric", "protobuf hex");
 			space(4.0f * metrics.scale);
-			if (widgets::picker("##lyric", widgets::Icon::Lyric, state.hasLyric ? "Replace the lyric" : "Load a lyric",
-			                    state.hasLyric ? state.lyricName.c_str() : "No lyric loaded", state.hasLyric)) {
+			if (widgets::picker("##lyric",
+				    widgets::Icon::Lyric,
+				    state.hasLyric ? "Replace the lyric" : "Load a lyric",
+				    state.hasLyric ? state.lyricName.c_str() : "No lyric loaded",
+				    state.hasLyric)) {
 				actions.loadLyric = true;
 			}
 
@@ -267,7 +273,7 @@ namespace example {
 			return actions;
 		}
 
-		const theme::Metrics& metrics = theme::metrics();
+		const theme::Metrics& metrics     = theme::metrics();
 		const float           frameWidth  = static_cast<float>(width);
 		const float           frameHeight = static_cast<float>(height);
 		const float           sidebar     = static_cast<float>(this->width());
@@ -291,9 +297,10 @@ namespace example {
 			// The column background is painted below through Skia, so the ImGui window itself stays transparent.
 			ImGui::SetNextWindowBgAlpha(0.0f);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-			ImGui::Begin("sidebar", nullptr,
-			             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse |
-			                 ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar);
+			ImGui::Begin("sidebar",
+				nullptr,
+				ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse |
+					ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar);
 
 			drawHeader();
 
@@ -307,15 +314,15 @@ namespace example {
 			ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
 			ImGui::BeginChild("##body", ImVec2(0.0f, 0.0f), ImGuiChildFlags_None);
 			switch (this->tab) {
-				case 0:
-					drawAudioTab(state, actions);
-					break;
-				case 1:
-					drawLyricTab(state, actions);
-					break;
-				default:
-					drawSettingsTab(state, actions);
-					break;
+			case 0:
+				drawAudioTab(state, actions);
+				break;
+			case 1:
+				drawLyricTab(state, actions);
+				break;
+			default:
+				drawSettingsTab(state, actions);
+				break;
 			}
 			ImGui::EndChild();
 			ImGui::PopStyleColor();
@@ -329,9 +336,10 @@ namespace example {
 		ImGui::SetNextWindowSize(ImVec2(frameWidth - sidebar, barHeight));
 		ImGui::SetNextWindowBgAlpha(0.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-		ImGui::Begin("transport", nullptr,
-		             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse |
-		                 ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar);
+		ImGui::Begin("transport",
+			nullptr,
+			ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus |
+				ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar);
 		{
 			char position[16] = {};
 			char total[16]    = {};
@@ -375,8 +383,12 @@ namespace example {
 			}
 
 			place(track, metrics.sliderHeight);
-			const widgets::Drag seek = widgets::slider("##seek", track, static_cast<float>(state.positionMs), 0.0f,
-			                                           static_cast<float>(std::max(state.durationMs, 1.0)), state.durationMs <= 0.0);
+			const widgets::Drag seek = widgets::slider("##seek",
+				track,
+				static_cast<float>(state.positionMs),
+				0.0f,
+				static_cast<float>(std::max(state.durationMs, 1.0)),
+				state.durationMs <= 0.0);
 			if (seek.changed) {
 				actions.seek = static_cast<double>(seek.value);
 			}

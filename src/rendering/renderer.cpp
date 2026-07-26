@@ -29,9 +29,7 @@ namespace music_lyric_player::rendering {
 	} // namespace
 
 	Renderer::Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const music_lyric_player::utils::Clock& clock)
-	    : player(player),
-	      fontMgr(std::move(fontMgr)),
-	      clock(clock) {
+	    : player(player), fontMgr(std::move(fontMgr)), clock(clock) {
 		// Unicode backend drives the shaper's word / grapheme / line-break boundaries.
 		this->unicode = SkUnicodes::ICU::Make();
 
@@ -40,15 +38,9 @@ namespace music_lyric_player::rendering {
 		// It shares the ICU backend for BiDi / script so minority scripts survive, and the self-laid-out timed words pass an unbounded width so it never breaks them.
 		this->shaper = SkShapers::HB::ShaperDrivenWrapper(this->unicode, this->fontMgr);
 
-		this->lyricListener  = this->player.onLyricUpdate.add([this](const music_lyric_model::parsed::Info& info) {
-			handleLyricUpdate(info);
-		});
-		this->linesListener  = this->player.onLinesUpdate.add([this](const std::vector<int>&, int firstIndex, bool) {
-			handleLinesUpdate(firstIndex);
-		});
-		this->configListener = this->config.onUpdate.add([this](const config::Root&, const config::Root&) {
-			handleConfigUpdate();
-		});
+		this->lyricListener  = this->player.onLyricUpdate.add([this](const music_lyric_model::parsed::Info& info) { handleLyricUpdate(info); });
+		this->linesListener  = this->player.onLinesUpdate.add([this](const std::vector<int>&, int firstIndex, bool) { handleLinesUpdate(firstIndex); });
+		this->configListener = this->config.onUpdate.add([this](const config::Root&, const config::Root&) { handleConfigUpdate(); });
 
 		// Adopt any lyric already loaded before the renderer attached.
 		if (!this->player.currentInfo().lines.empty()) {
@@ -144,9 +136,7 @@ namespace music_lyric_player::rendering {
 		this->layout.update(this->lines.all(), gap);
 
 		// Centre the focus (primary active) line on the anchor, then ease the scroll towards it.
-		const std::size_t focus   = (this->activeIndex >= 0 && this->activeIndex < static_cast<int>(this->lines.size()))
-			? static_cast<std::size_t>(this->activeIndex)
-			: 0;
+		const std::size_t focus   = (this->activeIndex >= 0 && this->activeIndex < static_cast<int>(this->lines.size())) ? static_cast<std::size_t>(this->activeIndex) : 0;
 		const float       anchorY = logicalH * static_cast<float>(cfg.scroll.anchor);
 		const float       targetY = this->layout.top(focus) + this->lines.at(focus).height() * 0.5f - anchorY;
 

@@ -73,7 +73,15 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		 * The glow shares the main timeline and pulses each cell's halo alpha; its word-level radius is exposed through glowRadius().
 		 * Cells that never started before the line deactivated hold rest through the wind-down, so a skipped line cannot flash its upcoming words.
 		 */
-		const std::vector<Transform>& sample(double currentTime, double now, bool active, double minDuration, double disableRate, std::size_t cellCount, const MainSettings& main, const FloatSettings& floating, const GlowSettings& glow) const;
+		const std::vector<Transform>& sample(double currentTime,
+			double                              now,
+			bool                                active,
+			double                              minDuration,
+			double                              disableRate,
+			std::size_t                         cellCount,
+			const MainSettings&                 main,
+			const FloatSettings&                floating,
+			const GlowSettings&                 glow) const;
 
 		/**
 		 * Returns the word-level glow blur radius derived from the last sample's intensity, zero while the glow is off or at rest.

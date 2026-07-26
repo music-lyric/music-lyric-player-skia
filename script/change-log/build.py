@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Generate the change log from conventional commits.
 

@@ -73,8 +73,7 @@ struct music_lyric_player_renderer_handle {
 	music_lyric_player::rendering::Renderer                    renderer;
 
 	music_lyric_player_renderer_handle(music_lyric_player::playback::Player& player, void* window)
-	    : surface(music_lyric_player::backend::gpu::createWindowSurface({window})),
-	      renderer(player, music_lyric_player::backend::font::createFontMgr(), player.clock()) {}
+	    : surface(music_lyric_player::backend::gpu::createWindowSurface({window})), renderer(player, music_lyric_player::backend::font::createFontMgr(), player.clock()) {}
 };
 
 music_lyric_player_handle* music_lyric_player_create(void) {
@@ -87,8 +86,7 @@ void music_lyric_player_destroy(music_lyric_player_handle* player) {
 
 void music_lyric_player_update_lyric(music_lyric_player_handle* player, const uint8_t* data, size_t size) {
 	guardVoid([&] {
-		const music_lyric_model::parsed::Info info = music_lyric_model::parsed::decodeParsedInfo(
-			std::vector<std::uint8_t>(data, data + size));
+		const music_lyric_model::parsed::Info info = music_lyric_model::parsed::decodeParsedInfo(std::vector<std::uint8_t>(data, data + size));
 		player->player.updateLyric(info);
 	});
 }
@@ -130,13 +128,14 @@ int music_lyric_player_current_active(const music_lyric_player_handle* player) {
 }
 
 size_t music_lyric_player_current_index(const music_lyric_player_handle* player, int* out, size_t capacity) {
-	return guard([&]() -> size_t {
-		const std::vector<int> indices = player->player.currentIndex();
-		if (out != nullptr) {
-			std::copy_n(indices.begin(), std::min(capacity, indices.size()), out);
-		}
-		return indices.size();
-	},
+	return guard(
+		[&]() -> size_t {
+			const std::vector<int> indices = player->player.currentIndex();
+			if (out != nullptr) {
+				std::copy_n(indices.begin(), std::min(capacity, indices.size()), out);
+			}
+			return indices.size();
+		},
 		size_t{0});
 }
 
@@ -145,33 +144,29 @@ double music_lyric_player_convert_content_time(const music_lyric_player_handle* 
 }
 
 void music_lyric_player_on_play(music_lyric_player_handle* player, music_lyric_player_time_callback callback, void* user) {
-	guardVoid([&] {
-		player->player.onPlay.add([callback, user](double time) { callback(time, user); });
-	});
+	guardVoid([&] { player->player.onPlay.add([callback, user](double time) { callback(time, user); }); });
 }
 
 void music_lyric_player_on_pause(music_lyric_player_handle* player, music_lyric_player_time_callback callback, void* user) {
-	guardVoid([&] {
-		player->player.onPause.add([callback, user](double time) { callback(time, user); });
-	});
+	guardVoid([&] { player->player.onPause.add([callback, user](double time) { callback(time, user); }); });
 }
 
 void music_lyric_player_on_lines_update(music_lyric_player_handle* player, music_lyric_player_lines_callback callback, void* user) {
 	guardVoid([&] {
-		player->player.onLinesUpdate.add([callback, user](const std::vector<int>& indices, int active, bool isSeek) {
-			callback(indices.data(), indices.size(), active, isSeek ? 1 : 0, user);
-		});
+		player->player.onLinesUpdate.add(
+			[callback, user](const std::vector<int>& indices, int active, bool isSeek) { callback(indices.data(), indices.size(), active, isSeek ? 1 : 0, user); });
 	});
 }
 
 music_lyric_player_renderer_handle* music_lyric_player_renderer_create(music_lyric_player_handle* player, void* window) {
-	return guard([&]() -> music_lyric_player_renderer_handle* {
-		auto handle = std::make_unique<music_lyric_player_renderer_handle>(player->player, window);
-		if (handle->surface == nullptr) {
-			return nullptr;
-		}
-		return handle.release();
-	},
+	return guard(
+		[&]() -> music_lyric_player_renderer_handle* {
+			auto handle = std::make_unique<music_lyric_player_renderer_handle>(player->player, window);
+			if (handle->surface == nullptr) {
+				return nullptr;
+			}
+			return handle.release();
+		},
 		nullptr);
 }
 
@@ -182,9 +177,7 @@ void music_lyric_player_renderer_destroy(music_lyric_player_renderer_handle* ren
 void music_lyric_player_renderer_render(music_lyric_player_renderer_handle* renderer) {
 	guardVoid([&] {
 		renderer->surface->renderFrame([renderer](SkCanvas* canvas) {
-			renderer->renderer.setViewport(renderer->surface->width(),
-				renderer->surface->height(),
-				renderer->surface->devicePixelRatio());
+			renderer->renderer.setViewport(renderer->surface->width(), renderer->surface->height(), renderer->surface->devicePixelRatio());
 			renderer->renderer.render(canvas);
 		});
 	});

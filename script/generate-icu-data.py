@@ -1,9 +1,5 @@
-#!/usr/bin/env python
 """
-Embed an ICU common-data file (icudtl.dat) into a C++ translation unit.
-
-The emitted source defines music_lyric_player_icu_data, a 16-byte aligned uint32 array that the SkLoadICU() override hands to ICU via udata_setCommonData.
-No external icudtl.dat then has to ship next to the binary.
+Generate icu data to cpp.
 
 Usage: generate-icu-data.py <icudtl.dat> <output.cpp>
 """
@@ -32,7 +28,7 @@ def generate(src_path, dst_path):
         # The u suffix keeps every value an unsigned int so the braced initializer never narrows.
         dst.write("alignas(16) extern const std::uint32_t music_lyric_player_icu_data[] = {\n")
         for offset in range(0, len(words), 12):
-            line = ",".join("%uu" % word for word in words[offset:offset + 12])
+            line = ",".join("%uu" % word for word in words[offset : offset + 12])
             dst.write("\t" + line + ",\n")
         dst.write("};\n")
 

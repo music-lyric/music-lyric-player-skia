@@ -106,10 +106,10 @@ namespace music_lyric_player::playback {
 
 		config::Manager config;
 
-		utils::Signal<double>                               onPlay;
-		utils::Signal<double>                               onPause;
+		utils::Signal<double>                                 onPlay;
+		utils::Signal<double>                                 onPause;
 		utils::Signal<const music_lyric_model::parsed::Info&> onLyricUpdate;
-		utils::Signal<const std::vector<int>&, int, bool>   onLinesUpdate;
+		utils::Signal<const std::vector<int>&, int, bool>     onLinesUpdate;
 
 	private:
 		/**
@@ -151,16 +151,16 @@ namespace music_lyric_player::playback {
 		 */
 		void onConfigUpdate(const config::Root& changes);
 
-		const utils::Clock&               clockRef;
-		bool                              playing   = false;
-		int                               scanIndex = 0;
-		std::vector<int>                  activeIndex;
-		double                            start = 0.0;
-		double                            seek  = 0.0;
-		music_lyric_model::parsed::Info   info;
-		Merger                            merger;
-		Offset                            offset;
-		std::size_t                       configListenerId = 0;
+		const utils::Clock&             clockRef;
+		bool                            playing   = false;
+		int                             scanIndex = 0;
+		std::vector<int>                activeIndex;
+		double                          start = 0.0;
+		double                          seek  = 0.0;
+		music_lyric_model::parsed::Info info;
+		Merger                          merger;
+		Offset                          offset;
+		std::size_t                     configListenerId = 0;
 	};
 } // namespace music_lyric_player::playback
 

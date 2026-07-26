@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Extract a single version's section out of CHANGELOG.md into CURRENT_CHANGELOG.md.
 

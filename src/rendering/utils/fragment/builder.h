@@ -11,7 +11,6 @@
 #include "include/core/SkPoint.h"
 #include "include/core/SkRect.h"
 #include "include/core/SkTextBlob.h"
-
 #include "rendering/utils/fragment/glyph.h"
 #include "rendering/utils/fragment/group.h"
 #include "rendering/utils/shaping/glyph.h"
@@ -36,9 +35,9 @@ namespace music_lyric_player::rendering::utils::fragment {
 			if (line.runs.empty()) {
 				return;
 			}
-			start = line.runs.front().utf8Begin;
+			start                          = line.runs.front().utf8Begin;
 			const shaping::ShapedRun& last = line.runs.back();
-			end                           = last.utf8Begin + last.utf8Size;
+			end                            = last.utf8Begin + last.utf8Size;
 		}
 	} // namespace detail
 
@@ -79,7 +78,7 @@ namespace music_lyric_player::rendering::utils::fragment {
 
 		FragmentGroup     group;
 		SkTextBlobBuilder builder;
-		float             maxWidth = 0.0f;
+		float             maxWidth  = 0.0f;
 		std::size_t       textStart = 0;
 		std::size_t       textEnd   = 0;
 		bool              rangeSet  = false;
@@ -102,11 +101,11 @@ namespace music_lyric_player::rendering::utils::fragment {
 		}
 
 		const shaping::ShapedLine& last = text.lines.back();
-		group.advance = maxWidth;
-		group.ascent  = last.ascent;
-		group.descent = last.descent;
-		group.height  = last.ascent + last.descent;
-		group.bounds  = detail::typographicBounds(group.advance, group.height);
+		group.advance                   = maxWidth;
+		group.ascent                    = last.ascent;
+		group.descent                   = last.descent;
+		group.height                    = last.ascent + last.descent;
+		group.bounds                    = detail::typographicBounds(group.advance, group.height);
 
 		GlyphFragment fragment;
 		fragment.blob      = builder.make();
@@ -179,9 +178,9 @@ namespace music_lyric_player::rendering::utils::fragment {
 				SkPoint* points = buffer.points();
 				for (std::size_t i = 0; i < cell.count; ++i) {
 					const shaping::ShapedGlyph& glyph = cell.run->glyphs[cell.first + i];
-					buffer.glyphs[i]   = glyph.glyph;
-					points[i]          = glyph.position;
-					buffer.clusters[i] = glyph.cluster - cell.cluster;
+					buffer.glyphs[i]                  = glyph.glyph;
+					points[i]                         = glyph.position;
+					buffer.clusters[i]                = glyph.cluster - cell.cluster;
 				}
 
 				GlyphFragment fragment;

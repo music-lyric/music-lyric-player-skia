@@ -119,17 +119,17 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 			return;
 		}
 
-		const config::Root& cfg  = context.config;
-		const float         size = static_cast<float>(std::max(resolveLength(cfg.line.normal.main.syllable.font.size, config::Default.line.normal.main.syllable.font.size), 1.0));
+		const config::Root& cfg = context.config;
+		const float size = static_cast<float>(std::max(resolveLength(cfg.line.normal.main.syllable.font.size, config::Default.line.normal.main.syllable.font.size), 1.0));
 		// The word floats vertically, so its glyphs keep free sub-pixel placement; the paint path snaps them back onto the grid whenever the word rests.
-		const SkFont        font = utils::shaping::buildBodyFont(context.fontMgr, cfg.line.normal.main.syllable.font.family.value(), size, true);
+		const SkFont font = utils::shaping::buildBodyFont(context.fontMgr, cfg.line.normal.main.syllable.font.family.value(), size, true);
 
 		const char*       utf8  = this->text.c_str();
 		const std::size_t bytes = this->text.size();
 
 		const utils::shaping::ShapedText shaped = utils::shaping::shapeText(*context.shaper, context.unicode, context.fontMgr, font, utf8, bytes, kUnboundedWidth);
 		// The word is shaped unbounded, so makeTextGroup collapses it to one fragment; ceil/epsilon stay component-local for row packing.
-		this->group            = utils::fragment::makeTextGroup(shaped, utf8);
+		this->group = utils::fragment::makeTextGroup(shaped, utf8);
 		if (!this->group) {
 			return;
 		}
@@ -139,7 +139,8 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 		// The per-character split only happens for stressed words with at least one emphasize sub-effect enabled, so plain words keep the single cached blob.
 		const auto& emphasize = cfg.line.normal.main.syllable.word.animation.emphasize;
-		this->useCells        = this->stressed && emphasize.enabled.value() && (emphasize.effects.main.enabled.value() || emphasize.effects.glow.enabled.value() || emphasize.effects.floating.enabled.value());
+		this->useCells        = this->stressed && emphasize.enabled.value() &&
+			(emphasize.effects.main.enabled.value() || emphasize.effects.glow.enabled.value() || emphasize.effects.floating.enabled.value());
 		if (this->useCells) {
 			this->cells    = utils::fragment::makeClusterGroups(shaped, utf8);
 			this->useCells = !this->cells.empty();
@@ -211,7 +212,15 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		}
 	}
 
-	void Word::paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor unsungColor, SkColor sungColor, const std::vector<animation::Emphasize::Transform>* transforms, const GlowPaint* glow) const {
+	void Word::paintReveal(SkCanvas*                            canvas,
+		float                                               x,
+		float                                               y,
+		float                                               progress,
+		float                                               feather,
+		SkColor                                             unsungColor,
+		SkColor                                             sungColor,
+		const std::vector<animation::Emphasize::Transform>* transforms,
+		const GlowPaint*                                    glow) const {
 		if (!this->group) {
 			return;
 		}
@@ -236,29 +245,38 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		canvas->restore();
 	}
 
-	void Word::paint(SkCanvas* canvas, float lineX, float lineY, double now, bool active, bool maskEnabled, float maskProgress, float maskFeather, float inactiveOpacity, const common::RenderContext& context) const {
+	void Word::paint(SkCanvas*           canvas,
+		float                        lineX,
+		float                        lineY,
+		double                       now,
+		bool                         active,
+		bool                         maskEnabled,
+		float                        maskProgress,
+		float                        maskFeather,
+		float                        inactiveOpacity,
+		const common::RenderContext& context) const {
 		if (!this->group) {
 			return;
 		}
 
 		const config::Root& cfg             = context.config;
 		const auto&         animationConfig = cfg.line.normal.main.syllable.word.animation;
-		const double        fromValue       = std::isfinite(animationConfig.floating.from)
-			      ? animationConfig.floating.from
-			      : config::Default.line.normal.main.syllable.word.animation.floating.from;
-		const double        toValue         = std::isfinite(animationConfig.floating.to)
-			      ? animationConfig.floating.to
-			      : config::Default.line.normal.main.syllable.word.animation.floating.to;
-		const float         offset          = this->floating.sample(context.currentTime, now, active, animationConfig.floating.enabled, static_cast<float>(fromValue), static_cast<float>(toValue));
+		const double        fromValue =
+			std::isfinite(animationConfig.floating.from) ? animationConfig.floating.from : config::Default.line.normal.main.syllable.word.animation.floating.from;
+		const double toValue =
+			std::isfinite(animationConfig.floating.to) ? animationConfig.floating.to : config::Default.line.normal.main.syllable.word.animation.floating.to;
+		const float offset =
+			this->floating.sample(context.currentTime, now, active, animationConfig.floating.enabled, static_cast<float>(fromValue), static_cast<float>(toValue));
 		// The float rests either at `from` (unsung or settled back) or at `to` (fully risen), so the grid correction is measured against the nearer rest point.
-		const float         rest            = std::abs(offset - static_cast<float>(fromValue)) <= std::abs(offset - static_cast<float>(toValue)) ? static_cast<float>(fromValue) : static_cast<float>(toValue);
-		const float         rawX            = lineX + this->x;
-		const float         rawY            = lineY + this->y + offset;
+		const float rest = std::abs(offset - static_cast<float>(fromValue)) <= std::abs(offset - static_cast<float>(toValue)) ? static_cast<float>(fromValue)
+																      : static_cast<float>(toValue);
+		const float rawX = lineX + this->x;
+		const float rawY = lineY + this->y + offset;
 		// Measuring at the rest position keeps the correction constant while the word moves; blending it out over the first half pixel of travel makes a resting word pixel-crisp yet lets it leave and rejoin the grid without a visible pop.
-		const SkPoint       correction      = snapCorrection(*canvas, rawX, lineY + this->y + rest, this->measuredBaseline);
-		const float         blend           = std::clamp(1.0f - std::abs(offset - rest) / kSnapBlendRange, 0.0f, 1.0f);
-		const float         drawX           = rawX + correction.fX;
-		const float         drawY           = rawY + correction.fY * blend;
+		const SkPoint correction = snapCorrection(*canvas, rawX, lineY + this->y + rest, this->measuredBaseline);
+		const float   blend      = std::clamp(1.0f - std::abs(offset - rest) / kSnapBlendRange, 0.0f, 1.0f);
+		const float   drawX      = rawX + correction.fX;
+		const float   drawY      = rawY + correction.fY * blend;
 
 		// Emphasize transforms are sampled once per frame and shared by every paint path below; plain words skip the whole pipeline.
 		const std::vector<animation::Emphasize::Transform>* transforms = nullptr;
@@ -294,17 +312,25 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 				emphasizeConfig.effects.glow.easingRise.value(),
 				emphasizeConfig.effects.glow.easingFall.value(),
 			};
-			transforms = &this->emphasizing.sample(context.currentTime, now, active, emphasizeConfig.minDuration.value(), emphasizeConfig.disablePlaybackRate.value(), this->cells.size(), mainSettings, floatSettings, glowSettings);
+			transforms = &this->emphasizing.sample(context.currentTime,
+				now,
+				active,
+				emphasizeConfig.minDuration.value(),
+				emphasizeConfig.disablePlaybackRate.value(),
+				this->cells.size(),
+				mainSettings,
+				floatSettings,
+				glowSettings);
 			if (glowColor.has_value() && this->emphasizing.glowRadius() > 0.0f) {
 				glowPaint = GlowPaint{*glowColor, this->emphasizing.glowRadius()};
 				glowLit   = true;
 			}
 		}
 
-		const SkColor normalColor    = utils::color::resolve(cfg.line.normal.main.syllable.style.normal.color, config::Default.line.normal.main.syllable.style.normal.color);
-		const SkColor activeColor    = utils::color::resolve(cfg.line.normal.main.syllable.style.active.color, config::Default.line.normal.main.syllable.style.active.color);
-		const double  normalOpacity  = cfg.line.normal.main.syllable.style.normal.opacity;
-		const double  activeOpacity  = cfg.line.normal.main.syllable.style.active.opacity;
+		const SkColor normalColor   = utils::color::resolve(cfg.line.normal.main.syllable.style.normal.color, config::Default.line.normal.main.syllable.style.normal.color);
+		const SkColor activeColor   = utils::color::resolve(cfg.line.normal.main.syllable.style.active.color, config::Default.line.normal.main.syllable.style.active.color);
+		const double  normalOpacity = cfg.line.normal.main.syllable.style.normal.opacity;
+		const double  activeOpacity = cfg.line.normal.main.syllable.style.active.opacity;
 
 		// Inactive lines paint the whole word in the normal state color; the opacity is eased by the owning element so a deactivating line fades out (web `.word` `transition: opacity 0.8s ease`) instead of snapping.
 		if (!active) {

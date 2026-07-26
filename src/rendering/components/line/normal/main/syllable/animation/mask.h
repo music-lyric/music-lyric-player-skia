@@ -55,7 +55,14 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		 * Wipes the current glyph layer from the unsung color to the sung color, left to right.
 		 * The default kSrcIn replaces the layer's rgb and alpha; kDstIn multiplies only the layer's alpha with the same band, keeping its colors for layers like the glow.
 		 */
-		static void apply(SkCanvas* canvas, const SkRect& drawBounds, const SkRect& textBounds, float progress, float feather, SkColor unsungColor, SkColor sungColor, SkBlendMode blend = SkBlendMode::kSrcIn);
+		static void apply(SkCanvas* canvas,
+			const SkRect&       drawBounds,
+			const SkRect&       textBounds,
+			float               progress,
+			float               feather,
+			SkColor             unsungColor,
+			SkColor             sungColor,
+			SkBlendMode         blend = SkBlendMode::kSrcIn);
 
 	private:
 		struct Segment {

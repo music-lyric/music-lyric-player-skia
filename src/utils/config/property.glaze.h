@@ -2,7 +2,6 @@
 #define MUSIC_LYRIC_PLAYER_UTILS_CONFIG_PROPERTY_GLAZE_H_
 
 #include "glaze/json.hpp"
-
 #include "utils/config/property.h"
 
 template <typename T>

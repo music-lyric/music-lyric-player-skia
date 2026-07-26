@@ -60,28 +60,28 @@ namespace example {
 		LRESULT CALLBACK promptProc(HWND window, UINT message, WPARAM wParam, LPARAM lParam) {
 			auto* state = reinterpret_cast<PromptState*>(GetWindowLongPtrW(window, GWLP_USERDATA));
 			switch (message) {
-				case WM_COMMAND:
-					if (state != nullptr) {
-						const int id = LOWORD(wParam);
-						if (id == IDOK) {
-							state->text     = controlText(state->edit);
-							state->accepted = true;
-							state->done     = true;
-							return 0;
-						}
-						if (id == IDCANCEL) {
-							state->done = true;
-							return 0;
-						}
+			case WM_COMMAND:
+				if (state != nullptr) {
+					const int id = LOWORD(wParam);
+					if (id == IDOK) {
+						state->text     = controlText(state->edit);
+						state->accepted = true;
+						state->done     = true;
+						return 0;
 					}
-					break;
-				case WM_CLOSE:
-					if (state != nullptr) {
+					if (id == IDCANCEL) {
 						state->done = true;
+						return 0;
 					}
-					return 0;
-				default:
-					break;
+				}
+				break;
+			case WM_CLOSE:
+				if (state != nullptr) {
+					state->done = true;
+				}
+				return 0;
+			default:
+				break;
 			}
 			return DefWindowProcW(window, message, wParam, lParam);
 		}
@@ -125,7 +125,7 @@ namespace example {
 
 		static bool registered = false;
 		if (!registered) {
-			WNDCLASSEXW windowClass = {};
+			WNDCLASSEXW windowClass   = {};
 			windowClass.cbSize        = sizeof(windowClass);
 			windowClass.lpfnWndProc   = promptProc;
 			windowClass.hInstance     = instance;
@@ -138,9 +138,7 @@ namespace example {
 
 		// The process is per-monitor DPI aware, so lay the prompt out from a 96-DPI base scaled to the owner's DPI.
 		const UINT dpi   = owner != nullptr ? GetDpiForWindow(owner) : 96;
-		const auto scale = [dpi](int value) {
-			return MulDiv(value, static_cast<int>(dpi), 96);
-		};
+		const auto scale = [dpi](int value) { return MulDiv(value, static_cast<int>(dpi), 96); };
 
 		const int width  = scale(560);
 		const int height = scale(320);
@@ -154,8 +152,18 @@ namespace example {
 
 		PromptState state;
 
-		HWND window = CreateWindowExW(WS_EX_DLGMODALFRAME, kClass, L"Load lyric from hex",
-		                              WS_POPUP | WS_CAPTION | WS_SYSMENU, x, y, width, height, owner, nullptr, instance, nullptr);
+		HWND window = CreateWindowExW(WS_EX_DLGMODALFRAME,
+			kClass,
+			L"Load lyric from hex",
+			WS_POPUP | WS_CAPTION | WS_SYSMENU,
+			x,
+			y,
+			width,
+			height,
+			owner,
+			nullptr,
+			instance,
+			nullptr);
 		if (window == nullptr) {
 			return std::nullopt;
 		}
@@ -166,7 +174,7 @@ namespace example {
 		SystemParametersInfoForDpi(SPI_GETNONCLIENTMETRICS, sizeof(metrics), &metrics, 0, dpi);
 		const HFONT font = CreateFontIndirectW(&metrics.lfMessageFont);
 
-		RECT      client = {};
+		RECT client = {};
 		GetClientRect(window, &client);
 		const int pad          = scale(12);
 		const int gap          = scale(8);
@@ -174,28 +182,62 @@ namespace example {
 		const int buttonWidth  = scale(88);
 		const int buttonHeight = scale(28);
 
-		HWND label = CreateWindowExW(0, L"STATIC",
-		                             L"Paste a hex-encoded lyric (protobuf binary).\nCtrl+Enter to load, Esc to cancel.",
-		                             WS_CHILD | WS_VISIBLE, pad, pad, client.right - 2 * pad, labelHeight, window, nullptr, instance,
-		                             nullptr);
+		HWND label = CreateWindowExW(0,
+			L"STATIC",
+			L"Paste a hex-encoded lyric (protobuf binary).\nCtrl+Enter to load, Esc to cancel.",
+			WS_CHILD | WS_VISIBLE,
+			pad,
+			pad,
+			client.right - 2 * pad,
+			labelHeight,
+			window,
+			nullptr,
+			instance,
+			nullptr);
 
 		const int editTop    = pad + labelHeight + gap;
 		const int editBottom = client.bottom - pad - buttonHeight - gap;
-		state.edit           = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"",
-		                                       WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_AUTOVSCROLL, pad, editTop,
-		                                       client.right - 2 * pad, editBottom - editTop, window, asControlId(kEditControlId),
-		                                       instance, nullptr);
+		state.edit           = CreateWindowExW(WS_EX_CLIENTEDGE,
+			L"EDIT",
+			L"",
+			WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_AUTOVSCROLL,
+			pad,
+			editTop,
+			client.right - 2 * pad,
+			editBottom - editTop,
+			window,
+			asControlId(kEditControlId),
+			instance,
+			nullptr);
 		SendMessageW(state.edit, EM_SETLIMITTEXT, 0, 0);
 		if (!initialHex.empty()) {
 			SetWindowTextW(state.edit, utf8ToWide(initialHex).c_str());
 		}
 
-		HWND okButton = CreateWindowExW(0, L"BUTTON", L"OK", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,
-		                                client.right - pad - 2 * buttonWidth - gap, client.bottom - pad - buttonHeight, buttonWidth,
-		                                buttonHeight, window, asControlId(IDOK), instance, nullptr);
-		HWND cancelButton = CreateWindowExW(0, L"BUTTON", L"Cancel", WS_CHILD | WS_VISIBLE,
-		                                    client.right - pad - buttonWidth, client.bottom - pad - buttonHeight, buttonWidth,
-		                                    buttonHeight, window, asControlId(IDCANCEL), instance, nullptr);
+		HWND okButton     = CreateWindowExW(0,
+			L"BUTTON",
+			L"OK",
+			WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,
+			client.right - pad - 2 * buttonWidth - gap,
+			client.bottom - pad - buttonHeight,
+			buttonWidth,
+			buttonHeight,
+			window,
+			asControlId(IDOK),
+			instance,
+			nullptr);
+		HWND cancelButton = CreateWindowExW(0,
+			L"BUTTON",
+			L"Cancel",
+			WS_CHILD | WS_VISIBLE,
+			client.right - pad - buttonWidth,
+			client.bottom - pad - buttonHeight,
+			buttonWidth,
+			buttonHeight,
+			window,
+			asControlId(IDCANCEL),
+			instance,
+			nullptr);
 
 		for (const HWND control : {label, state.edit, okButton, cancelButton}) {
 			SendMessageW(control, WM_SETFONT, reinterpret_cast<WPARAM>(font), TRUE);

@@ -46,8 +46,7 @@ namespace music_lyric_player::rendering::components::line::base {
 		}
 
 	protected:
-		explicit Element(int index)
-		    : lineIndex(index) {
+		explicit Element(int index) : lineIndex(index) {
 			this->colorTween.setEasing(animation::inOutCubic);
 		}
 

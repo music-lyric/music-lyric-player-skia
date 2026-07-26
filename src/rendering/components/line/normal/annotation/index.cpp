@@ -24,8 +24,7 @@ namespace music_lyric_player::rendering::components::line::normal::annotation {
 		}
 	} // namespace
 
-	Row::Row(std::string text)
-	    : text(std::move(text)) {
+	Row::Row(std::string text) : text(std::move(text)) {
 		this->colorTween.setEasing(animation::inOutCubic);
 	}
 
@@ -40,7 +39,8 @@ namespace music_lyric_player::rendering::components::line::normal::annotation {
 		}
 
 		const float                    blockWidth = std::max(width, 1.0f);
-		utils::layout::ParagraphLayout result     = utils::layout::layoutParagraph(*context.shaper, context.unicode, context.fontMgr, font, this->text.c_str(), this->text.size(), blockWidth, align);
+		utils::layout::ParagraphLayout result =
+			utils::layout::layoutParagraph(*context.shaper, context.unicode, context.fontMgr, font, this->text.c_str(), this->text.size(), blockWidth, align);
 
 		this->group          = std::move(result.group);
 		this->measuredHeight = result.height;

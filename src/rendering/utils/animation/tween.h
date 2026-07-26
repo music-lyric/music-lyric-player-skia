@@ -18,9 +18,7 @@ namespace music_lyric_player::rendering::animation {
 		/**
 		 * Creates a settled tween holding `value` (`from` == `to`); `sample` returns it until retargeted.
 		 */
-		explicit Tween(T value = T{})
-		    : from(value),
-		      to(value) {}
+		explicit Tween(T value = T{}) : from(value), to(value) {}
 
 		/**
 		 * Sets the easing curve applied while animating; a tween with no easing behaves as settled.

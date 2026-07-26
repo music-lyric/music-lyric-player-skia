@@ -20,12 +20,11 @@ namespace music_lyric_player::rendering::components::line::interlude {
 		constexpr float kPaddingY = 6.0f;
 	} // namespace
 
-	Element::Element(int index, const music_lyric_model::parsed::Line& info)
-	    : base::Element(index) {
+	Element::Element(int index, const music_lyric_model::parsed::Line& info) : base::Element(index) {
 		const music_lyric_model::common::Time* time = music_lyric_model::parsed::getParsedLineTime(info);
-		this->start                                = time ? static_cast<double>(time->start) : 0.0;
-		const double duration                      = static_cast<double>(music_lyric_model::parsed::getParsedLineDuration(info));
-		this->slice                       = std::floor(std::max(duration, 0.0) / static_cast<double>(kDotCount));
+		this->start                                 = time ? static_cast<double>(time->start) : 0.0;
+		const double duration                       = static_cast<double>(music_lyric_model::parsed::getParsedLineDuration(info));
+		this->slice                                 = std::floor(std::max(duration, 0.0) / static_cast<double>(kDotCount));
 
 		this->scaleTween.setDuration(kScaleDuration);
 		this->scaleTween.setEasing(animation::CubicBezier(0.0f, 0.0f, 0.58f, 1.0f));
@@ -79,21 +78,18 @@ namespace music_lyric_player::rendering::components::line::interlude {
 
 	void Element::paint(SkCanvas* canvas, float x, float y, double now, bool active, bool /* played */, const common::RenderContext& context) const {
 		const config::Root& cfg   = context.config;
-		const SkColor       color = this->stateColor(
-                        now,
-                        active,
-                        utils::color::resolve(cfg.line.interlude.style.normal.color, config::Default.line.interlude.style.normal.color),
-                        utils::color::resolve(cfg.line.interlude.style.active.color, config::Default.line.interlude.style.active.color));
-		const double normalOpacityValue = std::isfinite(cfg.line.interlude.style.normal.opacity)
-			? cfg.line.interlude.style.normal.opacity
-			: config::Default.line.interlude.style.normal.opacity;
-		const double activeOpacityValue = std::isfinite(cfg.line.interlude.style.active.opacity)
-			? cfg.line.interlude.style.active.opacity
-			: config::Default.line.interlude.style.active.opacity;
-		const float  normalOpacity      = static_cast<float>(normalOpacityValue);
-		const float  activeOpacity      = static_cast<float>(activeOpacityValue);
-		const bool   deactivating       = !active && this->animationActive;
-		const float  scale              = this->stateScale(now, active);
+		const SkColor       color = this->stateColor(now,
+			active,
+			utils::color::resolve(cfg.line.interlude.style.normal.color, config::Default.line.interlude.style.normal.color),
+			utils::color::resolve(cfg.line.interlude.style.active.color, config::Default.line.interlude.style.active.color));
+		const double        normalOpacityValue =
+			std::isfinite(cfg.line.interlude.style.normal.opacity) ? cfg.line.interlude.style.normal.opacity : config::Default.line.interlude.style.normal.opacity;
+		const double activeOpacityValue =
+			std::isfinite(cfg.line.interlude.style.active.opacity) ? cfg.line.interlude.style.active.opacity : config::Default.line.interlude.style.active.opacity;
+		const float normalOpacity = static_cast<float>(normalOpacityValue);
+		const float activeOpacity = static_cast<float>(activeOpacityValue);
+		const bool  deactivating  = !active && this->animationActive;
+		const float scale         = this->stateScale(now, active);
 
 		const float radius   = this->dotSize * 0.5f;
 		const float cy       = y + kPaddingY + radius;

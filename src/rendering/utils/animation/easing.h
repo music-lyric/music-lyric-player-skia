@@ -152,8 +152,8 @@ namespace music_lyric_player::rendering::animation {
 				::std::size_t            start = 0;
 				bool                     ok    = true;
 				while (ok && count < 4) {
-					const ::std::size_t           comma = body.find(',', start);
-					const ::std::string_view      piece = body.substr(start, comma == ::std::string_view::npos ? ::std::string_view::npos : comma - start);
+					const ::std::size_t           comma  = body.find(',', start);
+					const ::std::string_view      piece  = body.substr(start, comma == ::std::string_view::npos ? ::std::string_view::npos : comma - start);
 					const ::std::optional<double> number = detail::parseNumber(detail::trimLength(piece));
 					if (!number.has_value()) {
 						ok = false;
@@ -166,7 +166,10 @@ namespace music_lyric_player::rendering::animation {
 					start = comma + 1;
 				}
 				if (ok && count == 4) {
-					return CubicBezier(static_cast<float>(coords[0]), static_cast<float>(coords[1]), static_cast<float>(coords[2]), static_cast<float>(coords[3]));
+					return CubicBezier(static_cast<float>(coords[0]),
+						static_cast<float>(coords[1]),
+						static_cast<float>(coords[2]),
+						static_cast<float>(coords[3]));
 				}
 			}
 			return CubicBezier(0.25f, 0.1f, 0.25f, 1.0f); // malformed cubic-bezier falls back to `ease`

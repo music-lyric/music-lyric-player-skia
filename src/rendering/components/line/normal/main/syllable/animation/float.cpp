@@ -6,9 +6,7 @@
 #include "rendering/utils/animation/interpolate.h"
 
 namespace music_lyric_player::rendering::components::line::normal::main::syllable::animation {
-	Float::Float(double start, double duration)
-	    : start(std::isfinite(start) ? start : 0.0),
-	      duration(std::isfinite(duration) ? std::max(duration, 0.0) : 0.0) {}
+	Float::Float(double start, double duration) : start(std::isfinite(start) ? start : 0.0), duration(std::isfinite(duration) ? std::max(duration, 0.0) : 0.0) {}
 
 	float Float::sample(double currentTime, double now, bool active, bool enabled, float from, float to) const {
 		if (!enabled) {

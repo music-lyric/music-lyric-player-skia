@@ -11,7 +11,6 @@
 #include "include/core/SkRefCnt.h"
 #include "modules/skshaper/include/SkShaper.h"
 #include "modules/skunicode/include/SkUnicode.h"
-
 #include "rendering/config/layout/index.gen.h"
 #include "rendering/utils/fragment/builder.h"
 #include "rendering/utils/fragment/glyph.h"
@@ -58,7 +57,14 @@ namespace music_lyric_player::rendering::utils::layout {
 	 * The width bounds shaper-driven wrapping and is the block width each line's alignment offset is measured against.
 	 * Empty utf8 or failed shaping yields an empty result, so a caller can keep its own pre-layout early return.
 	 */
-	inline ParagraphLayout layoutParagraph(SkShaper& shaper, const sk_sp<SkUnicode>& unicode, const sk_sp<SkFontMgr>& fontMgr, const SkFont& font, const char* utf8, std::size_t bytes, float width, config::layout::Align align) {
+	inline ParagraphLayout layoutParagraph(SkShaper& shaper,
+		const sk_sp<SkUnicode>&                  unicode,
+		const sk_sp<SkFontMgr>&                  fontMgr,
+		const SkFont&                            font,
+		const char*                              utf8,
+		std::size_t                              bytes,
+		float                                    width,
+		config::layout::Align                    align) {
 		ParagraphLayout result;
 
 		const shaping::ShapedText shaped = shaping::shapeText(shaper, unicode, fontMgr, font, utf8, bytes, width);

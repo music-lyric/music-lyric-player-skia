@@ -1,5 +1,4 @@
 #include "backend/font/font.h"
-
 #include "include/core/SkFontMgr.h"
 #include "include/ports/SkTypeface_win.h"
 

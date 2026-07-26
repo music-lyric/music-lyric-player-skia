@@ -1,4 +1,3 @@
-
 SKIP_DIRS = {"build", "third-party", ".history", ".git", "node_modules", ".turbo", ".vscode", ".claude"}
 
 # Format notes appended to a kind-typed leaf's doc.

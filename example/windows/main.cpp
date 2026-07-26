@@ -235,7 +235,9 @@ int main() {
 	}
 	updateTitle();
 
-	std::printf("[example] controls: L = load hex lyric, O = open audio, P = toggle panel, R = restart, Space = pause, Left/Right = seek 5s.\n");
+	std::printf(
+		"[example] controls: L = load hex lyric, O = open audio, P = toggle panel, R = restart, Space = pause, Left/Right = seek "
+		"5s.\n");
 
 	while (!window.shouldClose()) {
 		window.pollEvents();

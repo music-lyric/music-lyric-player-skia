@@ -1,4 +1,3 @@
-
 from model import (
     ACCESS_INCLUDE,
     ACCESS_TYPE,
@@ -102,7 +101,11 @@ def nested_default_expression(module, field):
             else:
                 rendered = value
             initializers.append(f".{name} = {rendered}")
-        qualified_type = current_type if current_type.startswith("::") or current_module is module else f"::{current_module.namespace}::{current_type}"
+        qualified_type = (
+            current_type
+            if current_type.startswith("::") or current_module is module
+            else f"::{current_module.namespace}::{current_type}"
+        )
         return f"{qualified_type}{{ {', '.join(initializers)} }}"
 
     return render(target_module, target_cfg, type_str, root)
@@ -218,7 +221,9 @@ def collect_inherit_edges(root_module):
                 if "inheritFrom" in field:
                     source = field["inheritFrom"]
                     if source == path or source.startswith(path + "."):
-                        raise SchemaError(f"field '{path}' cannot inheritFrom '{source}' (itself or its own descendant)")
+                        raise SchemaError(
+                            f"field '{path}' cannot inheritFrom '{source}' (itself or its own descendant)"
+                        )
                     source_module, source_cfg = resolve_path(root_module, source)
                     if (source_module.namespace, source_cfg["name"]) != (target_module.namespace, target_cfg["name"]):
                         raise SchemaError(

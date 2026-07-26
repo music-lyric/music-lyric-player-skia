@@ -106,9 +106,8 @@ namespace music_lyric_player::rendering::components::container {
 		}
 
 		const SkPoint   points[] = {{0.0f, 0.0f}, {0.0f, logicalHeight}};
-		sk_sp<SkShader> shader    = SkShaders::LinearGradient(
-            points,
-            {{SkSpan<const SkColor4f>(colors, count), SkSpan<const float>(positions, count), SkTileMode::kClamp}, {}});
+		sk_sp<SkShader> shader =
+			SkShaders::LinearGradient(points, {{SkSpan<const SkColor4f>(colors, count), SkSpan<const float>(positions, count), SkTileMode::kClamp}, {}});
 		if (!shader) {
 			return;
 		}

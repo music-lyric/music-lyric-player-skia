@@ -17,7 +17,6 @@
 #include "include/core/SkTypes.h"
 #include "modules/skshaper/include/SkShaper.h"
 #include "modules/skunicode/include/SkUnicode.h"
-
 #include "rendering/utils/shaping/glyph.h"
 #include "rendering/utils/shaping/iterator.h"
 
@@ -106,7 +105,8 @@ namespace music_lyric_player::rendering::utils::shaping {
 	 * Shapes a utf8 string into a ShapedText, wrapping at `width` (pass a large value for a single unbounded line).
 	 * Returns an empty result when the run iterators cannot be built, matching the callers' pre-shaping bail.
 	 */
-	inline ShapedText shapeText(SkShaper& shaper, const sk_sp<SkUnicode>& unicode, const sk_sp<SkFontMgr>& fontMgr, const SkFont& font, const char* utf8, std::size_t bytes, float width) {
+	inline ShapedText
+	shapeText(SkShaper& shaper, const sk_sp<SkUnicode>& unicode, const sk_sp<SkFontMgr>& fontMgr, const SkFont& font, const char* utf8, std::size_t bytes, float width) {
 		ShapingIterators iterators = makeShapingIterators(unicode, fontMgr, font, utf8, bytes);
 		if (!iterators) {
 			return {};
@@ -134,9 +134,9 @@ namespace music_lyric_player::rendering::utils::shaping {
 			SkPoint* points = buffer.points();
 			for (int i = 0; i < glyphCount; ++i) {
 				const ShapedGlyph& glyph = run.glyphs[static_cast<std::size_t>(i)];
-				buffer.glyphs[i]   = glyph.glyph;
-				points[i]          = glyph.position;
-				buffer.clusters[i] = glyph.cluster - static_cast<uint32_t>(run.utf8Begin);
+				buffer.glyphs[i]         = glyph.glyph;
+				points[i]                = glyph.position;
+				buffer.clusters[i]       = glyph.cluster - static_cast<uint32_t>(run.utf8Begin);
 			}
 		}
 	}

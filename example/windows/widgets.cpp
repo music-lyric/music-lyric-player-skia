@@ -44,13 +44,11 @@ namespace example::widgets {
 		 * Blends two packed colours channel by channel.
 		 */
 		ImU32 mix(ImU32 from, ImU32 to, float t) {
-			const float amount = std::clamp(t, 0.0f, 1.0f);
-			const ImVec4 a = toVec4(from);
-			const ImVec4 b = toVec4(to);
-			return ImGui::ColorConvertFloat4ToU32(ImVec4(a.x + (b.x - a.x) * amount,
-			                                            a.y + (b.y - a.y) * amount,
-			                                            a.z + (b.z - a.z) * amount,
-			                                            a.w + (b.w - a.w) * amount));
+			const float  amount = std::clamp(t, 0.0f, 1.0f);
+			const ImVec4 a      = toVec4(from);
+			const ImVec4 b      = toVec4(to);
+			return ImGui::ColorConvertFloat4ToU32(
+				ImVec4(a.x + (b.x - a.x) * amount, a.y + (b.y - a.y) * amount, a.z + (b.z - a.z) * amount, a.w + (b.w - a.w) * amount));
 		}
 
 		/**
@@ -88,8 +86,7 @@ namespace example::widgets {
 			ImVec2 at(float x, float y) const {
 				const float dx = (x - 12.0f) * this->unit;
 				const float dy = (y - 12.0f) * this->unit;
-				return ImVec2(this->center.x + dx * this->cosine - dy * this->sine,
-				              this->center.y + dx * this->sine + dy * this->cosine);
+				return ImVec2(this->center.x + dx * this->cosine - dy * this->sine, this->center.y + dx * this->sine + dy * this->cosine);
 			}
 
 			/**
@@ -163,70 +160,70 @@ namespace example::widgets {
 		pen.thickness = std::max(1.0f, 2.0f * pen.unit);
 
 		switch (which) {
-			case Icon::Menu:
-				pen.line(3.0f, 6.0f, 21.0f, 6.0f);
-				pen.line(3.0f, 12.0f, 21.0f, 12.0f);
-				pen.line(3.0f, 18.0f, 21.0f, 18.0f);
-				break;
+		case Icon::Menu:
+			pen.line(3.0f, 6.0f, 21.0f, 6.0f);
+			pen.line(3.0f, 12.0f, 21.0f, 12.0f);
+			pen.line(3.0f, 18.0f, 21.0f, 18.0f);
+			break;
 
-			case Icon::Play:
-				pen.triangle(8.0f, 5.0f, 8.0f, 19.0f, 19.0f, 12.0f);
-				break;
+		case Icon::Play:
+			pen.triangle(8.0f, 5.0f, 8.0f, 19.0f, 19.0f, 12.0f);
+			break;
 
-			case Icon::Pause:
-				pen.bar(6.0f, 4.0f, 10.0f, 20.0f, 1.0f);
-				pen.bar(14.0f, 4.0f, 18.0f, 20.0f, 1.0f);
-				break;
+		case Icon::Pause:
+			pen.bar(6.0f, 4.0f, 10.0f, 20.0f, 1.0f);
+			pen.bar(14.0f, 4.0f, 18.0f, 20.0f, 1.0f);
+			break;
 
-			case Icon::Restart:
-				// An almost closed ring whose opening sits at the top left, where the arrow head is drawn.
-				pen.arc(12.0f, 12.0f, 9.0f, -0.60f * kPi, 1.15f * kPi);
-				pen.line(3.0f, 3.0f, 3.0f, 8.0f);
-				pen.line(3.0f, 8.0f, 8.0f, 8.0f);
-				break;
+		case Icon::Restart:
+			// An almost closed ring whose opening sits at the top left, where the arrow head is drawn.
+			pen.arc(12.0f, 12.0f, 9.0f, -0.60f * kPi, 1.15f * kPi);
+			pen.line(3.0f, 3.0f, 3.0f, 8.0f);
+			pen.line(3.0f, 8.0f, 8.0f, 8.0f);
+			break;
 
-			case Icon::Volume:
-			case Icon::VolumeMuted: {
-				const float speaker[] = {11.0f, 5.0f, 6.0f, 9.0f, 2.0f, 9.0f, 2.0f, 15.0f, 6.0f, 15.0f, 11.0f, 19.0f};
-				pen.polyline(speaker, 6, true);
-				if (which == Icon::Volume) {
-					pen.arc(12.0f, 12.0f, 5.0f, -0.25f * kPi, 0.25f * kPi);
-					pen.arc(12.0f, 12.0f, 10.0f, -0.25f * kPi, 0.25f * kPi);
-				} else {
-					pen.line(17.0f, 9.0f, 23.0f, 15.0f);
-					pen.line(23.0f, 9.0f, 17.0f, 15.0f);
-				}
-				break;
+		case Icon::Volume:
+		case Icon::VolumeMuted: {
+			const float speaker[] = {11.0f, 5.0f, 6.0f, 9.0f, 2.0f, 9.0f, 2.0f, 15.0f, 6.0f, 15.0f, 11.0f, 19.0f};
+			pen.polyline(speaker, 6, true);
+			if (which == Icon::Volume) {
+				pen.arc(12.0f, 12.0f, 5.0f, -0.25f * kPi, 0.25f * kPi);
+				pen.arc(12.0f, 12.0f, 10.0f, -0.25f * kPi, 0.25f * kPi);
+			} else {
+				pen.line(17.0f, 9.0f, 23.0f, 15.0f);
+				pen.line(23.0f, 9.0f, 17.0f, 15.0f);
 			}
+			break;
+		}
 
-			case Icon::Music: {
-				const float staff[] = {9.0f, 18.0f, 9.0f, 5.0f, 21.0f, 3.0f, 21.0f, 16.0f};
-				pen.polyline(staff, 4, false);
-				pen.circle(6.0f, 18.0f, 3.0f);
-				pen.circle(18.0f, 16.0f, 3.0f);
-				break;
-			}
+		case Icon::Music: {
+			const float staff[] = {9.0f, 18.0f, 9.0f, 5.0f, 21.0f, 3.0f, 21.0f, 16.0f};
+			pen.polyline(staff, 4, false);
+			pen.circle(6.0f, 18.0f, 3.0f);
+			pen.circle(18.0f, 16.0f, 3.0f);
+			break;
+		}
 
-			case Icon::Lyric: {
-				const float page[] = {5.0f, 3.0f, 19.0f, 3.0f, 19.0f, 21.0f, 5.0f, 21.0f};
-				pen.polyline(page, 4, true);
-				pen.line(9.0f, 8.0f, 15.0f, 8.0f);
-				pen.line(9.0f, 12.0f, 15.0f, 12.0f);
-				pen.line(9.0f, 16.0f, 13.0f, 16.0f);
-				break;
-			}
+		case Icon::Lyric: {
+			const float page[] = {5.0f, 3.0f, 19.0f, 3.0f, 19.0f, 21.0f, 5.0f, 21.0f};
+			pen.polyline(page, 4, true);
+			pen.line(9.0f, 8.0f, 15.0f, 8.0f);
+			pen.line(9.0f, 12.0f, 15.0f, 12.0f);
+			pen.line(9.0f, 16.0f, 13.0f, 16.0f);
+			break;
+		}
 
-			case Icon::Chevron: {
-				const float points[] = {9.0f, 18.0f, 15.0f, 12.0f, 9.0f, 6.0f};
-				pen.polyline(points, 3, false);
-				break;
-			}
+		case Icon::Chevron: {
+			const float points[] = {9.0f, 18.0f, 15.0f, 12.0f, 9.0f, 6.0f};
+			pen.polyline(points, 3, false);
+			break;
+		}
 
-			case Icon::Check: {
-				const float points[] = {20.0f, 6.0f, 9.0f, 17.0f, 4.0f, 12.0f};
-				pen.polyline(points, 3, false);
-				break;
-			}
+		case Icon::Check: {
+			const float points[] = {20.0f, 6.0f, 9.0f, 17.0f, 4.0f, 12.0f};
+			pen.polyline(points, 3, false);
+			break;
+		}
 		}
 	}
 
@@ -265,8 +262,11 @@ namespace example::widgets {
 		if (!disabled && hovered) {
 			list->AddRectFilled(origin, ImVec2(origin.x + box, origin.y + box), color::primaryFaint, metrics.radiusMd);
 		}
-		icon(list, playing ? Icon::Pause : Icon::Play, ImVec2(origin.x + box * 0.5f, origin.y + box * 0.5f), metrics.iconGlyph,
-		     disabled ? color::textMuted : color::primary);
+		icon(list,
+			playing ? Icon::Pause : Icon::Play,
+			ImVec2(origin.x + box * 0.5f, origin.y + box * 0.5f),
+			metrics.iconGlyph,
+			disabled ? color::textMuted : color::primary);
 		return clicked;
 	}
 
@@ -290,9 +290,9 @@ namespace example::widgets {
 		const float  gap      = 6.0f * metrics.scale;
 		const float  height   = metrics.fontSmall + 10.0f * metrics.scale;
 		const float  width    = padding * 2.0f + glyph + gap + textSize.x;
-		const ImVec2 origin  = ImGui::GetCursorScreenPos();
-		const bool   clicked = ImGui::InvisibleButton(id, ImVec2(width, height));
-		const bool   hovered = ImGui::IsItemHovered();
+		const ImVec2 origin   = ImGui::GetCursorScreenPos();
+		const bool   clicked  = ImGui::InvisibleButton(id, ImVec2(width, height));
+		const bool   hovered  = ImGui::IsItemHovered();
 
 		const ImU32  fill   = hovered ? color::primaryFaint : color::background;
 		const ImU32  stroke = hovered ? color::primaryBorder : color::border;
@@ -334,9 +334,9 @@ namespace example::widgets {
 			}
 		}
 
-		const float alpha  = disabled ? 0.5f : 1.0f;
-		const float filled = maximum > minimum ? std::clamp((result.value - minimum) / (maximum - minimum), 0.0f, 1.0f) : 0.0f;
-		const float middle = origin.y + metrics.sliderHeight * 0.5f;
+		const float  alpha  = disabled ? 0.5f : 1.0f;
+		const float  filled = maximum > minimum ? std::clamp((result.value - minimum) / (maximum - minimum), 0.0f, 1.0f) : 0.0f;
+		const float  middle = origin.y + metrics.sliderHeight * 0.5f;
 		const ImVec2 railMin(origin.x, middle - metrics.sliderTrack * 0.5f);
 		const ImVec2 railMax(origin.x + width, middle + metrics.sliderTrack * 0.5f);
 		list->AddRectFilled(railMin, railMax, mix(color::background, color::border, alpha), metrics.radiusSm);
@@ -427,9 +427,9 @@ namespace example::widgets {
 		const ImU32 on    = hovered ? color::primaryStrong : color::primary;
 		list->AddRectFilled(pillMin, pillMax, mix(off, on, moved), metrics.radiusFull);
 
-		const float inset  = 2.0f * metrics.scale;
-		const float radius = metrics.toggleThumb * 0.5f;
-		const float travel = metrics.toggleWidth - metrics.toggleThumb - inset * 2.0f;
+		const float  inset  = 2.0f * metrics.scale;
+		const float  radius = metrics.toggleThumb * 0.5f;
+		const float  travel = metrics.toggleWidth - metrics.toggleThumb - inset * 2.0f;
 		const ImVec2 thumb(pillMin.x + inset + radius + travel * moved, (pillMin.y + pillMax.y) * 0.5f);
 		list->AddCircleFilled(ImVec2(thumb.x, thumb.y + metrics.scale), radius, color::shadowThumb);
 		list->AddCircleFilled(thumb, radius, color::textInverse);
@@ -483,8 +483,12 @@ namespace example::widgets {
 
 		// Drawn once the combo is closed so it lands on top of the frame rather than under it.
 		const float glyph = 14.0f * metrics.scale;
-		icon(ImGui::GetWindowDrawList(), Icon::Chevron, ImVec2(origin.x + width - glyph, origin.y + metrics.controlHeight * 0.5f), glyph,
-		     color::textMuted, open ? -kPi * 0.5f : kPi * 0.5f);
+		icon(ImGui::GetWindowDrawList(),
+			Icon::Chevron,
+			ImVec2(origin.x + width - glyph, origin.y + metrics.controlHeight * 0.5f),
+			glyph,
+			color::textMuted,
+			open ? -kPi * 0.5f : kPi * 0.5f);
 
 		return picked == selected ? -1 : picked;
 	}

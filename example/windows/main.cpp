@@ -302,20 +302,23 @@ int main() {
 		example::PanelActions actions;
 		surface->renderFrame([&](SkCanvas* canvas) {
 			const int panelWidth  = panel.width();
+			const int frameWidth  = surface->width();
 			const int frameHeight = surface->height();
-			const int lyricWidth  = surface->width() - panelWidth;
+			const int lyricWidth  = frameWidth - panelWidth;
+			// The transport bar runs along the bottom of whatever the sidebar leaves, so the lyrics stop above it.
+			const int lyricHeight = frameHeight - panel.controlsHeight();
 
-			// The renderer always paints from its own origin, so the lyric half is clipped and shifted past the panel.
-			if (lyricWidth > 0) {
+			// The renderer always paints from its own origin, so the lyric area is clipped and shifted past the panel.
+			if (lyricWidth > 0 && lyricHeight > 0) {
 				canvas->save();
-				canvas->clipRect(SkRect::MakeXYWH(static_cast<float>(panelWidth), 0.0f, static_cast<float>(lyricWidth), static_cast<float>(frameHeight)));
+				canvas->clipRect(SkRect::MakeXYWH(static_cast<float>(panelWidth), 0.0f, static_cast<float>(lyricWidth), static_cast<float>(lyricHeight)));
 				canvas->translate(static_cast<float>(panelWidth), 0.0f);
-				renderer.setViewport(lyricWidth, frameHeight, surface->devicePixelRatio());
+				renderer.setViewport(lyricWidth, lyricHeight, surface->devicePixelRatio());
 				renderer.render(canvas);
 				canvas->restore();
 			}
 
-			actions = panel.render(canvas, view, frameHeight);
+			actions = panel.render(canvas, view, frameWidth, frameHeight);
 		});
 
 		// Applied once the frame is done, so a seek or a modal file dialog never runs mid-paint.

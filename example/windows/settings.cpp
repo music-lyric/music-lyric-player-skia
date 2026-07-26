@@ -13,26 +13,34 @@
 #include <vector>
 
 #include "imgui.h"
+#include "theme.h"
+#include "widgets.h"
 
 namespace example {
 	namespace {
 		namespace config = music_lyric_player::rendering::config;
+		namespace color  = theme::color;
 
 		/**
 		 * One editable leaf: the label shown beside the control, and the control itself.
 		 * A control reads the resolved config, writes only what the user changed into the override store, and reports it through the edit.
 		 */
 		struct Field {
-			std::string                                                            label;
-			std::function<void(const config::Root&, config::Root&, SettingsEdit&)> draw;
+			std::string label;
+			// Set only for a boolean leaf, so a titled group can promote it into its own header and fold the rest behind it.
+			// Draws the card's title row and returns whether the body follows.
+			std::function<bool(const char*, const config::Root&, config::Root&, SettingsEdit&)> master;
+			std::function<void(const config::Root&, config::Root&, SettingsEdit&)>              draw;
 		};
 
 		/**
 		 * A run of fields under an optional heading; an empty title keeps them inline under their section.
+		 * A detail group folds behind a chevron and starts closed, the way the playground hides font and state blocks.
 		 */
 		struct Group {
 			std::string        title;
 			std::vector<Field> fields;
+			bool               collapsible = false;
 		};
 
 		/**
@@ -45,19 +53,36 @@ namespace example {
 		};
 
 		/**
-		 * Builds a checkbox bound to a boolean leaf.
+		 * Returns the tone a control's text takes: a leaf the user has not overridden reads as a placeholder.
+		 */
+		ImVec4 valueTint(bool assigned) {
+			return ImGui::ColorConvertU32ToFloat4(assigned ? color::text : color::textMuted);
+		}
+
+		/**
+		 * Builds a switch bound to a boolean leaf, which a titled group may promote into its header.
 		 */
 		template <typename At>
 		Field toggle(std::string label, At at) {
 			auto draw = [at](const config::Root& current, config::Root& overrides, SettingsEdit& edit) {
-				bool value = at(current).value();
-				if (ImGui::Checkbox("##value", &value)) {
-					at(overrides)  = value;
+				const bool value = at(current).value();
+				if (widgets::toggle("##value", value)) {
+					at(overrides)  = !value;
 					edit.changed   = true;
 					edit.committed = true;
 				}
 			};
-			return Field{std::move(label), std::move(draw)};
+			auto master = [at](const char* title, const config::Root& current, config::Root& overrides, SettingsEdit& edit) {
+				const bool             value  = at(current).value();
+				const widgets::Master  header = widgets::groupMaster(title, value);
+				if (header.toggled) {
+					at(overrides)  = !value;
+					edit.changed   = true;
+					edit.committed = true;
+				}
+				return header.open;
+			};
+			return Field{std::move(label), std::move(master), std::move(draw)};
 		}
 
 		/**
@@ -67,17 +92,18 @@ namespace example {
 		Field number(std::string label, At at, double min, double max, double step) {
 			auto draw = [at, min, max, step](const config::Root& current, config::Root& overrides, SettingsEdit& edit) {
 				double value = at(current).value();
-				ImGui::SetNextItemWidth(-1.0f);
+				ImGui::PushStyleColor(ImGuiCol_Text, valueTint(at(overrides).assigned()));
 				if (ImGui::DragScalar("##value", ImGuiDataType_Double, &value, static_cast<float>(step), &min, &max, "%g", ImGuiSliderFlags_AlwaysClamp)) {
 					at(overrides) = std::clamp(value, min, max);
 					edit.changed  = true;
 				}
+				ImGui::PopStyleColor();
 				// A drag reports every frame it moves, so the store reaches the disk only once the handle is released.
 				if (ImGui::IsItemDeactivatedAfterEdit()) {
 					edit.committed = true;
 				}
 			};
-			return Field{std::move(label), std::move(draw)};
+			return Field{std::move(label), nullptr, std::move(draw)};
 		}
 
 		/**
@@ -90,49 +116,28 @@ namespace example {
 
 		/**
 		 * Builds a text box bound to a string leaf.
+		 * An untouched leaf shows the resolved value as a hint rather than as content, so it reads as inherited.
 		 * The value is committed only once editing ends, since a half-typed color or length would otherwise reach the renderer.
 		 */
 		template <typename At>
 		Field text(std::string label, At at) {
 			const auto buffer = std::make_shared<TextBuffer>();
 			auto       draw   = [at, buffer](const config::Root& current, config::Root& overrides, SettingsEdit& edit) {
-                // While the box is idle it follows the config, so an override applied elsewhere still shows up.
+                // While the box is idle it follows the store, so an override applied elsewhere still shows up.
                 if (!buffer->editing) {
-                    std::snprintf(buffer->data.data(), buffer->data.size(), "%s", at(current).value().c_str());
+                    const bool assigned = at(overrides).assigned();
+                    std::snprintf(buffer->data.data(), buffer->data.size(), "%s", assigned ? at(overrides).value().c_str() : "");
                 }
-                ImGui::SetNextItemWidth(-1.0f);
-                ImGui::InputText("##value", buffer->data.data(), buffer->data.size());
+                ImGui::InputTextWithHint("##value", at(current).value().c_str(), buffer->data.data(), buffer->data.size());
                 buffer->editing = ImGui::IsItemActive();
-                if (ImGui::IsItemDeactivatedAfterEdit()) {
+                // An emptied box cannot drop the override: a leaf has no way to be unset, and the renderer would keep the merged value anyway.
+                if (ImGui::IsItemDeactivatedAfterEdit() && buffer->data[0] != '\0') {
                     at(overrides)  = std::string(buffer->data.data());
                     edit.changed   = true;
                     edit.committed = true;
                 }
 			};
-			return Field{std::move(label), std::move(draw)};
-		}
-
-		/**
-		 * Renders a combo box listing `labels` and returns the index the user picked, or -1 when the selection stands.
-		 */
-		int drawCombo(const std::vector<const char*>& labels, int selected) {
-			ImGui::SetNextItemWidth(-1.0f);
-			if (!ImGui::BeginCombo("##value", selected >= 0 ? labels[static_cast<std::size_t>(selected)] : "")) {
-				return -1;
-			}
-
-			int picked = -1;
-			for (std::size_t i = 0; i < labels.size(); ++i) {
-				const bool active = static_cast<int>(i) == selected;
-				if (ImGui::Selectable(labels[i], active)) {
-					picked = static_cast<int>(i);
-				}
-				if (active) {
-					ImGui::SetItemDefaultFocus();
-				}
-			}
-			ImGui::EndCombo();
-			return picked;
+			return Field{std::move(label), nullptr, std::move(draw)};
 		}
 
 		/**
@@ -145,7 +150,7 @@ namespace example {
 		};
 
 		/**
-		 * Builds a combo box bound to an enum leaf.
+		 * Builds a select bound to an enum leaf.
 		 */
 		template <typename E, typename At>
 		Field select(std::string label, At at, std::initializer_list<Option<E>> options) {
@@ -162,18 +167,18 @@ namespace example {
                     }
                 }
 
-                const int picked = drawCombo(labels, selected);
-                if (picked >= 0 && picked != selected) {
+                const int picked = widgets::select("##value", labels.data(), static_cast<int>(labels.size()), selected, at(overrides).assigned());
+                if (picked >= 0) {
                     at(overrides)  = values[static_cast<std::size_t>(picked)].value;
                     edit.changed   = true;
                     edit.committed = true;
                 }
 			};
-			return Field{std::move(label), std::move(draw)};
+			return Field{std::move(label), nullptr, std::move(draw)};
 		}
 
 		/**
-		 * Builds a combo box bound to a string leaf, listing the values the renderer recognises.
+		 * Builds a select bound to a string leaf, listing the values the renderer recognises.
 		 * An empty value is the inherit slot, so it is labelled instead of shown blank.
 		 */
 		template <typename At>
@@ -184,20 +189,20 @@ namespace example {
 				int                      selected = -1;
 				labels.reserve(values.size());
 				for (std::size_t i = 0; i < values.size(); ++i) {
-					labels.push_back(values[i].empty() ? "(inherit)" : values[i].c_str());
+					labels.push_back(values[i].empty() ? "Inherit" : values[i].c_str());
 					if (values[i] == value) {
 						selected = static_cast<int>(i);
 					}
 				}
 
-				const int picked = drawCombo(labels, selected);
-				if (picked >= 0 && picked != selected) {
+				const int picked = widgets::select("##value", labels.data(), static_cast<int>(labels.size()), selected, at(overrides).assigned());
+				if (picked >= 0) {
 					at(overrides)  = values[static_cast<std::size_t>(picked)];
 					edit.changed   = true;
 					edit.committed = true;
 				}
 			};
-			return Field{std::move(label), std::move(draw)};
+			return Field{std::move(label), nullptr, std::move(draw)};
 		}
 
 		/**
@@ -229,7 +234,7 @@ namespace example {
 			std::vector<Field> fields;
 			fields.push_back(text("Family", [at](auto& c) -> auto& { return at(c).font.family; }));
 			fields.push_back(text("Size", [at](auto& c) -> auto& { return at(c).font.size; }));
-			return Group{"Font", std::move(fields)};
+			return Group{"Font", std::move(fields), true};
 		}
 
 		/**
@@ -243,18 +248,18 @@ namespace example {
 			std::vector<Field> normal;
 			normal.push_back(text("Color", [at](auto& c) -> auto& { return at(c).style.normal.color; }));
 			normal.push_back(number("Opacity", [at](auto& c) -> auto& { return at(c).style.normal.opacity; }, 0.0, 1.0, 0.05));
-			groups.push_back(Group{"Normal state", std::move(normal)});
+			groups.push_back(Group{"Normal state", std::move(normal), true});
 
 			std::vector<Field> active;
 			active.push_back(text("Color", [at](auto& c) -> auto& { return at(c).style.active.color; }));
 			active.push_back(number("Opacity", [at](auto& c) -> auto& { return at(c).style.active.opacity; }, 0.0, 1.0, 0.05));
-			groups.push_back(Group{"Active state", std::move(active)});
+			groups.push_back(Group{"Active state", std::move(active), true});
 
 			if constexpr (Played) {
 				std::vector<Field> played;
 				played.push_back(text("Color", [at](auto& c) -> auto& { return at(c).style.played.color; }));
 				played.push_back(number("Opacity", [at](auto& c) -> auto& { return at(c).style.played.opacity; }, 0.0, 1.0, 0.05));
-				groups.push_back(Group{"Played state", std::move(played)});
+				groups.push_back(Group{"Played state", std::move(played), true});
 			}
 			return groups;
 		}
@@ -268,7 +273,7 @@ namespace example {
 			fields.push_back(number("Duration", [at](auto& c) -> auto& { return at(c).duration; }, 0.0, 2000.0, 10.0));
 			fields.push_back(text("Easing", [at](auto& c) -> auto& { return at(c).easing; }));
 			fields.insert(fields.end(), std::make_move_iterator(extra.begin()), std::make_move_iterator(extra.end()));
-			return Group{std::move(title), std::move(fields)};
+			return Group{std::move(title), std::move(fields), true};
 		}
 
 		/**
@@ -480,59 +485,97 @@ namespace example {
 		}
 
 		/**
-		 * Draws one group as a two-column table, so every label in the section lines up.
+		 * Draws one run of fields as label and control rows.
 		 */
-		void drawGroup(const Group& group, const config::Root& current, config::Root& overrides, SettingsEdit& edit) {
-			if (!group.title.empty()) {
-				ImGui::SeparatorText(group.title.c_str());
-			}
-			if (!ImGui::BeginTable("fields", 2, ImGuiTableFlags_SizingStretchProp)) {
-				return;
-			}
-			ImGui::TableSetupColumn("label", ImGuiTableColumnFlags_WidthStretch, 0.42f);
-			ImGui::TableSetupColumn("value", ImGuiTableColumnFlags_WidthStretch, 0.58f);
+		void drawRows(const std::vector<Field>& fields, std::size_t from, const config::Root& current, config::Root& overrides, SettingsEdit& edit) {
+			const theme::Metrics& metrics = theme::metrics();
 
-			for (std::size_t i = 0; i < group.fields.size(); ++i) {
-				const Field& field = group.fields[i];
-				ImGui::TableNextRow();
-				ImGui::TableSetColumnIndex(0);
-				ImGui::AlignTextToFramePadding();
-				ImGui::TextUnformatted(field.label.c_str());
-				ImGui::TableSetColumnIndex(1);
+			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8.0f * metrics.scale, 4.0f * metrics.scale));
+			for (std::size_t i = from; i < fields.size(); ++i) {
 				// Labels repeat across groups, so the row index is what keeps the controls apart in ImGui's id stack.
 				ImGui::PushID(static_cast<int>(i));
-				field.draw(current, overrides, edit);
+				widgets::field(fields[i].label.c_str());
+				fields[i].draw(current, overrides, edit);
 				ImGui::PopID();
 			}
-			ImGui::EndTable();
+			ImGui::PopStyleVar();
 		}
 
 		/**
-		 * Draws one section and everything nested under it.
+		 * Draws one group: an untitled run sits straight on the section body, a titled one inside its own card.
 		 */
-		void drawSection(const Section& section, const config::Root& current, config::Root& overrides, SettingsEdit& edit) {
-			if (!ImGui::TreeNodeEx(section.title.c_str(), ImGuiTreeNodeFlags_SpanAvailWidth)) {
+		void drawGroup(const Group& group, const config::Root& current, config::Root& overrides, SettingsEdit& edit) {
+			if (group.title.empty()) {
+				drawRows(group.fields, 0, current, overrides, edit);
 				return;
 			}
-			for (std::size_t i = 0; i < section.groups.size(); ++i) {
-				ImGui::PushID(static_cast<int>(i));
-				drawGroup(section.groups[i], current, overrides, edit);
+
+			widgets::beginCard(group.title.c_str());
+
+			std::size_t first = 0;
+			bool        open  = true;
+			if (!group.fields.empty() && group.fields[0].master) {
+				// A leading switch owns the card: it moves up into the title row and the rest folds with it.
+				open  = group.fields[0].master(group.title.c_str(), current, overrides, edit);
+				first = 1;
+			} else if (group.collapsible) {
+				open = widgets::groupHeader(group.title.c_str());
+			} else {
+				widgets::groupTitle(group.title.c_str());
+			}
+
+			if (open && first < group.fields.size()) {
+				drawRows(group.fields, first, current, overrides, edit);
+			}
+			widgets::endCard();
+		}
+
+		/**
+		 * Draws one accordion section and everything nested under it.
+		 */
+		void drawSection(const Section& section, int level, const config::Root& current, config::Root& overrides, SettingsEdit& edit) {
+			const theme::Metrics& metrics = theme::metrics();
+			if (!widgets::sectionHeader(section.title.c_str(), level)) {
+				return;
+			}
+
+			if (!section.groups.empty()) {
+				// The body steps in with the head it belongs to, and keeps the frame's padding on its right.
+				const float indent = level == 0 ? metrics.framePadding : (level == 1 ? 22.0f * metrics.scale : 26.0f * metrics.scale);
+				widgets::beginInset(indent, metrics.framePadding);
+				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 12.0f * metrics.scale));
+				ImGui::Dummy(ImVec2(0.0f, 0.0f));
+				for (std::size_t i = 0; i < section.groups.size(); ++i) {
+					ImGui::PushID(static_cast<int>(i));
+					drawGroup(section.groups[i], current, overrides, edit);
+					ImGui::PopID();
+				}
+				ImGui::PopStyleVar();
+				widgets::endInset();
+				ImGui::Dummy(ImVec2(0.0f, 12.0f * metrics.scale));
+			}
+
+			for (std::size_t i = 0; i < section.children.size(); ++i) {
+				widgets::rule();
+				// Child indices share a scope with the group indices above, so they are offset out of the way.
+				ImGui::PushID(static_cast<int>(i) + 1000);
+				drawSection(section.children[i], level + 1, current, overrides, edit);
 				ImGui::PopID();
 			}
-			for (const Section& child : section.children) {
-				drawSection(child, current, overrides, edit);
-			}
-			ImGui::TreePop();
 		}
 	} // namespace
 
 	SettingsEdit drawSettings(const config::Root& current, config::Root& overrides) {
 		SettingsEdit edit;
-		if (ImGui::Button("Reset overrides", ImVec2(-1.0f, 0.0f))) {
-			edit.reset = true;
-		}
-		for (const Section& section : sections()) {
-			drawSection(section, current, overrides, edit);
+
+		const std::vector<Section>& tree = sections();
+		for (std::size_t i = 0; i < tree.size(); ++i) {
+			if (i > 0) {
+				widgets::rule();
+			}
+			ImGui::PushID(static_cast<int>(i));
+			drawSection(tree[i], 0, current, overrides, edit);
+			ImGui::PopID();
 		}
 		return edit;
 	}

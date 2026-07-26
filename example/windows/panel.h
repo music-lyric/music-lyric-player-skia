@@ -52,9 +52,10 @@ namespace example {
 	};
 
 	/**
-	 * The demo's controls, drawn with ImGui into the left column of the lyric window.
-	 * It owns no window and no GPU state: the host reserves the column, draws the lyrics beside it,
-	 * and hands the same canvas over for the panel to paint itself onto.
+	 * The demo's controls, drawn with ImGui into the lyric window and styled after the web playground.
+	 * They occupy two regions the host reserves: a sidebar down the left, and a transport bar along the
+	 * bottom of whatever the sidebar leaves. The panel owns no window and no GPU state — the host hands
+	 * the same canvas over for it to paint itself onto.
 	 */
 	class ControlPanel {
 	public:
@@ -71,23 +72,29 @@ namespace example {
 		bool init(GLFWwindow* window, float devicePixelRatio);
 
 		/**
-		 * Builds one frame and paints it into the left `width()` pixels of `canvas`, spanning `height` pixels.
+		 * Builds one frame and paints it into the `width` by `height` pixel surface `canvas` covers.
 		 * Returns what the user asked for while the frame was built; the host applies it after the frame.
 		 */
-		PanelActions render(SkCanvas* canvas, const PanelState& state, int height);
+		PanelActions render(SkCanvas* canvas, const PanelState& state, int width, int height);
 
 		/**
-		 * Returns the width in physical pixels the panel reserves on the left, or zero while it is hidden.
+		 * Returns the width in physical pixels the sidebar reserves on the left, which follows it in and out
+		 * while it slides and reaches zero once it is hidden.
 		 */
 		int width() const;
 
 		/**
-		 * Reports whether the panel column is currently shown.
+		 * Returns the height in physical pixels the transport bar reserves along the bottom.
+		 */
+		int controlsHeight() const;
+
+		/**
+		 * Reports whether the sidebar is currently shown.
 		 */
 		bool visible() const;
 
 		/**
-		 * Shows or hides the panel column; the lyrics take the whole surface while it is hidden.
+		 * Shows or hides the sidebar; the lyrics take its width back while it is hidden.
 		 */
 		void setVisible(bool visible);
 
@@ -101,6 +108,13 @@ namespace example {
 		bool          ready   = false;
 		bool          shown   = true;
 		float         scale   = 1.0f;
+		// How much of the sidebar is currently out, from fully collapsed at zero to fully open at one.
+		// It eases toward `shown` once per frame, so the sidebar slides in and out instead of snapping.
+		float reveal = 1.0f;
+		// Which of the sidebar's three tabs is open.
+		int tab = 0;
+		// The level to restore when the speaker is clicked again, since muting is stored as a volume of zero.
+		float mutedVolume = 1.0f;
 	};
 } // namespace example
 

@@ -12,8 +12,6 @@ namespace example {
 		bool changed = false;
 		// An edit finished — a drag was released or a text box committed — so the host mirrors the store to disk.
 		bool committed = false;
-		// The user asked to drop every override and return to the demo's own defaults.
-		bool reset = false;
 	};
 
 	/**

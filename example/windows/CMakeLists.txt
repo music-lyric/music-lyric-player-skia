@@ -35,6 +35,8 @@ add_executable(music_lyric_player_example_windows
 	settings.cpp
 	state.cpp
 	text.cpp
+	theme.cpp
+	widgets.cpp
 	window.cpp
 	"${IMGUI_DIR}/imgui.cpp"
 	"${IMGUI_DIR}/imgui_draw.cpp"
@@ -49,7 +51,12 @@ target_compile_features(music_lyric_player_example_windows PRIVATE cxx_std_23)
 # The demo only plays local files, so leave out miniaudio's encoding and waveform-synthesis halves.
 # NOMINMAX stops windows.h from defining min/max as macros, which would otherwise break std::min / std::max
 # and every heavily templated header (Glaze, Skia) that a translation unit pulls in after it.
-target_compile_definitions(music_lyric_player_example_windows PRIVATE MA_NO_ENCODING MA_NO_GENERATION NOMINMAX)
+# The sidebar prints the release the demo was built from, which VERSION.txt is the only source of.
+target_compile_definitions(music_lyric_player_example_windows PRIVATE
+	MA_NO_ENCODING
+	MA_NO_GENERATION
+	NOMINMAX
+	MUSIC_LYRIC_PLAYER_VERSION="${MUSIC_LYRIC_PLAYER_VERSION}")
 
 # The demo may carry UTF-8 string literals, so the source must be read and encoded as UTF-8.
 if(MSVC)

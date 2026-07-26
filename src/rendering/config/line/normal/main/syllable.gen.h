@@ -6,6 +6,8 @@
 #ifndef MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_LINE_NORMAL_MAIN_SYLLABLE_CONFIG_GEN_H_
 #define MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_LINE_NORMAL_MAIN_SYLLABLE_CONFIG_GEN_H_
 
+#include <string>
+
 #include "rendering/config/common/index.gen.h"
 
 #include "utils/config/access.h"
@@ -123,6 +125,334 @@ namespace music_lyric_player::rendering::config::line::normal::main::syllable {
 	};
 
 	/**
+	 * Core per-character transform of the emphasize effect: a scale pulse with an outward fan-out and an upward lift.
+	 */
+	struct EmphasizeMainConfig {
+		/**
+		 * Whether the main transform animation runs.
+		 *
+		 * @default true
+		 */
+		::music_lyric_player::utils::config::Property<bool> enabled = true;
+		/**
+		 * Peak scale increment; the character's peak scale is `1 + scale * intensity`, where the intensity derives from the syllable's duration.
+		 *
+		 * @default 0.1
+		 * @minimum 0
+		 */
+		::music_lyric_player::utils::config::Property<double> scale = 0.1;
+		/**
+		 * Peak outward horizontal shift per character in logical pixels; characters fan out from the word's center.
+		 *
+		 * @default 1.0
+		 * @minimum 0
+		 */
+		::music_lyric_player::utils::config::Property<double> offsetHorizontal = 1.0;
+		/**
+		 * Peak upward vertical shift in logical pixels, applied uniformly to every character.
+		 *
+		 * @default 1.0
+		 * @minimum 0
+		 */
+		::music_lyric_player::utils::config::Property<double> offsetVertical = 1.0;
+		/**
+		 * Easing applied from rest to the peak at the pulse midpoint.
+		 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.
+		 *
+		 * @default "cubic-bezier(0.2, 0.4, 0.58, 1)"
+		 */
+		::music_lyric_player::utils::config::Property<::std::string> easingRise = "cubic-bezier(0.2, 0.4, 0.58, 1)";
+		/**
+		 * Easing applied from the peak back to rest.
+		 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.
+		 *
+		 * @default "cubic-bezier(0.3, 0, 0.58, 1)"
+		 */
+		::music_lyric_player::utils::config::Property<::std::string> easingFall = "cubic-bezier(0.3, 0, 0.58, 1)";
+
+		bool operator==(const EmphasizeMainConfig&) const = default;
+
+		friend void overlay(EmphasizeMainConfig& dst, const EmphasizeMainConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.enabled.assigned()) dst.enabled = src.enabled.value();
+			if (src.scale.assigned()) dst.scale = src.scale.value();
+			if (src.offsetHorizontal.assigned()) dst.offsetHorizontal = src.offsetHorizontal.value();
+			if (src.offsetVertical.assigned()) dst.offsetVertical = src.offsetVertical.value();
+			if (src.easingRise.assigned()) dst.easingRise = src.easingRise.value();
+			if (src.easingFall.assigned()) dst.easingFall = src.easingFall.value();
+		}
+
+		friend void capture(EmphasizeMainConfig& delta, const EmphasizeMainConfig& prev, const EmphasizeMainConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.enabled == next.enabled)) delta.enabled = next.enabled.value();
+			if (!(prev.scale == next.scale)) delta.scale = next.scale.value();
+			if (!(prev.offsetHorizontal == next.offsetHorizontal)) delta.offsetHorizontal = next.offsetHorizontal.value();
+			if (!(prev.offsetVertical == next.offsetVertical)) delta.offsetVertical = next.offsetVertical.value();
+			if (!(prev.easingRise == next.easingRise)) delta.easingRise = next.easingRise.value();
+			if (!(prev.easingFall == next.easingFall)) delta.easingFall = next.easingFall.value();
+		}
+	};
+
+	/**
+	 * Glow halo rendered behind emphasized characters; the only sub-effect that defaults to off because every character costs one blur per frame.
+	 */
+	struct EmphasizeGlowConfig {
+		/**
+		 * Whether to render the glow.
+		 *
+		 * @default false
+		 */
+		::music_lyric_player::utils::config::Property<bool> enabled = false;
+		/**
+		 * Glow color; an unparseable string silently disables the glow, acting as a soft kill switch.
+		 * Accepts `#RGB` / `#RGBA` / `#RRGGBB` / `#RRGGBBAA`, `rgb(r, g, b)` or `rgba(r, g, b, a)` (a in 0..1).
+		 *
+		 * @default "#000000"
+		 */
+		::music_lyric_player::utils::config::Property<::std::string> color = "#000000";
+		/**
+		 * Easing applied from rest to the peak at the pulse midpoint.
+		 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.
+		 *
+		 * @default "cubic-bezier(0.2, 0.4, 0.58, 1)"
+		 */
+		::music_lyric_player::utils::config::Property<::std::string> easingRise = "cubic-bezier(0.2, 0.4, 0.58, 1)";
+		/**
+		 * Easing applied from the peak back to rest.
+		 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.
+		 *
+		 * @default "cubic-bezier(0.3, 0, 0.58, 1)"
+		 */
+		::music_lyric_player::utils::config::Property<::std::string> easingFall = "cubic-bezier(0.3, 0, 0.58, 1)";
+		/**
+		 * Maximum glow radius in logical pixels; the duration-derived intensity clamps it further so short syllables get a tighter halo.
+		 *
+		 * @default 9.0
+		 * @minimum 0
+		 */
+		::music_lyric_player::utils::config::Property<double> maxRadius = 9.0;
+		/**
+		 * Peak glow alpha in the `[0, 1]` range.
+		 *
+		 * @default 1.0
+		 * @minimum 0
+		 * @maximum 1
+		 */
+		::music_lyric_player::utils::config::Property<double> maxAlpha = 1.0;
+
+		bool operator==(const EmphasizeGlowConfig&) const = default;
+
+		friend void overlay(EmphasizeGlowConfig& dst, const EmphasizeGlowConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.enabled.assigned()) dst.enabled = src.enabled.value();
+			if (src.color.assigned()) dst.color = src.color.value();
+			if (src.easingRise.assigned()) dst.easingRise = src.easingRise.value();
+			if (src.easingFall.assigned()) dst.easingFall = src.easingFall.value();
+			if (src.maxRadius.assigned()) dst.maxRadius = src.maxRadius.value();
+			if (src.maxAlpha.assigned()) dst.maxAlpha = src.maxAlpha.value();
+		}
+
+		friend void capture(EmphasizeGlowConfig& delta, const EmphasizeGlowConfig& prev, const EmphasizeGlowConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.enabled == next.enabled)) delta.enabled = next.enabled.value();
+			if (!(prev.color == next.color)) delta.color = next.color.value();
+			if (!(prev.easingRise == next.easingRise)) delta.easingRise = next.easingRise.value();
+			if (!(prev.easingFall == next.easingFall)) delta.easingFall = next.easingFall.value();
+			if (!(prev.maxRadius == next.maxRadius)) delta.maxRadius = next.maxRadius.value();
+			if (!(prev.maxAlpha == next.maxAlpha)) delta.maxAlpha = next.maxAlpha.value();
+		}
+	};
+
+	/**
+	 * Timing controls of the secondary float layer.
+	 */
+	struct EmphasizeFloatDurationConfig {
+		/**
+		 * Float duration as a multiple of the main emphasize duration; values above 1 make the float linger after the main effect settles.
+		 *
+		 * @default 1.4
+		 * @minimum 0
+		 */
+		::music_lyric_player::utils::config::Property<double> scale = 1.4;
+		/**
+		 * Milliseconds the float starts before the main emphasize effect.
+		 *
+		 * @default 400.0
+		 * @minimum 0
+		 */
+		::music_lyric_player::utils::config::Property<double> lead = 400.0;
+
+		bool operator==(const EmphasizeFloatDurationConfig&) const = default;
+
+		friend void overlay(EmphasizeFloatDurationConfig& dst, const EmphasizeFloatDurationConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.scale.assigned()) dst.scale = src.scale.value();
+			if (src.lead.assigned()) dst.lead = src.lead.value();
+		}
+
+		friend void capture(EmphasizeFloatDurationConfig& delta, const EmphasizeFloatDurationConfig& prev, const EmphasizeFloatDurationConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.scale == next.scale)) delta.scale = next.scale.value();
+			if (!(prev.lead == next.lead)) delta.lead = next.lead.value();
+		}
+	};
+
+	/**
+	 * Amplified float for background lines, layered on the emphasize float.
+	 */
+	struct EmphasizeFloatBackgroundConfig {
+		/**
+		 * Whether background lines get an amplified float.
+		 *
+		 * @default true
+		 */
+		::music_lyric_player::utils::config::Property<bool> enabled = true;
+		/**
+		 * Float amplitude multiplier applied on background lines.
+		 *
+		 * @default 2.0
+		 * @minimum 0
+		 */
+		::music_lyric_player::utils::config::Property<double> scale = 2.0;
+
+		bool operator==(const EmphasizeFloatBackgroundConfig&) const = default;
+
+		friend void overlay(EmphasizeFloatBackgroundConfig& dst, const EmphasizeFloatBackgroundConfig& src, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (src.enabled.assigned()) dst.enabled = src.enabled.value();
+			if (src.scale.assigned()) dst.scale = src.scale.value();
+		}
+
+		friend void capture(EmphasizeFloatBackgroundConfig& delta, const EmphasizeFloatBackgroundConfig& prev, const EmphasizeFloatBackgroundConfig& next, [[maybe_unused]] ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.enabled == next.enabled)) delta.enabled = next.enabled.value();
+			if (!(prev.scale == next.scale)) delta.scale = next.scale.value();
+		}
+	};
+
+	/**
+	 * Secondary bounce layered on top of the per-word float animation.
+	 */
+	struct EmphasizeFloatConfig {
+		/**
+		 * Whether to enable the secondary float.
+		 *
+		 * @default true
+		 */
+		::music_lyric_player::utils::config::Property<bool> enabled = true;
+		/**
+		 * Float timing.
+		 */
+		EmphasizeFloatDurationConfig duration;
+		/**
+		 * Peak upward displacement in logical pixels.
+		 *
+		 * @default 2.0
+		 * @minimum 0
+		 */
+		::music_lyric_player::utils::config::Property<double> amplitude = 2.0;
+		/**
+		 * Easing applied to each half of the bounce.
+		 * Accepts `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` or `cubic-bezier(x1, y1, x2, y2)`.
+		 *
+		 * @default "cubic-bezier(0.45, 0, 0.55, 1)"
+		 */
+		::music_lyric_player::utils::config::Property<::std::string> easing = "cubic-bezier(0.45, 0, 0.55, 1)";
+		/**
+		 * Amplified float for background lines.
+		 */
+		EmphasizeFloatBackgroundConfig background;
+
+		bool operator==(const EmphasizeFloatConfig&) const = default;
+
+		friend void overlay(EmphasizeFloatConfig& dst, const EmphasizeFloatConfig& src, ::music_lyric_player::utils::config::Access key) {
+			if (src.enabled.assigned()) dst.enabled = src.enabled.value();
+			overlay(dst.duration, src.duration, key);
+			if (src.amplitude.assigned()) dst.amplitude = src.amplitude.value();
+			if (src.easing.assigned()) dst.easing = src.easing.value();
+			overlay(dst.background, src.background, key);
+		}
+
+		friend void capture(EmphasizeFloatConfig& delta, const EmphasizeFloatConfig& prev, const EmphasizeFloatConfig& next, ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.enabled == next.enabled)) delta.enabled = next.enabled.value();
+			capture(delta.duration, prev.duration, next.duration, key);
+			if (!(prev.amplitude == next.amplitude)) delta.amplitude = next.amplitude.value();
+			if (!(prev.easing == next.easing)) delta.easing = next.easing.value();
+			capture(delta.background, prev.background, next.background, key);
+		}
+	};
+
+	/**
+	 * Independently togglable sub-effects that compose the emphasize animation.
+	 */
+	struct EmphasizeEffectsConfig {
+		/**
+		 * Main per-character transform.
+		 */
+		EmphasizeMainConfig main;
+		/**
+		 * Glow halo.
+		 */
+		EmphasizeGlowConfig glow;
+		/**
+		 * Secondary float layer.
+		 */
+		EmphasizeFloatConfig floating;
+
+		bool operator==(const EmphasizeEffectsConfig&) const = default;
+
+		friend void overlay(EmphasizeEffectsConfig& dst, const EmphasizeEffectsConfig& src, ::music_lyric_player::utils::config::Access key) {
+			overlay(dst.main, src.main, key);
+			overlay(dst.glow, src.glow, key);
+			overlay(dst.floating, src.floating, key);
+		}
+
+		friend void capture(EmphasizeEffectsConfig& delta, const EmphasizeEffectsConfig& prev, const EmphasizeEffectsConfig& next, ::music_lyric_player::utils::config::Access key) {
+			capture(delta.main, prev.main, next.main, key);
+			capture(delta.glow, prev.glow, next.glow, key);
+			capture(delta.floating, prev.floating, next.floating, key);
+		}
+	};
+
+	/**
+	 * Per-character emphasize effect of stressed syllables; at least one sub-effect must be enabled for the per-character split to happen.
+	 */
+	struct EmphasizeConfig {
+		/**
+		 * Master switch for the entire emphasize feature.
+		 *
+		 * @default true
+		 */
+		::music_lyric_player::utils::config::Property<bool> enabled = true;
+		/**
+		 * Sub-effects.
+		 */
+		EmphasizeEffectsConfig effects;
+		/**
+		 * Minimum animation duration in milliseconds; shorter syllables still emphasize but their timeline lasts at least this long.
+		 *
+		 * @default 1000.0
+		 * @minimum 0
+		 */
+		::music_lyric_player::utils::config::Property<double> minDuration = 1000.0;
+		/**
+		 * Playback rate used to wind down an in-flight per-character animation when the line leaves the active state.
+		 *
+		 * @default 4.0
+		 * @minimum 1
+		 */
+		::music_lyric_player::utils::config::Property<double> disablePlaybackRate = 4.0;
+
+		bool operator==(const EmphasizeConfig&) const = default;
+
+		friend void overlay(EmphasizeConfig& dst, const EmphasizeConfig& src, ::music_lyric_player::utils::config::Access key) {
+			if (src.enabled.assigned()) dst.enabled = src.enabled.value();
+			overlay(dst.effects, src.effects, key);
+			if (src.minDuration.assigned()) dst.minDuration = src.minDuration.value();
+			if (src.disablePlaybackRate.assigned()) dst.disablePlaybackRate = src.disablePlaybackRate.value();
+		}
+
+		friend void capture(EmphasizeConfig& delta, const EmphasizeConfig& prev, const EmphasizeConfig& next, ::music_lyric_player::utils::config::Access key) {
+			if (!(prev.enabled == next.enabled)) delta.enabled = next.enabled.value();
+			capture(delta.effects, prev.effects, next.effects, key);
+			if (!(prev.minDuration == next.minDuration)) delta.minDuration = next.minDuration.value();
+			if (!(prev.disablePlaybackRate == next.disablePlaybackRate)) delta.disablePlaybackRate = next.disablePlaybackRate.value();
+		}
+	};
+
+	/**
 	 * Animation settings of timed words.
 	 */
 	struct WordAnimationConfig {
@@ -134,17 +464,23 @@ namespace music_lyric_player::rendering::config::line::normal::main::syllable {
 		 * Karaoke color reveal mask.
 		 */
 		MaskConfig mask;
+		/**
+		 * Per-character emphasize effect of stressed words.
+		 */
+		EmphasizeConfig emphasize;
 
 		bool operator==(const WordAnimationConfig&) const = default;
 
 		friend void overlay(WordAnimationConfig& dst, const WordAnimationConfig& src, ::music_lyric_player::utils::config::Access key) {
 			overlay(dst.floating, src.floating, key);
 			overlay(dst.mask, src.mask, key);
+			overlay(dst.emphasize, src.emphasize, key);
 		}
 
 		friend void capture(WordAnimationConfig& delta, const WordAnimationConfig& prev, const WordAnimationConfig& next, ::music_lyric_player::utils::config::Access key) {
 			capture(delta.floating, prev.floating, next.floating, key);
 			capture(delta.mask, prev.mask, next.mask, key);
+			capture(delta.emphasize, prev.emphasize, next.emphasize, key);
 		}
 	};
 

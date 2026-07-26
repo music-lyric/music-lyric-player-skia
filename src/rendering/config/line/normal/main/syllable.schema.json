@@ -77,6 +77,222 @@
       ]
     },
     {
+      "name": "EmphasizeMainConfig",
+      "comment": "Core per-character transform of the emphasize effect: a scale pulse with an outward fan-out and an upward lift.",
+      "fields": [
+        {
+          "name": "enabled",
+          "type": "bool",
+          "default": "true",
+          "comment": "Whether the main transform animation runs."
+        },
+        {
+          "name": "scale",
+          "type": "double",
+          "default": "0.1",
+          "min": 0,
+          "comment": "Peak scale increment; the character's peak scale is `1 + scale * intensity`, where the intensity derives from the syllable's duration."
+        },
+        {
+          "name": "offsetHorizontal",
+          "type": "double",
+          "default": "1.0",
+          "min": 0,
+          "comment": "Peak outward horizontal shift per character in logical pixels; characters fan out from the word's center."
+        },
+        {
+          "name": "offsetVertical",
+          "type": "double",
+          "default": "1.0",
+          "min": 0,
+          "comment": "Peak upward vertical shift in logical pixels, applied uniformly to every character."
+        },
+        {
+          "name": "easingRise",
+          "kind": "easing",
+          "default": "\"cubic-bezier(0.2, 0.4, 0.58, 1)\"",
+          "comment": "Easing applied from rest to the peak at the pulse midpoint."
+        },
+        {
+          "name": "easingFall",
+          "kind": "easing",
+          "default": "\"cubic-bezier(0.3, 0, 0.58, 1)\"",
+          "comment": "Easing applied from the peak back to rest."
+        }
+      ]
+    },
+    {
+      "name": "EmphasizeGlowConfig",
+      "comment": "Glow halo rendered behind emphasized characters; the only sub-effect that defaults to off because every character costs one blur per frame.",
+      "fields": [
+        {
+          "name": "enabled",
+          "type": "bool",
+          "default": "false",
+          "comment": "Whether to render the glow."
+        },
+        {
+          "name": "color",
+          "kind": "color",
+          "default": "\"#000000\"",
+          "comment": "Glow color; an unparseable string silently disables the glow, acting as a soft kill switch."
+        },
+        {
+          "name": "easingRise",
+          "kind": "easing",
+          "default": "\"cubic-bezier(0.2, 0.4, 0.58, 1)\"",
+          "comment": "Easing applied from rest to the peak at the pulse midpoint."
+        },
+        {
+          "name": "easingFall",
+          "kind": "easing",
+          "default": "\"cubic-bezier(0.3, 0, 0.58, 1)\"",
+          "comment": "Easing applied from the peak back to rest."
+        },
+        {
+          "name": "maxRadius",
+          "type": "double",
+          "default": "9.0",
+          "min": 0,
+          "comment": "Maximum glow radius in logical pixels; the duration-derived intensity clamps it further so short syllables get a tighter halo."
+        },
+        {
+          "name": "maxAlpha",
+          "type": "double",
+          "default": "1.0",
+          "min": 0,
+          "max": 1,
+          "comment": "Peak glow alpha in the `[0, 1]` range."
+        }
+      ]
+    },
+    {
+      "name": "EmphasizeFloatDurationConfig",
+      "comment": "Timing controls of the secondary float layer.",
+      "fields": [
+        {
+          "name": "scale",
+          "type": "double",
+          "default": "1.4",
+          "min": 0,
+          "comment": "Float duration as a multiple of the main emphasize duration; values above 1 make the float linger after the main effect settles."
+        },
+        {
+          "name": "lead",
+          "type": "double",
+          "default": "400.0",
+          "min": 0,
+          "comment": "Milliseconds the float starts before the main emphasize effect."
+        }
+      ]
+    },
+    {
+      "name": "EmphasizeFloatBackgroundConfig",
+      "comment": "Amplified float for background lines, layered on the emphasize float.",
+      "fields": [
+        {
+          "name": "enabled",
+          "type": "bool",
+          "default": "true",
+          "comment": "Whether background lines get an amplified float."
+        },
+        {
+          "name": "scale",
+          "type": "double",
+          "default": "2.0",
+          "min": 0,
+          "comment": "Float amplitude multiplier applied on background lines."
+        }
+      ]
+    },
+    {
+      "name": "EmphasizeFloatConfig",
+      "comment": "Secondary bounce layered on top of the per-word float animation.",
+      "fields": [
+        {
+          "name": "enabled",
+          "type": "bool",
+          "default": "true",
+          "comment": "Whether to enable the secondary float."
+        },
+        {
+          "name": "duration",
+          "nested": "EmphasizeFloatDurationConfig",
+          "comment": "Float timing."
+        },
+        {
+          "name": "amplitude",
+          "type": "double",
+          "default": "2.0",
+          "min": 0,
+          "comment": "Peak upward displacement in logical pixels."
+        },
+        {
+          "name": "easing",
+          "kind": "easing",
+          "default": "\"cubic-bezier(0.45, 0, 0.55, 1)\"",
+          "comment": "Easing applied to each half of the bounce."
+        },
+        {
+          "name": "background",
+          "nested": "EmphasizeFloatBackgroundConfig",
+          "comment": "Amplified float for background lines."
+        }
+      ]
+    },
+    {
+      "name": "EmphasizeEffectsConfig",
+      "comment": "Independently togglable sub-effects that compose the emphasize animation.",
+      "fields": [
+        {
+          "name": "main",
+          "nested": "EmphasizeMainConfig",
+          "comment": "Main per-character transform."
+        },
+        {
+          "name": "glow",
+          "nested": "EmphasizeGlowConfig",
+          "comment": "Glow halo."
+        },
+        {
+          "name": "floating",
+          "nested": "EmphasizeFloatConfig",
+          "comment": "Secondary float layer."
+        }
+      ]
+    },
+    {
+      "name": "EmphasizeConfig",
+      "comment": "Per-character emphasize effect of stressed syllables; at least one sub-effect must be enabled for the per-character split to happen.",
+      "fields": [
+        {
+          "name": "enabled",
+          "type": "bool",
+          "default": "true",
+          "comment": "Master switch for the entire emphasize feature."
+        },
+        {
+          "name": "effects",
+          "nested": "EmphasizeEffectsConfig",
+          "comment": "Sub-effects."
+        },
+        {
+          "name": "minDuration",
+          "type": "double",
+          "default": "1000.0",
+          "min": 0,
+          "comment": "Minimum animation duration in milliseconds; shorter syllables still emphasize but their timeline lasts at least this long."
+        },
+        {
+          "name": "disablePlaybackRate",
+          "type": "double",
+          "default": "4.0",
+          "min": 1,
+          "comment": "Playback rate used to wind down an in-flight per-character animation when the line leaves the active state."
+        }
+      ]
+    },
+    {
       "name": "WordAnimationConfig",
       "comment": "Animation settings of timed words.",
       "fields": [
@@ -89,6 +305,11 @@
           "name": "mask",
           "nested": "MaskConfig",
           "comment": "Karaoke color reveal mask."
+        },
+        {
+          "name": "emphasize",
+          "nested": "EmphasizeConfig",
+          "comment": "Per-character emphasize effect of stressed words."
         }
       ]
     },

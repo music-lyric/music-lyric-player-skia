@@ -121,8 +121,8 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		const SkRect textBounds = SkRect::MakeXYWH(x, y, this->measuredWidth, this->measuredHeight);
 		const SkRect drawBounds = textBounds.makeOutset(kGlyphOutset, kGlyphOutset);
 		canvas->saveLayer(&drawBounds, nullptr);
-		// Opaque coverage: the mask supplies the alpha, so the base glyph layer stays fully opaque here.
-		this->paintGroup(canvas, x, y, SK_ColorWHITE);
+		// Opaque coverage in the sung color's rgb: kSrcIn replaces the rgb anyway, and keeping the paint luminance of the direct draws keeps the glyph masks' gamma identical, so entering or leaving the reveal cannot shift the word's weight.
+		this->paintGroup(canvas, x, y, SkColorSetA(sungColor, 0xFF));
 		animation::Mask::apply(canvas, drawBounds, textBounds, progress, feather, unsungColor, sungColor);
 		canvas->restore();
 	}

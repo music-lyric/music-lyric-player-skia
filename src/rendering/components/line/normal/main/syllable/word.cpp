@@ -26,6 +26,12 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		constexpr float kWidthEpsilon   = 0.01f;
 
 		/**
+		 * Layer padding of emphasized words, matching the web word padding that gives the scale pulse and glow room to overflow the glyph box.
+		 */
+		constexpr float kEmphasizePaddingX = 9.0f;
+		constexpr float kEmphasizePaddingY = 5.0f;
+
+		/**
 		 * Distance the float offset must move away from a rest point before the word fully leaves the pixel grid.
 		 * Blending the snap correction over this range keeps lift-off and touch-down continuous instead of popping half a pixel.
 		 */
@@ -71,7 +77,8 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 	      duration(wordDuration(info)),
 	      spaceCount(spacesBefore),
 	      stressed(info.stress),
-	      floating(this->start, this->duration) {}
+	      floating(this->start, this->duration),
+	      emphasizing(this->start, this->duration) {}
 
 	Word::~Word() = default;
 
@@ -119,28 +126,43 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		this->y = y;
 	}
 
-	void Word::paintGroup(SkCanvas* canvas, float x, float y, SkColor color) const {
-		// Cells keep their absolute in-word glyph positions, so painting every cell at the word origin issues the same draw parameters as the single blob.
+	void Word::paintGroup(SkCanvas* canvas, float x, float y, SkColor color, const std::vector<animation::Emphasize::Transform>* transforms) const {
+		// Cells keep their absolute in-word glyph positions, so an untransformed cell issues the same draw parameters as the single blob.
 		if (this->useCells) {
-			for (const utils::fragment::FragmentGroup& cell : this->cells) {
+			for (std::size_t i = 0; i < this->cells.size(); ++i) {
+				const utils::fragment::FragmentGroup&  cell      = this->cells[i];
+				const animation::Emphasize::Transform* transform = transforms && i < transforms->size() ? &(*transforms)[i] : nullptr;
+				if (!transform || (transform->scale == 1.0f && transform->dx == 0.0f && transform->dy == 0.0f)) {
+					cell.paint(canvas, x, y, color);
+					continue;
+				}
+				// Scale about the cell center, then shift in the scaled space: the same net matrix as the web `scale() translate()` list with a centered transform origin.
+				const float centerX = x + cell.bounds.fLeft + cell.advance * 0.5f;
+				const float centerY = y + cell.height * 0.5f;
+				canvas->save();
+				canvas->translate(centerX, centerY);
+				canvas->scale(transform->scale, transform->scale);
+				canvas->translate(transform->dx - centerX, transform->dy - centerY);
 				cell.paint(canvas, x, y, color);
+				canvas->restore();
 			}
 			return;
 		}
 		this->group.paint(canvas, x, y, color);
 	}
 
-	void Word::paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor unsungColor, SkColor sungColor) const {
+	void Word::paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor unsungColor, SkColor sungColor, const std::vector<animation::Emphasize::Transform>* transforms) const {
 		if (!this->group) {
 			return;
 		}
 
 		// Use the ceil'd layout box (not group.bounds) so the mask saveLayer size stays bit-identical to today.
 		const SkRect textBounds = SkRect::MakeXYWH(x, y, this->measuredWidth, this->measuredHeight);
-		const SkRect drawBounds = textBounds.makeOutset(kGlyphOutset, kGlyphOutset);
+		// Emphasized cells scale and shift past the glyph outset, so their layer grows by the web word padding; the mask geometry itself stays on the unpadded box.
+		const SkRect drawBounds = this->useCells ? textBounds.makeOutset(kEmphasizePaddingX, kEmphasizePaddingY) : textBounds.makeOutset(kGlyphOutset, kGlyphOutset);
 		canvas->saveLayer(&drawBounds, nullptr);
 		// Opaque coverage in the sung color's rgb: kSrcIn replaces the rgb anyway, and keeping the paint luminance of the direct draws keeps the glyph masks' gamma identical, so entering or leaving the reveal cannot shift the word's weight.
-		this->paintGroup(canvas, x, y, SkColorSetA(sungColor, 0xFF));
+		this->paintGroup(canvas, x, y, SkColorSetA(sungColor, 0xFF), transforms);
 		animation::Mask::apply(canvas, drawBounds, textBounds, progress, feather, unsungColor, sungColor);
 		canvas->restore();
 	}
@@ -169,6 +191,21 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		const float         drawX           = rawX + correction.fX;
 		const float         drawY           = rawY + correction.fY * blend;
 
+		// Emphasize transforms are sampled once per frame and shared by every paint path below; plain words skip the whole pipeline.
+		const std::vector<animation::Emphasize::Transform>* transforms = nullptr;
+		if (this->useCells) {
+			const auto&                              emphasizeConfig = animationConfig.emphasize;
+			const animation::Emphasize::MainSettings mainSettings{
+				emphasizeConfig.effects.main.enabled.value(),
+				static_cast<float>(emphasizeConfig.effects.main.scale.value()),
+				static_cast<float>(emphasizeConfig.effects.main.offsetHorizontal.value()),
+				static_cast<float>(emphasizeConfig.effects.main.offsetVertical.value()),
+				emphasizeConfig.effects.main.easingRise.value(),
+				emphasizeConfig.effects.main.easingFall.value(),
+			};
+			transforms = &this->emphasizing.sample(context.currentTime, now, active, emphasizeConfig.minDuration.value(), emphasizeConfig.disablePlaybackRate.value(), this->cells.size(), mainSettings);
+		}
+
 		const SkColor normalColor    = utils::color::resolve(cfg.line.normal.main.syllable.style.normal.color, config::Default.line.normal.main.syllable.style.normal.color);
 		const SkColor activeColor    = utils::color::resolve(cfg.line.normal.main.syllable.style.active.color, config::Default.line.normal.main.syllable.style.active.color);
 		const double  normalOpacity  = cfg.line.normal.main.syllable.style.normal.opacity;
@@ -176,7 +213,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 		// Inactive lines paint the whole word in the normal state color; the opacity is eased by the owning element so a deactivating line fades out (web `.word` `transition: opacity 0.8s ease`) instead of snapping.
 		if (!active) {
-			this->paintGroup(canvas, drawX, drawY, utils::color::withOpacity(normalColor, inactiveOpacity));
+			this->paintGroup(canvas, drawX, drawY, utils::color::withOpacity(normalColor, inactiveOpacity), transforms);
 			return;
 		}
 
@@ -185,14 +222,14 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		const SkColor unsungColor = utils::color::withOpacity(activeColor, normalOpacity);
 
 		if (!maskEnabled || maskProgress >= 1.0f) {
-			this->paintGroup(canvas, drawX, drawY, sungColor);
+			this->paintGroup(canvas, drawX, drawY, sungColor, transforms);
 			return;
 		}
 		if (maskProgress <= 0.0f) {
-			this->paintGroup(canvas, drawX, drawY, unsungColor);
+			this->paintGroup(canvas, drawX, drawY, unsungColor, transforms);
 			return;
 		}
-		this->paintReveal(canvas, drawX, drawY, maskProgress, maskFeather, unsungColor, sungColor);
+		this->paintReveal(canvas, drawX, drawY, maskProgress, maskFeather, unsungColor, sungColor, transforms);
 	}
 
 	animation::Mask::Input Word::maskInput() const {

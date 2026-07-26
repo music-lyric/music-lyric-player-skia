@@ -22,6 +22,7 @@ add_library(music_lyric_player_rendering
 	rendering/components/line/normal/main/plain/index.cpp
 	rendering/components/line/normal/main/syllable/index.cpp
 	rendering/components/line/normal/main/syllable/word.cpp
+	rendering/components/line/normal/main/syllable/animation/emphasize.cpp
 	rendering/components/line/normal/main/syllable/animation/float.cpp
 	rendering/components/line/normal/main/syllable/animation/mask.cpp
 	rendering/components/line/interlude/index.cpp

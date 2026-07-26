@@ -77,14 +77,14 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 	private:
 		/**
-		 * Paints the cached word blob — or its per-character cells when the emphasize split is active — at the word position in the supplied state color.
+		 * Paints the cached word blob — or its per-character cells with their emphasize transforms — at the word position in the supplied state color.
 		 */
-		void paintGroup(SkCanvas* canvas, float x, float y, SkColor color) const;
+		void paintGroup(SkCanvas* canvas, float x, float y, SkColor color, const std::vector<animation::Emphasize::Transform>* transforms) const;
 
 		/**
 		 * Reveals the word by wiping alpha from the unsung color to the sung color across its width.
 		 */
-		void paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor unsungColor, SkColor sungColor) const;
+		void paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor unsungColor, SkColor sungColor, const std::vector<animation::Emphasize::Transform>* transforms) const;
 
 		std::string text;
 		double      start;
@@ -92,7 +92,8 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		uint32_t    spaceCount;
 		bool        stressed;
 
-		animation::Float floating;
+		animation::Float     floating;
+		animation::Emphasize emphasizing;
 
 		utils::fragment::FragmentGroup              group;
 		std::vector<utils::fragment::FragmentGroup> cells;

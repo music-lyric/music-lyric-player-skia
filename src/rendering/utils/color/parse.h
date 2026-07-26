@@ -76,6 +76,13 @@ namespace music_lyric_player::rendering::utils::color {
 	}
 
 	/**
+	 * Parses a CSS-style colour string, or returns no value when parsing fails, for callers that treat an invalid color as a switch.
+	 */
+	inline ::std::optional<SkColor> tryResolve(const ::std::string& value) {
+		return detail::parse(value);
+	}
+
+	/**
 	 * Scales a color's alpha channel by an opacity in `[0, 1]`, mirroring the CSS color-times-opacity model.
 	 * An opacity of `1` leaves the color unchanged; `0` makes it fully transparent.
 	 */

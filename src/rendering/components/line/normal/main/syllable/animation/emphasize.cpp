@@ -15,6 +15,15 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		}
 
 		/**
+		 * Maps the stretched syllable duration to the glow intensity, shaped like the main intensity but on a 3s pivot with a lower cap.
+		 */
+		float glowIntensity(double raw) {
+			const double ratio  = raw / 3000.0;
+			const double shaped = ratio > 1.0 ? std::sqrt(ratio) : ratio * ratio * ratio;
+			return static_cast<float>(std::clamp(shaped * 0.5, 0.0, 0.8));
+		}
+
+		/**
 		 * Evaluates the triangle pulse factor at clamped progress `p`: rest to peak over the first half with the rise easing, peak back to rest over the second half with the fall easing.
 		 */
 		float pulse(float p, const ::music_lyric_player::rendering::animation::Easing& rise, const ::music_lyric_player::rendering::animation::Easing& fall) {
@@ -41,8 +50,9 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 	    : start(std::isfinite(start) ? start : 0.0),
 	      duration(std::isfinite(duration) ? std::max(duration, 0.0) : 0.0) {}
 
-	const std::vector<Emphasize::Transform>& Emphasize::sample(double currentTime, double now, bool active, double minDuration, double disableRate, std::size_t cellCount, const MainSettings& main, const FloatSettings& floating) const {
+	const std::vector<Emphasize::Transform>& Emphasize::sample(double currentTime, double now, bool active, double minDuration, double disableRate, std::size_t cellCount, const MainSettings& main, const FloatSettings& floating, const GlowSettings& glow) const {
 		this->transforms.assign(cellCount, Transform{});
+		this->glowRadiusValue = 0.0f;
 
 		// Web params: the timeline lasts at least minDuration and cells step by a fixed share of it.
 		const double raw = std::max(std::isfinite(minDuration) ? std::max(minDuration, 0.0) : 0.0, this->duration);
@@ -134,9 +144,40 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 				this->transforms[i].dy += -floating.amplitude * factor;
 			}
 		}
+		if (glow.enabled) {
+			const ::music_lyric_player::rendering::animation::Easing& rise = this->glowRise.resolve(glow.easingRise);
+			const ::music_lyric_player::rendering::animation::Easing& fall = this->glowFall.resolve(glow.easingFall);
+
+			// The radius is constant through the pulse; only the halo alpha animates, matching the web text-shadow keyframes.
+			const float intensity = glowIntensity(raw);
+			const float peakAlpha = std::clamp(intensity * glow.maxAlpha, 0.0f, 1.0f);
+			this->glowRadiusValue = std::min(glow.maxRadius, intensity * glow.maxRadius);
+
+			// The glow shares the main pulse timeline: same duration, same stagger, no lead.
+			for (std::size_t i = 0; i < cellCount; ++i) {
+				const double begun = (base - this->start - stagger * static_cast<double>(i)) / raw;
+				// A cell that never started before deactivation holds rest through the wind-down.
+				if (!active && begun <= 0.0) {
+					continue;
+				}
+				const double progress = std::clamp(begun + elapsed / raw, 0.0, 1.0);
+				if (!active && progress < 1.0) {
+					residual = true;
+				}
+				const float factor = pulse(static_cast<float>(progress), rise, fall);
+				if (factor <= 0.0f) {
+					continue;
+				}
+				this->transforms[i].glow = peakAlpha * factor;
+			}
+		}
 		if (!active && !residual) {
 			this->exiting = false;
 		}
 		return this->transforms;
+	}
+
+	float Emphasize::glowRadius() const {
+		return this->glowRadiusValue;
 	}
 } // namespace music_lyric_player::rendering::components::line::normal::main::syllable::animation

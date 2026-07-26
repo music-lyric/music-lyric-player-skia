@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <vector>
 
+#include "include/core/SkBlendMode.h"
 #include "include/core/SkColor.h"
 #include "include/core/SkRect.h"
 
@@ -51,9 +52,10 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		float feather(std::size_t index) const;
 
 		/**
-		 * Wipes the current glyph layer's alpha from the unsung color to the sung color, left to right.
+		 * Wipes the current glyph layer from the unsung color to the sung color, left to right.
+		 * The default kSrcIn replaces the layer's rgb and alpha; kDstIn multiplies only the layer's alpha with the same band, keeping its colors for layers like the glow.
 		 */
-		static void apply(SkCanvas* canvas, const SkRect& drawBounds, const SkRect& textBounds, float progress, float feather, SkColor unsungColor, SkColor sungColor);
+		static void apply(SkCanvas* canvas, const SkRect& drawBounds, const SkRect& textBounds, float progress, float feather, SkColor unsungColor, SkColor sungColor, SkBlendMode blend = SkBlendMode::kSrcIn);
 
 	private:
 		struct Segment {

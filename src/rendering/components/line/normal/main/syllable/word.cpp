@@ -4,13 +4,19 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 
+#include "include/core/SkBlendMode.h"
+#include "include/core/SkBlurTypes.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColor.h"
 #include "include/core/SkFont.h"
+#include "include/core/SkMaskFilter.h"
 #include "include/core/SkMatrix.h"
+#include "include/core/SkPaint.h"
 #include "include/core/SkPoint.h"
 #include "include/core/SkRect.h"
+#include "include/core/SkRefCnt.h"
 #include "music_lyric_model.h"
 #include "rendering/common/context.h"
 #include "rendering/utils/color/parse.h"
@@ -53,6 +59,25 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 				(std::round(deviceX) - deviceX) / matrix.getScaleX(),
 				(std::round(deviceBaseline) - deviceBaseline) / matrix.getScaleY(),
 			};
+		}
+
+		/**
+		 * Reports whether a sampled cell transform moves the cell at all, letting resting cells skip the canvas save.
+		 */
+		bool isRestTransform(const animation::Emphasize::Transform& transform) {
+			return transform.scale == 1.0f && transform.dx == 0.0f && transform.dy == 0.0f;
+		}
+
+		/**
+		 * Concats one cell's emphasize transform: scale about the cell center, then shift in the scaled space.
+		 * This is the same net matrix as the web `scale() translate()` list with a centered transform origin.
+		 */
+		void concatCellTransform(SkCanvas* canvas, const utils::fragment::FragmentGroup& cell, const animation::Emphasize::Transform& transform, float x, float y) {
+			const float centerX = x + cell.bounds.fLeft + cell.advance * 0.5f;
+			const float centerY = y + cell.height * 0.5f;
+			canvas->translate(centerX, centerY);
+			canvas->scale(transform.scale, transform.scale);
+			canvas->translate(transform.dx - centerX, transform.dy - centerY);
 		}
 
 		/**
@@ -132,17 +157,12 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 			for (std::size_t i = 0; i < this->cells.size(); ++i) {
 				const utils::fragment::FragmentGroup&  cell      = this->cells[i];
 				const animation::Emphasize::Transform* transform = transforms && i < transforms->size() ? &(*transforms)[i] : nullptr;
-				if (!transform || (transform->scale == 1.0f && transform->dx == 0.0f && transform->dy == 0.0f)) {
+				if (!transform || isRestTransform(*transform)) {
 					cell.paint(canvas, x, y, color);
 					continue;
 				}
-				// Scale about the cell center, then shift in the scaled space: the same net matrix as the web `scale() translate()` list with a centered transform origin.
-				const float centerX = x + cell.bounds.fLeft + cell.advance * 0.5f;
-				const float centerY = y + cell.height * 0.5f;
 				canvas->save();
-				canvas->translate(centerX, centerY);
-				canvas->scale(transform->scale, transform->scale);
-				canvas->translate(transform->dx - centerX, transform->dy - centerY);
+				concatCellTransform(canvas, cell, *transform, x, y);
 				cell.paint(canvas, x, y, color);
 				canvas->restore();
 			}
@@ -151,7 +171,47 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		this->group.paint(canvas, x, y, color);
 	}
 
-	void Word::paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor unsungColor, SkColor sungColor, const std::vector<animation::Emphasize::Transform>* transforms) const {
+	void Word::paintGlow(SkCanvas* canvas, float x, float y, const GlowPaint& glow, double opacity, const std::vector<animation::Emphasize::Transform>* transforms) const {
+		if (!this->useCells || !transforms || glow.radius <= 0.0f) {
+			return;
+		}
+
+		// The CSS blur radius equals two standard deviations, so the sigma is half the sampled radius; the filter respects the CTM so a scaled cell scales its halo too.
+		const sk_sp<SkMaskFilter> blur = SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, glow.radius * 0.5f);
+		if (!blur) {
+			return;
+		}
+
+		SkPaint paint;
+		paint.setAntiAlias(true);
+		paint.setMaskFilter(blur);
+		for (std::size_t i = 0; i < this->cells.size(); ++i) {
+			const animation::Emphasize::Transform* transform = i < transforms->size() ? &(*transforms)[i] : nullptr;
+			if (!transform || transform->glow <= 0.0f) {
+				continue;
+			}
+			// The halo alpha comes from the pulse and the path opacity; the config color's own alpha is discarded like the web rgba template.
+			paint.setColor(utils::color::withOpacity(SkColorSetA(glow.color, 0xFF), static_cast<double>(transform->glow) * opacity));
+
+			const utils::fragment::FragmentGroup& cell = this->cells[i];
+			const bool                            rest = isRestTransform(*transform);
+			if (!rest) {
+				canvas->save();
+				concatCellTransform(canvas, cell, *transform, x, y);
+			}
+			for (const utils::fragment::GlyphFragment& fragment : cell.fragments) {
+				if (!fragment.blob) {
+					continue;
+				}
+				canvas->drawTextBlob(fragment.blob, x + fragment.origin.fX, y + fragment.origin.fY, paint);
+			}
+			if (!rest) {
+				canvas->restore();
+			}
+		}
+	}
+
+	void Word::paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor unsungColor, SkColor sungColor, const std::vector<animation::Emphasize::Transform>* transforms, const GlowPaint* glow) const {
 		if (!this->group) {
 			return;
 		}
@@ -160,6 +220,15 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		const SkRect textBounds = SkRect::MakeXYWH(x, y, this->measuredWidth, this->measuredHeight);
 		// Emphasized cells scale and shift past the glyph outset, so their layer grows by the web word padding; the mask geometry itself stays on the unpadded box.
 		const SkRect drawBounds = this->useCells ? textBounds.makeOutset(kEmphasizePaddingX, kEmphasizePaddingY) : textBounds.makeOutset(kGlyphOutset, kGlyphOutset);
+
+		// The glow wipes in its own layer beneath the body: kDstIn multiplies only the halo's alpha with the same band, keeping the glow color the kSrcIn body pass would overwrite.
+		if (glow) {
+			canvas->saveLayer(&drawBounds, nullptr);
+			this->paintGlow(canvas, x, y, *glow, 1.0, transforms);
+			animation::Mask::apply(canvas, drawBounds, textBounds, progress, feather, unsungColor, sungColor, SkBlendMode::kDstIn);
+			canvas->restore();
+		}
+
 		canvas->saveLayer(&drawBounds, nullptr);
 		// Opaque coverage in the sung color's rgb: kSrcIn replaces the rgb anyway, and keeping the paint luminance of the direct draws keeps the glyph masks' gamma identical, so entering or leaving the reveal cannot shift the word's weight.
 		this->paintGroup(canvas, x, y, SkColorSetA(sungColor, 0xFF), transforms);
@@ -193,6 +262,8 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 		// Emphasize transforms are sampled once per frame and shared by every paint path below; plain words skip the whole pipeline.
 		const std::vector<animation::Emphasize::Transform>* transforms = nullptr;
+		GlowPaint                                           glowPaint;
+		bool                                                glowLit = false;
 		if (this->useCells) {
 			const auto&                              emphasizeConfig = animationConfig.emphasize;
 			const animation::Emphasize::MainSettings mainSettings{
@@ -211,7 +282,23 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 				emphasizeConfig.effects.floating.duration.lead.value(),
 				emphasizeConfig.effects.floating.easing.value(),
 			};
-			transforms = &this->emphasizing.sample(context.currentTime, now, active, emphasizeConfig.minDuration.value(), emphasizeConfig.disablePlaybackRate.value(), this->cells.size(), mainSettings, floatSettings);
+			// An unparseable glow color disables the whole sub-effect, mirroring the web soft kill switch.
+			std::optional<SkColor> glowColor;
+			if (emphasizeConfig.effects.glow.enabled.value()) {
+				glowColor = utils::color::tryResolve(emphasizeConfig.effects.glow.color.value());
+			}
+			const animation::Emphasize::GlowSettings glowSettings{
+				glowColor.has_value(),
+				static_cast<float>(emphasizeConfig.effects.glow.maxRadius.value()),
+				static_cast<float>(emphasizeConfig.effects.glow.maxAlpha.value()),
+				emphasizeConfig.effects.glow.easingRise.value(),
+				emphasizeConfig.effects.glow.easingFall.value(),
+			};
+			transforms = &this->emphasizing.sample(context.currentTime, now, active, emphasizeConfig.minDuration.value(), emphasizeConfig.disablePlaybackRate.value(), this->cells.size(), mainSettings, floatSettings, glowSettings);
+			if (glowColor.has_value() && this->emphasizing.glowRadius() > 0.0f) {
+				glowPaint = GlowPaint{*glowColor, this->emphasizing.glowRadius()};
+				glowLit   = true;
+			}
 		}
 
 		const SkColor normalColor    = utils::color::resolve(cfg.line.normal.main.syllable.style.normal.color, config::Default.line.normal.main.syllable.style.normal.color);
@@ -221,6 +308,9 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 		// Inactive lines paint the whole word in the normal state color; the opacity is eased by the owning element so a deactivating line fades out (web `.word` `transition: opacity 0.8s ease`) instead of snapping.
 		if (!active) {
+			if (glowLit) {
+				this->paintGlow(canvas, drawX, drawY, glowPaint, inactiveOpacity, transforms);
+			}
 			this->paintGroup(canvas, drawX, drawY, utils::color::withOpacity(normalColor, inactiveOpacity), transforms);
 			return;
 		}
@@ -230,14 +320,20 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		const SkColor unsungColor = utils::color::withOpacity(activeColor, normalOpacity);
 
 		if (!maskEnabled || maskProgress >= 1.0f) {
+			if (glowLit) {
+				this->paintGlow(canvas, drawX, drawY, glowPaint, activeOpacity, transforms);
+			}
 			this->paintGroup(canvas, drawX, drawY, sungColor, transforms);
 			return;
 		}
 		if (maskProgress <= 0.0f) {
+			if (glowLit) {
+				this->paintGlow(canvas, drawX, drawY, glowPaint, normalOpacity, transforms);
+			}
 			this->paintGroup(canvas, drawX, drawY, unsungColor, transforms);
 			return;
 		}
-		this->paintReveal(canvas, drawX, drawY, maskProgress, maskFeather, unsungColor, sungColor, transforms);
+		this->paintReveal(canvas, drawX, drawY, maskProgress, maskFeather, unsungColor, sungColor, transforms, glowLit ? &glowPaint : nullptr);
 	}
 
 	animation::Mask::Input Word::maskInput() const {

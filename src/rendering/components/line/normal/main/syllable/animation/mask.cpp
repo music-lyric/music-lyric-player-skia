@@ -101,12 +101,12 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		return index < this->frames.size() ? this->frames[index].feather : 0.0f;
 	}
 
-	void Mask::apply(SkCanvas* canvas, const SkRect& drawBounds, const SkRect& textBounds, float progress, float feather, SkColor unsungColor, SkColor sungColor) {
+	void Mask::apply(SkCanvas* canvas, const SkRect& drawBounds, const SkRect& textBounds, float progress, float feather, SkColor unsungColor, SkColor sungColor, SkBlendMode blend) {
 		progress = std::clamp(progress, 0.0f, 1.0f);
 		feather  = std::max(feather, 0.0f);
 
 		SkPaint paint;
-		paint.setBlendMode(SkBlendMode::kSrcIn);
+		paint.setBlendMode(blend);
 		if (feather <= 0.0f) {
 			paint.setColor(unsungColor);
 			canvas->drawRect(drawBounds, paint);

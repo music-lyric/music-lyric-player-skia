@@ -77,14 +77,29 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 	private:
 		/**
+		 * Resolved glow inputs for one frame: the halo color and the word-level blur radius.
+		 */
+		struct GlowPaint {
+			SkColor color  = SK_ColorTRANSPARENT;
+			float   radius = 0.0f;
+		};
+
+		/**
 		 * Paints the cached word blob — or its per-character cells with their emphasize transforms — at the word position in the supplied state color.
 		 */
 		void paintGroup(SkCanvas* canvas, float x, float y, SkColor color, const std::vector<animation::Emphasize::Transform>* transforms) const;
 
 		/**
-		 * Reveals the word by wiping alpha from the unsung color to the sung color across its width.
+		 * Paints the blurred glow halo beneath every emphasized cell whose pulse is lit, scaling each halo with its cell transform.
+		 * `opacity` is the paint path's state multiplier, mirroring how the web mask or word opacity also dims the char shadows.
 		 */
-		void paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor unsungColor, SkColor sungColor, const std::vector<animation::Emphasize::Transform>* transforms) const;
+		void paintGlow(SkCanvas* canvas, float x, float y, const GlowPaint& glow, double opacity, const std::vector<animation::Emphasize::Transform>* transforms) const;
+
+		/**
+		 * Reveals the word by wiping alpha from the unsung color to the sung color across its width.
+		 * A lit glow renders in its own layer beneath the body, wiped by the same band with kDstIn so the halo keeps its color while its alpha follows the mask.
+		 */
+		void paintReveal(SkCanvas* canvas, float x, float y, float progress, float feather, SkColor unsungColor, SkColor sungColor, const std::vector<animation::Emphasize::Transform>* transforms, const GlowPaint* glow) const;
 
 		std::string text;
 		double      start;

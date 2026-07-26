@@ -43,6 +43,14 @@ namespace music_lyric_player::utils::config {
 		}
 
 		/**
+		 * Alias of `assigned()` named the way JSON serialization expects a nullable leaf to report itself.
+		 * Without it a sparse patch would serialize its untouched leaves as if they had been overridden.
+		 */
+		bool has_value() const {
+			return this->isSet;
+		}
+
+		/**
 		 * Overrides the value and marks the leaf set.
 		 */
 		Property& operator=(T value) {

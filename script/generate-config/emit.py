@@ -10,6 +10,7 @@ from model import (
     leaf_default,
     leaf_type,
     referenced_includes,
+    resolve_field_path,
     resolve_nested,
 )
 
@@ -205,28 +206,46 @@ def resolve_path(root_module, path):
 
 
 def collect_inherit_edges(root_module):
-    """Collect every `inheritFrom` edge and its sticky default leaves, validate them, then order the edges."""
+    """Collect every `inheritFrom` edge as (consumer, source, relative leaves), validate it, then order the edges."""
+    root_cfg = root_module.by_name["Root"]
     edges = []
 
     def walk(module, cfg, prefix):
         for field in cfg["fields"]:
-            if not is_nested(field):
-                continue
             path = f"{prefix}{field['name']}"
-            target_module, target_cfg, _ = resolve_nested(module, field["nested"])
-            if "inheritFrom" in field:
+            if is_nested(field):
+                target_module, target_cfg, _ = resolve_nested(module, field["nested"])
+                if "inheritFrom" in field:
+                    source = field["inheritFrom"]
+                    if source == path or source.startswith(path + "."):
+                        raise SchemaError(f"field '{path}' cannot inheritFrom '{source}' (itself or its own descendant)")
+                    source_module, source_cfg = resolve_path(root_module, source)
+                    if (source_module.namespace, source_cfg["name"]) != (target_module.namespace, target_cfg["name"]):
+                        raise SchemaError(
+                            f"inheritFrom '{source}' resolves to '{source_cfg['name']}' but field '{path}' is '{target_cfg['name']}'; the inherited source must be the same type"
+                        )
+                    # Sticky defaults keep their explicit values, so only the remaining leaves inherit.
+                    defaults = explicit_default_paths(field)
+                    leaves = [leaf for leaf in walk_leaves(target_module, target_cfg) if leaf not in defaults]
+                    edges.append((path, source, leaves))
+                walk(target_module, target_cfg, path + ".")
+            elif "inheritFrom" in field:
                 source = field["inheritFrom"]
-                if source == path or source.startswith(path + "."):
-                    raise SchemaError(f"field '{path}' cannot inheritFrom '{source}' (itself or its own descendant)")
-                source_module, source_cfg = resolve_path(root_module, source)
-                if (source_module.namespace, source_cfg["name"]) != (target_module.namespace, target_cfg["name"]):
+                if source == path:
+                    raise SchemaError(f"field '{path}' cannot inheritFrom itself")
+                _, _, source_field, source_type = resolve_field_path(root_module, root_cfg, source)
+                if is_nested(source_field):
                     raise SchemaError(
-                        f"inheritFrom '{source}' resolves to '{source_cfg['name']}' but field '{path}' is '{target_cfg['name']}'; the inherited source must be the same type"
+                        f"leaf field '{path}' cannot inheritFrom nested '{source}'; a leaf must inherit from a leaf"
                     )
-                edges.append((path, source, target_module, target_cfg, explicit_default_paths(field)))
-            walk(target_module, target_cfg, path + ".")
+                if source_type != leaf_type(field):
+                    raise SchemaError(
+                        f"inheritFrom '{source}' is '{source_type}' but leaf '{path}' is '{leaf_type(field)}'; the inherited source must be the same type"
+                    )
+                # A leaf edge copies the field itself (no relative sub-path).
+                edges.append((path, source, [""]))
 
-    walk(root_module, root_module.by_name["Root"], "")
+    walk(root_module, root_cfg, "")
     return order_inherit_edges(edges)
 
 
@@ -270,12 +289,12 @@ def gen_resolve(module):
         "\t\t\toverlay(out, overrides, key);",
     ]
     # Topologically ordered, so every source is resolved before a consumer reads it.
-    for consumer, source, type_module, type_cfg, defaults in edges:
-        for leaf in walk_leaves(type_module, type_cfg):
-            if leaf in defaults:
-                continue
-            out.append(f"\t\t\tif (!overrides.{consumer}.{leaf}.assigned()) {{")
-            out.append(f"\t\t\t\tout.{consumer}.{leaf} = out.{source}.{leaf}.value();")
+    for consumer, source, leaves in edges:
+        for leaf in leaves:
+            consumer_leaf = f"{consumer}.{leaf}" if leaf else consumer
+            source_leaf = f"{source}.{leaf}" if leaf else source
+            out.append(f"\t\t\tif (!overrides.{consumer_leaf}.assigned()) {{")
+            out.append(f"\t\t\t\tout.{consumer_leaf} = out.{source_leaf}.value();")
             out.append("\t\t\t}")
     out.append("\t\t}")
     return "\n".join(out)

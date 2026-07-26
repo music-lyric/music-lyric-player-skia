@@ -288,9 +288,9 @@ def validate_structure(schema):
                         raise SchemaError(
                             f"{at} ('{field_name}') must have a non-empty 'type', a 'kind', an 'enum', or 'nested'"
                         )
-                if "inheritFrom" in field:
+                if "inheritFrom" in field and (not isinstance(field["inheritFrom"], str) or not field["inheritFrom"]):
                     raise SchemaError(
-                        f"{at} ('{field_name}') has 'inheritFrom' but is a leaf; inheritance is only supported on nested fields"
+                        f"{at} ('{field_name}').inheritFrom must be a non-empty string (a dotted path from Root to the inherited source leaf)"
                     )
                 if "default" in field and not isinstance(field["default"], str):
                     raise SchemaError(f"{at} ('{field_name}').default must be a string holding a C++ literal")

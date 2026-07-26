@@ -11,3 +11,11 @@
 [submodule "third-party/glaze"]
 	path = third-party/glaze
 	url = https://github.com/stephenberry/glaze.git
+[submodule "example/third-party/miniaudio"]
+	path = example/third-party/miniaudio
+	url = https://github.com/mackron/miniaudio.git
+	shallow = true
+[submodule "example/third-party/imgui"]
+	path = example/third-party/imgui
+	url = https://github.com/ocornut/imgui.git
+	shallow = true

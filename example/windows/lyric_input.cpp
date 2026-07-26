@@ -3,9 +3,6 @@
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
-#include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <optional>
 #include <string>
 #include <vector>
@@ -19,6 +16,8 @@
 #endif
 
 #include <windows.h>
+
+#include "text.h"
 
 namespace example {
 	namespace {
@@ -34,32 +33,6 @@ namespace example {
 			bool         accepted = false;
 			std::wstring text;
 		};
-
-		/**
-		 * Converts a UTF-8 string to UTF-16 for the Win32 wide-character controls.
-		 */
-		std::wstring utf8ToWide(const std::string& input) {
-			if (input.empty()) {
-				return {};
-			}
-			const int length = MultiByteToWideChar(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), nullptr, 0);
-			std::wstring output(static_cast<std::size_t>(length), L'\0');
-			MultiByteToWideChar(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), output.data(), length);
-			return output;
-		}
-
-		/**
-		 * Converts a UTF-16 string from the Win32 controls back to UTF-8.
-		 */
-		std::string wideToUtf8(const std::wstring& input) {
-			if (input.empty()) {
-				return {};
-			}
-			const int length = WideCharToMultiByte(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), nullptr, 0, nullptr, nullptr);
-			std::string output(static_cast<std::size_t>(length), '\0');
-			WideCharToMultiByte(CP_UTF8, 0, input.data(), static_cast<int>(input.size()), output.data(), length, nullptr, nullptr);
-			return output;
-		}
 
 		/**
 		 * Reads the full text of a control into a wide string.
@@ -111,16 +84,6 @@ namespace example {
 					break;
 			}
 			return DefWindowProcW(window, message, wParam, lParam);
-		}
-
-		/**
-		 * Returns the path, next to the executable, where the last loaded lyric is persisted.
-		 */
-		std::filesystem::path persistedLyricPath() {
-			wchar_t     buffer[MAX_PATH] = {};
-			const DWORD length           = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
-			const std::filesystem::path executable(buffer, buffer + length);
-			return executable.parent_path() / L"last_lyric.bin";
 		}
 	} // namespace
 
@@ -280,23 +243,16 @@ namespace example {
 		return wideToUtf8(state.text);
 	}
 
-	void persistLyric(const std::vector<std::uint8_t>& bytes) {
-		std::ofstream out(persistedLyricPath(), std::ios::binary | std::ios::trunc);
-		if (out) {
-			out.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()));
-		}
-	}
+	std::string encodeHex(const std::vector<std::uint8_t>& bytes) {
+		static constexpr char kDigits[] = "0123456789abcdef";
 
-	std::optional<std::vector<std::uint8_t>> loadPersistedLyric() {
-		std::ifstream in(persistedLyricPath(), std::ios::binary);
-		if (!in) {
-			return std::nullopt;
+		std::string text;
+		text.reserve(bytes.size() * 2);
+		for (const std::uint8_t byte : bytes) {
+			text.push_back(kDigits[byte >> 4]);
+			text.push_back(kDigits[byte & 0x0F]);
 		}
-		std::vector<std::uint8_t> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-		if (bytes.empty()) {
-			return std::nullopt;
-		}
-		return bytes;
+		return text;
 	}
 
 	void reportError(void* ownerHwnd, const std::string& message) {

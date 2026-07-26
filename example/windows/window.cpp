@@ -9,23 +9,34 @@
 #include <GLFW/glfw3native.h>
 
 namespace example {
+	namespace {
+		// GLFW is process-wide, so the first window brings it up and the last one tears it down.
+		int liveWindows = 0;
+	} // namespace
+
 	Window::Window() = default;
 
 	Window::~Window() {
 		if (this->window != nullptr) {
 			glfwDestroyWindow(this->window);
+			this->window = nullptr;
+			liveWindows -= 1;
 		}
-		glfwTerminate();
+		if (liveWindows == 0) {
+			glfwTerminate();
+		}
 	}
 
 	bool Window::init(int width, int height, const char* title) {
 		// The backend surface reads the client rect in physical pixels and the window DPI directly,
 		// so the process must be per-monitor DPI aware or sizes and the device-pixel ratio go wrong.
-		SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+		if (liveWindows == 0) {
+			SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
-		if (glfwInit() == GLFW_FALSE) {
-			std::fprintf(stderr, "[example] glfwInit failed\n");
-			return false;
+			if (glfwInit() == GLFW_FALSE) {
+				std::fprintf(stderr, "[example] glfwInit failed\n");
+				return false;
+			}
 		}
 
 		// No client API: the backend owns the whole Vulkan stack; GLFW only provides the window and input.
@@ -33,8 +44,12 @@ namespace example {
 		this->window = glfwCreateWindow(width, height, title, nullptr, nullptr);
 		if (this->window == nullptr) {
 			std::fprintf(stderr, "[example] glfwCreateWindow failed\n");
+			if (liveWindows == 0) {
+				glfwTerminate();
+			}
 			return false;
 		}
+		liveWindows += 1;
 
 		glfwSetWindowUserPointer(this->window, this);
 		glfwSetFramebufferSizeCallback(this->window, [](GLFWwindow* window, int, int) {
@@ -44,6 +59,7 @@ namespace example {
 			}
 		});
 
+		// An input backend attached later chains onto this callback, so both it and the demo bindings see the key.
 		glfwSetKeyCallback(this->window, [](GLFWwindow* window, int key, int, int action, int) {
 			if (action != GLFW_PRESS && action != GLFW_REPEAT) {
 				return;
@@ -59,6 +75,18 @@ namespace example {
 				case GLFW_KEY_L:
 					self->actions.push_back(InputAction::LoadHex);
 					break;
+				case GLFW_KEY_O:
+					self->actions.push_back(InputAction::LoadAudio);
+					break;
+				case GLFW_KEY_P:
+					self->actions.push_back(InputAction::TogglePanel);
+					break;
+				case GLFW_KEY_LEFT:
+					self->actions.push_back(InputAction::SeekBackward);
+					break;
+				case GLFW_KEY_RIGHT:
+					self->actions.push_back(InputAction::SeekForward);
+					break;
 				case GLFW_KEY_SPACE:
 					self->actions.push_back(InputAction::TogglePause);
 					break;
@@ -72,6 +100,10 @@ namespace example {
 
 	bool Window::shouldClose() const {
 		return this->window == nullptr || glfwWindowShouldClose(this->window) == GLFW_TRUE;
+	}
+
+	GLFWwindow* Window::handle() const {
+		return this->window;
 	}
 
 	void Window::pollEvents() {

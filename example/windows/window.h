@@ -12,7 +12,11 @@ namespace example {
 	enum class InputAction {
 		Restart,
 		TogglePause,
+		TogglePanel,
 		LoadHex,
+		LoadAudio,
+		SeekBackward,
+		SeekForward,
 	};
 
 	/**
@@ -33,6 +37,11 @@ namespace example {
 		 * Returns false when GLFW or window creation fails.
 		 */
 		bool init(int width, int height, const char* title);
+
+		/**
+		 * Returns the underlying GLFW window so an input backend can attach its own callbacks.
+		 */
+		GLFWwindow* handle() const;
 
 		/**
 		 * Reports whether the window has been asked to close.

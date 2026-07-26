@@ -14,21 +14,16 @@ namespace example {
 	std::optional<std::vector<std::uint8_t>> decodeHex(const std::string& input);
 
 	/**
+	 * Encodes raw bytes as a lowercase hex string.
+	 */
+	std::string encodeHex(const std::vector<std::uint8_t>& bytes);
+
+	/**
 	 * Shows a modal prompt, seeded with `initialHex`, for the user to paste a hex-encoded lyric.
 	 * `ownerHwnd` is the demo's native window handle, disabled for the lifetime of the prompt.
 	 * Returns the entered text, or nullopt when the user cancels or closes the prompt.
 	 */
 	std::optional<std::string> promptHexLyric(void* ownerHwnd, const std::string& initialHex);
-
-	/**
-	 * Writes the decoded lyric payload next to the executable so the next launch can restore it.
-	 */
-	void persistLyric(const std::vector<std::uint8_t>& bytes);
-
-	/**
-	 * Reads the lyric payload persisted next to the executable, or nullopt when none exists.
-	 */
-	std::optional<std::vector<std::uint8_t>> loadPersistedLyric();
 
 	/**
 	 * Shows a modal error message owned by the demo window, used when input fails to decode.

@@ -41,11 +41,11 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 	    : start(std::isfinite(start) ? start : 0.0),
 	      duration(std::isfinite(duration) ? std::max(duration, 0.0) : 0.0) {}
 
-	const std::vector<Emphasize::Transform>& Emphasize::sample(double currentTime, double now, bool active, double minDuration, double disableRate, std::size_t cellCount, const MainSettings& main) const {
+	const std::vector<Emphasize::Transform>& Emphasize::sample(double currentTime, double now, bool active, double minDuration, double disableRate, std::size_t cellCount, const MainSettings& main, const FloatSettings& floating) const {
 		this->transforms.assign(cellCount, Transform{});
 
 		// Web params: the timeline lasts at least minDuration and cells step by a fixed share of it.
-		const double raw = std::max(std::max(minDuration, 0.0), this->duration);
+		const double raw = std::max(std::isfinite(minDuration) ? std::max(minDuration, 0.0) : 0.0, this->duration);
 		if (cellCount == 0 || raw <= 0.0) {
 			this->lastActive = active;
 			this->exiting    = false;
@@ -73,6 +73,11 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		// The wind-down advances on wall-clock time at the clamped disable rate, so it keeps settling even while playback is paused.
 		const double base    = active ? this->lastTime : this->exitBase;
 		const double elapsed = active ? 0.0 : std::max(std::isfinite(now) ? now - this->exitStart : 0.0, 0.0) * std::max(disableRate, 1.0);
+
+		// The secondary float runs on its own stretched timeline and starts `lead` ms before the main pulse.
+		const double floatDuration = floating.enabled ? raw * std::max(floating.durationScale, 0.0) : 0.0;
+		const double floatLead     = std::max(floating.lead, 0.0);
+		const bool   floatEnable   = floating.enabled && floatDuration > 0.0;
 
 		bool residual = false;
 		if (main.enabled) {
@@ -104,6 +109,29 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 				cell.scale = 1.0f + peakScale * factor;
 				cell.dx    = -peakDx * spread * factor;
 				cell.dy    = peakDy * factor;
+			}
+		}
+		if (floatEnable) {
+			const ::music_lyric_player::rendering::animation::Easing& ease = this->floatEase.resolve(floating.easing);
+
+			for (std::size_t i = 0; i < cellCount; ++i) {
+				// The float leads the main pulse, so the lead adds to the progress numerator (the web subtracts it from the delay).
+				const double begun = (base - this->start - stagger * static_cast<double>(i) + floatLead) / floatDuration;
+				// A cell that never started before deactivation holds rest through the wind-down.
+				if (!active && begun <= 0.0) {
+					continue;
+				}
+				const double progress = std::clamp(begun + elapsed / floatDuration, 0.0, 1.0);
+				if (!active && progress < 1.0) {
+					residual = true;
+				}
+				// The bounce uses the same easing on both halves of the pulse, approximating the web sine wave.
+				const float factor = pulse(static_cast<float>(progress), ease, ease);
+				if (factor <= 0.0f) {
+					continue;
+				}
+				// The bob joins the transform's translation, so the main scale amplifies it exactly like the web composited transform list.
+				this->transforms[i].dy += -floating.amplitude * factor;
 			}
 		}
 		if (!active && !residual) {

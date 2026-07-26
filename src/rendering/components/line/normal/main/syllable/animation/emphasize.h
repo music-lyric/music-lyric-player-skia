@@ -37,6 +37,18 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		};
 
 		/**
+		 * Resolved secondary-float sub-effect settings for one sample call; the easing string references config storage.
+		 * The background amplitude multiplier stays unwired until background lines are ported, so the bob always uses the base amplitude.
+		 */
+		struct FloatSettings {
+			bool               enabled;
+			float              amplitude;
+			double             durationScale;
+			double             lead;
+			const std::string& easing;
+		};
+
+		/**
 		 * Caches the word's absolute start and non-negative duration.
 		 */
 		Emphasize(double start, double duration);
@@ -44,9 +56,10 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		/**
 		 * Samples every cell's transform for this frame and returns the internally cached list, sized to `cellCount`.
 		 * `minDuration` stretches the timeline of short syllables and `disableRate` is the wind-down playback rate, both taken raw from config and clamped here.
+		 * The secondary float runs on its own stretched timeline that starts `lead` ms early, and its bob joins the translation so the main scale amplifies it like the web composited transform list.
 		 * Cells that never started before the line deactivated hold rest through the wind-down, so a skipped line cannot flash its upcoming words.
 		 */
-		const std::vector<Transform>& sample(double currentTime, double now, bool active, double minDuration, double disableRate, std::size_t cellCount, const MainSettings& main) const;
+		const std::vector<Transform>& sample(double currentTime, double now, bool active, double minDuration, double disableRate, std::size_t cellCount, const MainSettings& main, const FloatSettings& floating) const;
 
 	private:
 		/**
@@ -68,6 +81,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 		mutable CachedEasing mainRise;
 		mutable CachedEasing mainFall;
+		mutable CachedEasing floatEase;
 
 		mutable std::vector<Transform> transforms;
 		mutable bool                   lastActive = false;

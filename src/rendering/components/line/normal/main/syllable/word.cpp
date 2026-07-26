@@ -203,7 +203,15 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 				emphasizeConfig.effects.main.easingRise.value(),
 				emphasizeConfig.effects.main.easingFall.value(),
 			};
-			transforms = &this->emphasizing.sample(context.currentTime, now, active, emphasizeConfig.minDuration.value(), emphasizeConfig.disablePlaybackRate.value(), this->cells.size(), mainSettings);
+			// The background amplitude multiplier stays unwired until background lines are ported.
+			const animation::Emphasize::FloatSettings floatSettings{
+				emphasizeConfig.effects.floating.enabled.value(),
+				static_cast<float>(emphasizeConfig.effects.floating.amplitude.value()),
+				emphasizeConfig.effects.floating.duration.scale.value(),
+				emphasizeConfig.effects.floating.duration.lead.value(),
+				emphasizeConfig.effects.floating.easing.value(),
+			};
+			transforms = &this->emphasizing.sample(context.currentTime, now, active, emphasizeConfig.minDuration.value(), emphasizeConfig.disablePlaybackRate.value(), this->cells.size(), mainSettings, floatSettings);
 		}
 
 		const SkColor normalColor    = utils::color::resolve(cfg.line.normal.main.syllable.style.normal.color, config::Default.line.normal.main.syllable.style.normal.color);

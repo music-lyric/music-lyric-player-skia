@@ -8,6 +8,8 @@
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColor.h"
 #include "include/core/SkFont.h"
+#include "include/core/SkMatrix.h"
+#include "include/core/SkPoint.h"
 #include "include/core/SkRect.h"
 #include "music_lyric_model.h"
 #include "rendering/common/context.h"
@@ -22,6 +24,30 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		constexpr float kGlyphOutset    = 2.0f;
 		constexpr float kUnboundedWidth = 1'000'000.0f;
 		constexpr float kWidthEpsilon   = 0.01f;
+
+		/**
+		 * Distance the float offset must move away from a rest point before the word fully leaves the pixel grid.
+		 * Blending the snap correction over this range keeps lift-off and touch-down continuous instead of popping half a pixel.
+		 */
+		constexpr float kSnapBlendRange = 0.5f;
+
+		/**
+		 * Returns the local-space corrections that move a draw origin so the word's left edge and baseline land on whole device pixels.
+		 * The word's blob keeps free sub-pixel placement for the float animation, so a resting word would otherwise sit at an arbitrary phase and look soft.
+		 * Zero when the matrix is not an axis-aligned scale, where device pixel columns have no local-space meaning.
+		 */
+		SkPoint snapCorrection(const SkCanvas& canvas, float x, float y, float baseline) {
+			const SkMatrix matrix = canvas.getLocalToDeviceAs3x3();
+			if (!matrix.isScaleTranslate() || matrix.getScaleX() == 0.0f || matrix.getScaleY() == 0.0f) {
+				return {0.0f, 0.0f};
+			}
+			const float deviceX        = matrix.getScaleX() * x + matrix.getTranslateX();
+			const float deviceBaseline = matrix.getScaleY() * (y + baseline) + matrix.getTranslateY();
+			return {
+				(std::round(deviceX) - deviceX) / matrix.getScaleX(),
+				(std::round(deviceBaseline) - deviceBaseline) / matrix.getScaleY(),
+			};
+		}
 
 		/**
 		 * Returns the word's absolute start time, or zero when timing is absent.
@@ -60,7 +86,8 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 
 		const config::Root& cfg  = context.config;
 		const float         size = static_cast<float>(std::max(resolveLength(cfg.line.normal.main.syllable.font.size, config::Default.line.normal.main.syllable.font.size), 1.0));
-		const SkFont        font = utils::shaping::buildBodyFont(context.fontMgr, cfg.line.normal.main.syllable.font.family.value(), size);
+		// The word floats vertically, so its glyphs keep free sub-pixel placement; the paint path snaps them back onto the grid whenever the word rests.
+		const SkFont        font = utils::shaping::buildBodyFont(context.fontMgr, cfg.line.normal.main.syllable.font.family.value(), size, true);
 
 		const char*       utf8  = this->text.c_str();
 		const std::size_t bytes = this->text.size();
@@ -114,8 +141,15 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 			      ? animationConfig.floating.to
 			      : config::Default.line.normal.main.syllable.word.animation.floating.to;
 		const float         offset          = this->floating.sample(context.currentTime, now, active, animationConfig.floating.enabled, static_cast<float>(fromValue), static_cast<float>(toValue));
-		const float         drawX           = lineX + this->x;
-		const float         drawY           = lineY + this->y + offset;
+		// The float rests either at `from` (unsung or settled back) or at `to` (fully risen), so the grid correction is measured against the nearer rest point.
+		const float         rest            = std::abs(offset - static_cast<float>(fromValue)) <= std::abs(offset - static_cast<float>(toValue)) ? static_cast<float>(fromValue) : static_cast<float>(toValue);
+		const float         rawX            = lineX + this->x;
+		const float         rawY            = lineY + this->y + offset;
+		// Measuring at the rest position keeps the correction constant while the word moves; blending it out over the first half pixel of travel makes a resting word pixel-crisp yet lets it leave and rejoin the grid without a visible pop.
+		const SkPoint       correction      = snapCorrection(*canvas, rawX, lineY + this->y + rest, this->measuredBaseline);
+		const float         blend           = std::clamp(1.0f - std::abs(offset - rest) / kSnapBlendRange, 0.0f, 1.0f);
+		const float         drawX           = rawX + correction.fX;
+		const float         drawY           = rawY + correction.fY * blend;
 
 		const SkColor normalColor    = utils::color::resolve(cfg.line.normal.main.syllable.style.normal.color, config::Default.line.normal.main.syllable.style.normal.color);
 		const SkColor activeColor    = utils::color::resolve(cfg.line.normal.main.syllable.style.active.color, config::Default.line.normal.main.syllable.style.active.color);

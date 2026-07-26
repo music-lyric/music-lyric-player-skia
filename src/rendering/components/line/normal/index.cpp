@@ -48,7 +48,8 @@ namespace music_lyric_player::rendering::components::line::normal {
 
 			row                 = std::make_unique<annotation::Row>(*text);
 			const float  size   = static_cast<float>(std::max(resolveLength(font.size.value(), fallbackSize, baseFontPx), 1.0));
-			const SkFont skFont = utils::shaping::buildBodyFont(context.fontMgr, font.family.value(), size);
+			// Annotation rows never move on their own, so their glyphs stay on the pixel grid.
+			const SkFont skFont = utils::shaping::buildBodyFont(context.fontMgr, font.family.value(), size, false);
 			row->layout(width, context, skFont, context.config.layout.align.value());
 		}
 	} // namespace

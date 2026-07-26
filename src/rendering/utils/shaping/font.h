@@ -13,10 +13,12 @@
 
 namespace music_lyric_player::rendering::utils::shaping {
 	/**
-	 * Builds a body-text font with baseline snapping disabled so a moving glyph stays sub-pixel smooth.
-	 * Per-glyph fallback keeps the same flags, so minority-script glyphs also escape the vertical pixel grid.
+	 * Builds a body-text font; `subpixel` frees glyph placement from the pixel grid for text that animates.
+	 * Static text passes false so every glyph rounds to a whole device pixel and its stroke edges stay crisp; free two-axis sub-pixel phases smear them instead.
+	 * Normal hinting grid-fits the outlines the way DirectWrite does natively without touching metrics, so the layout is identical either way.
+	 * Per-glyph fallback keeps the same flags, so minority-script glyphs render like the primary ones.
 	 */
-	inline SkFont buildBodyFont(const sk_sp<SkFontMgr>& fontMgr, const std::string& family, float size) {
+	inline SkFont buildBodyFont(const sk_sp<SkFontMgr>& fontMgr, const std::string& family, float size, bool subpixel) {
 		sk_sp<SkTypeface> typeface;
 		if (!family.empty()) {
 			typeface = fontMgr->matchFamilyStyle(family.c_str(), SkFontStyle::Normal());
@@ -26,10 +28,10 @@ namespace music_lyric_player::rendering::utils::shaping {
 		}
 
 		SkFont font(typeface, static_cast<SkScalar>(size));
-		font.setSubpixel(true);
-		font.setBaselineSnap(false);
+		font.setSubpixel(subpixel);
+		font.setBaselineSnap(!subpixel);
 		font.setEdging(SkFont::Edging::kAntiAlias);
-		font.setHinting(SkFontHinting::kNone);
+		font.setHinting(SkFontHinting::kNormal);
 		return font;
 	}
 } // namespace music_lyric_player::rendering::utils::shaping

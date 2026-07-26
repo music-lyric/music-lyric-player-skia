@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #ifndef WIN32_LEAN_AND_MEAN
@@ -50,15 +51,100 @@ namespace music_lyric_player::backend::gpu {
 		}
 
 		/**
+		 * The Vulkan instance, logical device and Skia context that every window surface in the process shares.
+		 * A second instance and device per window makes the driver stand up a whole extra GPU stack, which several
+		 * drivers handle badly, so the first surface builds this one and later surfaces borrow it.
+		 * Sharing one `GrDirectContext` also means the windows share Skia's glyph and texture caches.
+		 * It is released once the last surface using it is gone, and is only touched from the thread driving them.
+		 */
+		class SharedContext {
+		public:
+			~SharedContext() {
+				destroy();
+			}
+
+			/**
+			 * Creates the Vulkan instance with the surface extensions Win32 presentation needs.
+			 */
+			bool createInstance();
+
+			/**
+			 * Builds the device and the Skia context against the first window surface.
+			 * For a later surface the stack already exists, so this only checks it can present to that window.
+			 */
+			bool completeFor(VkSurfaceKHR surface);
+
+			VkInstance             instance         = VK_NULL_HANDLE;
+			VkPhysicalDevice       physicalDevice   = VK_NULL_HANDLE;
+			VkDevice               device           = VK_NULL_HANDLE;
+			std::uint32_t          queueFamilyIndex = 0;
+			VkQueue                queue            = VK_NULL_HANDLE;
+			sk_sp<GrDirectContext> context;
+
+		private:
+			/**
+			 * Picks the first physical device whose queue family supports graphics and presentation to `surface`.
+			 */
+			bool pickPhysicalDevice(VkSurfaceKHR surface);
+
+			/**
+			 * Creates the logical device, the graphics/present queue and the swapchain extension.
+			 */
+			bool createDevice();
+
+			/**
+			 * Builds the Skia Vulkan backend context and the GrDirectContext.
+			 */
+			bool createSkiaContext();
+
+			/**
+			 * Tears the stack down in reverse creation order.
+			 */
+			void destroy();
+
+			VkPhysicalDeviceFeatures2 deviceFeatures2{}; // queried device features, handed to Skia
+
+			skgpu::VulkanExtensions extensions;
+
+			std::vector<std::string> instanceExtensionNames;
+			std::vector<std::string> deviceExtensionNames;
+		};
+
+		// Held weakly so the stack goes away with the last surface instead of outliving the windows.
+		std::weak_ptr<SharedContext> sharedContext;
+
+		/**
+		 * Returns the process-wide GPU stack, standing its instance up when no surface holds one yet.
+		 */
+		std::shared_ptr<SharedContext> acquireSharedContext() {
+			std::shared_ptr<SharedContext> shared = sharedContext.lock();
+			if (shared != nullptr) {
+				return shared;
+			}
+
+			shared = std::make_shared<SharedContext>();
+			if (!shared->createInstance()) {
+				return nullptr;
+			}
+			sharedContext = shared;
+			return shared;
+		}
+
+		/**
 		 * A Vulkan swapchain bound to a Win32 `HWND`, exposing each backbuffer as a Skia surface.
-		 * Owns the whole GPU stack (instance / device / swapchain / GrDirectContext) and drives one frame at a time.
+		 * Owns only the presentation objects; the instance, device and Skia context come from the shared stack.
 		 * Sync is intentionally simple: one queue-wait-idle per frame, no pipelining — enough for this use.
 		 * Assumes the window is per-monitor DPI aware, so its client rect is already in physical pixels.
 		 */
 		class WindowSurface : public Surface {
 		public:
 			/**
-			 * Builds the full Vulkan + Skia stack for `hwnd`; returns false on any failure.
+			 * Takes a reference to the GPU stack this surface presents through.
+			 */
+			explicit WindowSurface(std::shared_ptr<SharedContext> shared) : shared(std::move(shared)) {}
+
+			/**
+			 * Binds the surface to `hwnd` and builds its swapchain; returns false on any failure.
 			 */
 			bool init(HWND hwnd);
 
@@ -91,29 +177,9 @@ namespace music_lyric_player::backend::gpu {
 			void present();
 
 			/**
-			 * Creates the Vulkan instance with the surface extensions Win32 presentation needs.
-			 */
-			bool createInstance();
-
-			/**
 			 * Creates the `VkSurfaceKHR` from the owned `HWND`.
 			 */
 			bool createSurface();
-
-			/**
-			 * Picks the first physical device whose queue family supports graphics and presentation.
-			 */
-			bool pickPhysicalDevice();
-
-			/**
-			 * Creates the logical device, the graphics/present queue and the swapchain extension.
-			 */
-			bool createDevice();
-
-			/**
-			 * Builds the Skia Vulkan backend context and the GrDirectContext.
-			 */
-			bool createSkiaContext();
 
 			/**
 			 * Creates the swapchain against the window's current size and wraps each image as an SkSurface.
@@ -131,7 +197,7 @@ namespace music_lyric_player::backend::gpu {
 			bool recreateSwapchain();
 
 			/**
-			 * Tears down the whole stack in reverse creation order.
+			 * Destroys the presentation objects; the shared stack outlives this and is left alone.
 			 */
 			void cleanup();
 
@@ -140,18 +206,9 @@ namespace music_lyric_player::backend::gpu {
 			 */
 			void queryClientSize(int& width, int& height) const;
 
-			HWND             hwnd             = nullptr;
-			VkInstance       instance         = VK_NULL_HANDLE;
-			VkSurfaceKHR     surface          = VK_NULL_HANDLE;
-			VkPhysicalDevice physicalDevice   = VK_NULL_HANDLE;
-			VkDevice         device           = VK_NULL_HANDLE;
-			std::uint32_t    queueFamilyIndex = 0;
-			VkQueue          queue            = VK_NULL_HANDLE;
-
-			VkPhysicalDeviceFeatures2 deviceFeatures2{}; // queried device features, handed to Skia
-
-			skgpu::VulkanExtensions extensions;
-			sk_sp<GrDirectContext>  context;
+			std::shared_ptr<SharedContext> shared;
+			HWND                           hwnd    = nullptr;
+			VkSurfaceKHR                   surface = VK_NULL_HANDLE;
 
 			VkSwapchainKHR                swapchain       = VK_NULL_HANDLE;
 			VkFormat                      swapchainFormat = VK_FORMAT_UNDEFINED;
@@ -159,21 +216,12 @@ namespace music_lyric_player::backend::gpu {
 			std::vector<VkImage>          swapchainImages;
 			std::vector<sk_sp<SkSurface>> surfaces;
 
-			std::vector<std::string> instanceExtensionNames;
-			std::vector<std::string> deviceExtensionNames;
-
 			bool          needRecreate      = false; // rebuild the swapchain before the next frame
 			std::uint32_t currentImageIndex = 0;     // backbuffer index acquire selected, presented by present
 			SkSurface*    currentSurface    = nullptr;
 		};
 
-		bool WindowSurface::init(HWND hwnd) {
-			this->hwnd = hwnd;
-			return createInstance() && createSurface() && pickPhysicalDevice() && createDevice() &&
-				createSkiaContext() && createSwapchain();
-		}
-
-		bool WindowSurface::createInstance() {
+		bool SharedContext::createInstance() {
 			this->instanceExtensionNames = {
 				VK_KHR_SURFACE_EXTENSION_NAME,
 				VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
@@ -204,20 +252,21 @@ namespace music_lyric_player::backend::gpu {
 			return true;
 		}
 
-		bool WindowSurface::createSurface() {
-			VkWin32SurfaceCreateInfoKHR createInfo{};
-			createInfo.sType     = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-			createInfo.hinstance = GetModuleHandle(nullptr);
-			createInfo.hwnd      = this->hwnd;
-
-			if (vkCreateWin32SurfaceKHR(this->instance, &createInfo, nullptr, &this->surface) != VK_SUCCESS) {
-				std::fprintf(stderr, "[backend] vkCreateWin32SurfaceKHR failed\n");
-				return false;
+		bool SharedContext::completeFor(VkSurfaceKHR surface) {
+			if (this->context != nullptr) {
+				// The stack is already built, so a later window only has to be presentable on the queue it settled on.
+				VkBool32 supported = VK_FALSE;
+				vkGetPhysicalDeviceSurfaceSupportKHR(this->physicalDevice, this->queueFamilyIndex, surface, &supported);
+				if (supported != VK_TRUE) {
+					std::fprintf(stderr, "[backend] the shared queue family cannot present to this window\n");
+					return false;
+				}
+				return true;
 			}
-			return true;
+			return pickPhysicalDevice(surface) && createDevice() && createSkiaContext();
 		}
 
-		bool WindowSurface::pickPhysicalDevice() {
+		bool SharedContext::pickPhysicalDevice(VkSurfaceKHR surface) {
 			std::uint32_t deviceCount = 0;
 			vkEnumeratePhysicalDevices(this->instance, &deviceCount, nullptr);
 			if (deviceCount == 0) {
@@ -235,7 +284,7 @@ namespace music_lyric_player::backend::gpu {
 
 				for (std::uint32_t i = 0; i < familyCount; ++i) {
 					VkBool32 presentSupport = VK_FALSE;
-					vkGetPhysicalDeviceSurfaceSupportKHR(candidate, i, this->surface, &presentSupport);
+					vkGetPhysicalDeviceSurfaceSupportKHR(candidate, i, surface, &presentSupport);
 					const bool graphics = (families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) != 0;
 					if (graphics && presentSupport == VK_TRUE) {
 						this->physicalDevice   = candidate;
@@ -248,7 +297,7 @@ namespace music_lyric_player::backend::gpu {
 			return false;
 		}
 
-		bool WindowSurface::createDevice() {
+		bool SharedContext::createDevice() {
 			const float             queuePriority = 1.0f;
 			VkDeviceQueueCreateInfo queueInfo{};
 			queueInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -285,7 +334,7 @@ namespace music_lyric_player::backend::gpu {
 			return true;
 		}
 
-		bool WindowSurface::createSkiaContext() {
+		bool SharedContext::createSkiaContext() {
 			std::vector<const char*> instanceExtensions;
 			std::vector<const char*> deviceExtensions;
 			for (const std::string& name : this->instanceExtensionNames) {
@@ -323,18 +372,52 @@ namespace music_lyric_player::backend::gpu {
 			return true;
 		}
 
+		void SharedContext::destroy() {
+			if (this->device != VK_NULL_HANDLE) {
+				vkDeviceWaitIdle(this->device);
+			}
+			this->context.reset(); // release the Skia GPU context before its Vulkan device
+
+			if (this->device != VK_NULL_HANDLE) {
+				vkDestroyDevice(this->device, nullptr);
+				this->device = VK_NULL_HANDLE;
+			}
+			if (this->instance != VK_NULL_HANDLE) {
+				vkDestroyInstance(this->instance, nullptr);
+				this->instance = VK_NULL_HANDLE;
+			}
+		}
+
+		bool WindowSurface::init(HWND hwnd) {
+			this->hwnd = hwnd;
+			return createSurface() && this->shared->completeFor(this->surface) && createSwapchain();
+		}
+
+		bool WindowSurface::createSurface() {
+			VkWin32SurfaceCreateInfoKHR createInfo{};
+			createInfo.sType     = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+			createInfo.hinstance = GetModuleHandle(nullptr);
+			createInfo.hwnd      = this->hwnd;
+
+			if (vkCreateWin32SurfaceKHR(this->shared->instance, &createInfo, nullptr, &this->surface) != VK_SUCCESS) {
+				std::fprintf(stderr, "[backend] vkCreateWin32SurfaceKHR failed\n");
+				return false;
+			}
+			return true;
+		}
+
 		bool WindowSurface::createSwapchain() {
 			VkSurfaceCapabilitiesKHR capabilities{};
-			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->physicalDevice, this->surface, &capabilities);
+			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->shared->physicalDevice, this->surface, &capabilities);
 
 			std::uint32_t formatCount = 0;
-			vkGetPhysicalDeviceSurfaceFormatsKHR(this->physicalDevice, this->surface, &formatCount, nullptr);
+			vkGetPhysicalDeviceSurfaceFormatsKHR(this->shared->physicalDevice, this->surface, &formatCount, nullptr);
 			if (formatCount == 0) {
 				std::fprintf(stderr, "[backend] no surface formats\n");
 				return false;
 			}
 			std::vector<VkSurfaceFormatKHR> formats(formatCount);
-			vkGetPhysicalDeviceSurfaceFormatsKHR(this->physicalDevice, this->surface, &formatCount, formats.data());
+			vkGetPhysicalDeviceSurfaceFormatsKHR(this->shared->physicalDevice, this->surface, &formatCount, formats.data());
 
 			VkSurfaceFormatKHR chosen = formats[0];
 			for (const VkSurfaceFormatKHR& format : formats) {
@@ -389,14 +472,14 @@ namespace music_lyric_player::backend::gpu {
 			createInfo.clipped          = VK_TRUE;
 			createInfo.oldSwapchain     = VK_NULL_HANDLE;
 
-			if (vkCreateSwapchainKHR(this->device, &createInfo, nullptr, &this->swapchain) != VK_SUCCESS) {
+			if (vkCreateSwapchainKHR(this->shared->device, &createInfo, nullptr, &this->swapchain) != VK_SUCCESS) {
 				std::fprintf(stderr, "[backend] vkCreateSwapchainKHR failed\n");
 				return false;
 			}
 
-			vkGetSwapchainImagesKHR(this->device, this->swapchain, &imageCount, nullptr);
+			vkGetSwapchainImagesKHR(this->shared->device, this->swapchain, &imageCount, nullptr);
 			this->swapchainImages.resize(imageCount);
-			vkGetSwapchainImagesKHR(this->device, this->swapchain, &imageCount, this->swapchainImages.data());
+			vkGetSwapchainImagesKHR(this->shared->device, this->swapchain, &imageCount, this->swapchainImages.data());
 
 			const SkColorType colorType = this->swapchainFormat == VK_FORMAT_B8G8R8A8_UNORM
 				? kBGRA_8888_SkColorType
@@ -420,7 +503,7 @@ namespace music_lyric_player::backend::gpu {
 					static_cast<int>(extent.height),
 					imageInfo);
 
-				this->surfaces[i] = SkSurfaces::WrapBackendRenderTarget(this->context.get(),
+				this->surfaces[i] = SkSurfaces::WrapBackendRenderTarget(this->shared->context.get(),
 					renderTarget,
 					kTopLeft_GrSurfaceOrigin,
 					colorType,
@@ -438,14 +521,14 @@ namespace music_lyric_player::backend::gpu {
 			this->surfaces.clear();
 			this->swapchainImages.clear();
 			if (this->swapchain != VK_NULL_HANDLE) {
-				vkDestroySwapchainKHR(this->device, this->swapchain, nullptr);
+				vkDestroySwapchainKHR(this->shared->device, this->swapchain, nullptr);
 				this->swapchain = VK_NULL_HANDLE;
 			}
 		}
 
 		bool WindowSurface::recreateSwapchain() {
-			if (this->device != VK_NULL_HANDLE) {
-				vkDeviceWaitIdle(this->device);
+			if (this->shared->device != VK_NULL_HANDLE) {
+				vkDeviceWaitIdle(this->shared->device);
 			}
 			destroySwapchain();
 			return createSwapchain();
@@ -471,24 +554,24 @@ namespace music_lyric_player::backend::gpu {
 			VkSemaphoreCreateInfo semaphoreInfo{};
 			semaphoreInfo.sType          = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 			VkSemaphore acquireSemaphore = VK_NULL_HANDLE;
-			if (vkCreateSemaphore(this->device, &semaphoreInfo, nullptr, &acquireSemaphore) != VK_SUCCESS) {
+			if (vkCreateSemaphore(this->shared->device, &semaphoreInfo, nullptr, &acquireSemaphore) != VK_SUCCESS) {
 				return nullptr;
 			}
 
 			std::uint32_t  imageIndex = 0;
-			const VkResult result     = vkAcquireNextImageKHR(this->device,
+			const VkResult result     = vkAcquireNextImageKHR(this->shared->device,
 				this->swapchain,
 				UINT64_MAX,
 				acquireSemaphore,
 				VK_NULL_HANDLE,
 				&imageIndex);
 			if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-				vkDestroySemaphore(this->device, acquireSemaphore, nullptr);
+				vkDestroySemaphore(this->shared->device, acquireSemaphore, nullptr);
 				this->needRecreate = true;
 				return nullptr;
 			}
 			if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-				vkDestroySemaphore(this->device, acquireSemaphore, nullptr);
+				vkDestroySemaphore(this->shared->device, acquireSemaphore, nullptr);
 				return nullptr;
 			}
 
@@ -497,7 +580,7 @@ namespace music_lyric_player::backend::gpu {
 			// Have Skia's GPU work wait on the acquire semaphore; Skia takes ownership and deletes it.
 			GrBackendSemaphore backendAcquire = GrBackendSemaphores::MakeVk(acquireSemaphore);
 			if (!target->wait(1, &backendAcquire)) {
-				vkDestroySemaphore(this->device, acquireSemaphore, nullptr);
+				vkDestroySemaphore(this->shared->device, acquireSemaphore, nullptr);
 				return nullptr;
 			}
 
@@ -510,11 +593,11 @@ namespace music_lyric_player::backend::gpu {
 			GrFlushInfo                flushInfo{};
 			skgpu::MutableTextureState presentState = skgpu::MutableTextureStates::MakeVulkan(
 				VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-				this->queueFamilyIndex);
-			this->context->flush(this->currentSurface, flushInfo, &presentState);
-			this->context->submit();
+				this->shared->queueFamilyIndex);
+			this->shared->context->flush(this->currentSurface, flushInfo, &presentState);
+			this->shared->context->submit();
 
-			vkQueueWaitIdle(this->queue);
+			vkQueueWaitIdle(this->shared->queue);
 
 			VkPresentInfoKHR presentInfo{};
 			presentInfo.sType          = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -522,7 +605,7 @@ namespace music_lyric_player::backend::gpu {
 			presentInfo.pSwapchains    = &this->swapchain;
 			presentInfo.pImageIndices  = &this->currentImageIndex;
 
-			const VkResult result = vkQueuePresentKHR(this->queue, &presentInfo);
+			const VkResult result = vkQueuePresentKHR(this->shared->queue, &presentInfo);
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
 				this->needRecreate = true;
 			}
@@ -539,23 +622,18 @@ namespace music_lyric_player::backend::gpu {
 		}
 
 		void WindowSurface::cleanup() {
-			if (this->device != VK_NULL_HANDLE) {
-				vkDeviceWaitIdle(this->device);
+			if (this->shared == nullptr) {
+				return;
+			}
+
+			if (this->shared->device != VK_NULL_HANDLE) {
+				vkDeviceWaitIdle(this->shared->device);
 			}
 			destroySwapchain();
-			this->context.reset(); // release the Skia GPU context before its Vulkan device
 
-			if (this->device != VK_NULL_HANDLE) {
-				vkDestroyDevice(this->device, nullptr);
-				this->device = VK_NULL_HANDLE;
-			}
 			if (this->surface != VK_NULL_HANDLE) {
-				vkDestroySurfaceKHR(this->instance, this->surface, nullptr);
+				vkDestroySurfaceKHR(this->shared->instance, this->surface, nullptr);
 				this->surface = VK_NULL_HANDLE;
-			}
-			if (this->instance != VK_NULL_HANDLE) {
-				vkDestroyInstance(this->instance, nullptr);
-				this->instance = VK_NULL_HANDLE;
 			}
 		}
 
@@ -568,7 +646,12 @@ namespace music_lyric_player::backend::gpu {
 	} // namespace
 
 	std::unique_ptr<Surface> createWindowSurface(const NativeWindow& window) {
-		auto surface = std::make_unique<WindowSurface>();
+		std::shared_ptr<SharedContext> shared = acquireSharedContext();
+		if (shared == nullptr) {
+			return nullptr;
+		}
+
+		auto surface = std::make_unique<WindowSurface>(std::move(shared));
 		if (!surface->init(static_cast<HWND>(window.hwnd))) {
 			return nullptr;
 		}

@@ -17,7 +17,7 @@ namespace music_lyric_player::backend::gpu {
 
 	/**
 	 * A GPU-backed drawing target bound to a native window.
-	 * Owns the whole GPU stack (context / swapchain) and is driven once per frame by the caller.
+	 * Owns its swapchain and is driven once per frame by the caller, drawing through a shared GPU context.
 	 * The renderer never sees this type; the platform layer drives it and hands the canvas to the renderer.
 	 */
 	class Surface {
@@ -53,7 +53,9 @@ namespace music_lyric_player::backend::gpu {
 
 	/**
 	 * Creates a window-owned Vulkan surface for `window`, or null on failure.
-	 * The surface builds and owns its own Vulkan instance, device, swapchain and Skia context.
+	 * The surface owns its swapchain, while the Vulkan instance, device and Skia context are shared
+	 * with every other live surface; the shared stack is built by the first one and freed with the last.
+	 * Surfaces are not thread safe and all of them must be created and driven from the same thread.
 	 */
 	std::unique_ptr<Surface> createWindowSurface(const NativeWindow& window);
 } // namespace music_lyric_player::backend::gpu

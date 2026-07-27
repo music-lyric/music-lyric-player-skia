@@ -4,6 +4,8 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
 	message(FATAL_ERROR "[Lyric] Must be run in script mode")
 endif()
 
+include("${CMAKE_CURRENT_LIST_DIR}/../../common/emsdk.cmake")
+
 if(NOT DEFINED LYRIC_BUILD_CONFIG)
 	set(LYRIC_BUILD_CONFIG "Release")
 endif()
@@ -108,9 +110,11 @@ if(_platform STREQUAL "android" AND NOT DEFINED LYRIC_TOOLCHAIN_FILE)
 		set(LYRIC_TOOLCHAIN_FILE "$ENV{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake")
 	endif()
 elseif(_platform STREQUAL "web" AND NOT DEFINED LYRIC_TOOLCHAIN_FILE)
-	if(DEFINED ENV{EMSDK} AND NOT "$ENV{EMSDK}" STREQUAL "")
-		set(LYRIC_TOOLCHAIN_FILE "$ENV{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake")
-	endif()
+	# Share the emsdk Skia was built with; a version split there breaks the libc++ ABI they link against.
+	emsdk_resolve("" _emsdk_dir)
+	emsdk_require_compiler("${_emsdk_dir}")
+	emsdk_resolve_toolchain("${_emsdk_dir}" LYRIC_TOOLCHAIN_FILE)
+	message(STATUS "[Lyric] Emsdk    : ${_emsdk_dir}")
 endif()
 
 if(NOT _platform STREQUAL "windows")
@@ -147,6 +151,10 @@ if(_platform STREQUAL "android")
 		"-DANDROID_ABI=${_arch}"
 		"-DANDROID_PLATFORM=android-21"
 		"-DANDROID_STL=c++_static")
+endif()
+
+if(_platform STREQUAL "web")
+	list(APPEND _configure_cmd "-DCMAKE_CXX_FLAGS=-fwasm-exceptions")
 endif()
 
 execute_process(COMMAND ${_configure_cmd} RESULT_VARIABLE _cfg_rc)

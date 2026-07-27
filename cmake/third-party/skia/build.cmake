@@ -4,6 +4,7 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
 	message(FATAL_ERROR "[Skia] Must be run in script mode")
 endif()
 
+include("${CMAKE_CURRENT_LIST_DIR}/../../common/emsdk.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/../../common/platform.cmake")
 
 set(SKIA_MODULES skia skshaper skunicode_core skunicode_icu)
@@ -117,13 +118,10 @@ if(_platform STREQUAL "windows")
 	message(STATUS "[Skia] Clang-cl : ${_CLANG_CL}")
 elseif(_platform STREQUAL "web")
 	if(NOT DEFINED SKIA_EMSDK_DIR)
-		if(DEFINED ENV{EMSDK} AND NOT "$ENV{EMSDK}" STREQUAL "")
-			set(SKIA_EMSDK_DIR "$ENV{EMSDK}")
-		else()
-			set(SKIA_EMSDK_DIR "${SKIA_SRC}/third_party/externals/emsdk")
-		endif()
+		set(SKIA_EMSDK_DIR "")
 	endif()
-	file(TO_CMAKE_PATH "${SKIA_EMSDK_DIR}" SKIA_EMSDK_DIR)
+	emsdk_resolve("${SKIA_EMSDK_DIR}" SKIA_EMSDK_DIR)
+	message(STATUS "[Skia] Emsdk    : ${SKIA_EMSDK_DIR}")
 else()
 	if(NOT DEFINED SKIA_ANDROID_NDK_DIR)
 		if(DEFINED ENV{ANDROID_NDK_ROOT} AND NOT "$ENV{ANDROID_NDK_ROOT}" STREQUAL "")
@@ -153,6 +151,42 @@ else()
 	message(STATUS "[Skia] Sync deps skipped (SKIA_BUILD_SYNC_DEPS=OFF)")
 endif()
 
+# Ninja shells out through cmd.exe on Windows, which reads the angle brackets in a few upstream defines as redirection and kills the compile before it starts.
+if(CMAKE_HOST_WIN32)
+	file(GLOB _patches "${CMAKE_CURRENT_LIST_DIR}/patch/*.patch")
+	list(SORT _patches)
+
+	if(_patches)
+		find_program(GIT NAMES git)
+		if(NOT GIT)
+			message(FATAL_ERROR "[Skia] Git not found")
+		endif()
+	endif()
+
+	foreach(_patch IN LISTS _patches)
+		get_filename_component(_patch_name "${_patch}" NAME)
+
+		# A patch that reverses cleanly is already in the tree, so applying it again would fail.
+		execute_process(
+			COMMAND "${GIT}" apply --check --reverse "${_patch}"
+			WORKING_DIRECTORY "${SKIA_SRC}"
+			RESULT_VARIABLE _patch_rc
+			OUTPUT_QUIET ERROR_QUIET)
+		if(_patch_rc EQUAL 0)
+			continue()
+		endif()
+
+		execute_process(
+			COMMAND "${GIT}" apply "${_patch}"
+			WORKING_DIRECTORY "${SKIA_SRC}"
+			RESULT_VARIABLE _patch_rc)
+		if(NOT _patch_rc EQUAL 0)
+			message(FATAL_ERROR "[Skia] Patch failed (rc=${_patch_rc}): ${_patch_name}")
+		endif()
+		message(STATUS "[Skia] Patch applied: ${_patch_name}")
+	endforeach()
+endif()
+
 if(NOT EXISTS "${_gn_bundled}")
 	message(STATUS "[Skia] Fetch gn...")
 	execute_process(
@@ -174,14 +208,7 @@ else()
 endif()
 
 if(_platform STREQUAL "web")
-	if(CMAKE_HOST_WIN32)
-		set(_emxx "${SKIA_EMSDK_DIR}/upstream/emscripten/em++.bat")
-	else()
-		set(_emxx "${SKIA_EMSDK_DIR}/upstream/emscripten/em++")
-	endif()
-	if(NOT EXISTS "${_emxx}")
-		message(FATAL_ERROR "[Skia] Emscripten compiler not found: ${_emxx}")
-	endif()
+	emsdk_require_compiler("${SKIA_EMSDK_DIR}")
 elseif(_platform STREQUAL "android")
 	if(NOT EXISTS "${SKIA_ANDROID_NDK_DIR}/build/cmake/android.toolchain.cmake")
 		message(FATAL_ERROR "[Skia] Android NDK not found: ${SKIA_ANDROID_NDK_DIR}")

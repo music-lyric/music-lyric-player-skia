@@ -3,19 +3,24 @@
 	url = https://github.com/music-lyric/music-lyric-model-cpp.git
 	shallow = true
 	branch = main
+	ignore = dirty
 [submodule "third-party/skia"]
 	path = third-party/skia
 	url = https://github.com/google/skia.git
 	branch = chrome/m150
 	shallow = true
+	ignore = dirty
 [submodule "third-party/glaze"]
 	path = third-party/glaze
 	url = https://github.com/stephenberry/glaze.git
+	ignore = dirty
 [submodule "example/third-party/miniaudio"]
 	path = example/third-party/miniaudio
 	url = https://github.com/mackron/miniaudio.git
 	shallow = true
+	ignore = dirty
 [submodule "example/third-party/imgui"]
 	path = example/third-party/imgui
 	url = https://github.com/ocornut/imgui.git
 	shallow = true
+	ignore = dirty

@@ -10,7 +10,18 @@
       "name": "default",
       "displayName": "Default",
       "generator": "Ninja Multi-Config",
-      "binaryDir": "${sourceDir}/out/app/cache"
+      "binaryDir": "${sourceDir}/out/app/cache/windows"
+    },
+    {
+      "name": "web",
+      "displayName": "Web",
+      "description": "Web Module With Emscripten",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/app/cache/web",
+      "toolchainFile": "${sourceDir}/cmake/tools/emscripten.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     },
     {
       "name": "windows-example",
@@ -36,6 +47,11 @@
       "name": "release",
       "configurePreset": "default",
       "configuration": "Release"
+    },
+    {
+      "name": "web-release",
+      "displayName": "Web Release",
+      "configurePreset": "web"
     },
     {
       "name": "windows-example-release",

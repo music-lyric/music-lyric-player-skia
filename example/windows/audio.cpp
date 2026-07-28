@@ -16,8 +16,12 @@
 #define NOMINMAX
 #endif
 
-#include <commdlg.h>
+// commdlg.h declares the file dialog in terms of the base Win32 types and includes none of them itself, so windows.h has to be parsed first.
+// Both headers fall in the same include category, and sorting them alphabetically leaves prsht.h without a single type it names, so the order is pinned here.
+// clang-format off
 #include <windows.h>
+#include <commdlg.h>
+// clang-format on
 
 #include "miniaudio.h"
 

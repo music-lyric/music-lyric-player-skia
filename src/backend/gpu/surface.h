@@ -9,10 +9,12 @@ class SkCanvas;
 namespace music_lyric_player::backend::gpu {
 	/**
 	 * Opaque handle to the native window a surface draws into.
-	 * On Windows this carries an `HWND`; other platforms extend it with their own fields.
+	 * On Windows this carries an `HWND` and on the web a CSS selector picking the canvas element;
+	 * other platforms extend it with their own fields.
 	 */
 	struct NativeWindow {
-		void* hwnd = nullptr;
+		void*       hwnd     = nullptr;
+		const char* selector = nullptr;
 	};
 
 	/**

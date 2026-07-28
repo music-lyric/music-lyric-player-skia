@@ -47,6 +47,7 @@ target_link_libraries(music_lyric_player_rendering PUBLIC
 # and has no system font stack to resolve from at all.
 if(EMSCRIPTEN)
 	set(_backend_sources
+		backend/gpu/webgl.cpp
 		backend/font/font_web.cpp
 	)
 else()

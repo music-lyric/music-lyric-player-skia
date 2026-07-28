@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>music-lyric-player-skia</title>
+		<style>
+			html,
+			body {
+				margin: 0;
+				height: 100%;
+				background: #101218;
+				color: #c8ccd4;
+				font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+			}
+
+			#canvas {
+				display: block;
+				width: 100vw;
+				height: 100vh;
+			}
+
+			#status {
+				position: fixed;
+				left: 12px;
+				bottom: 12px;
+				padding: 6px 10px;
+				border-radius: 6px;
+				background: rgba(0, 0, 0, 0.45);
+			}
+		</style>
+	</head>
+	<body>
+		<canvas id="canvas"></canvas>
+		<div id="status">loading…</div>
+
+		<script type="module">
+			const MODULE_URL = '../../out/app/build/web-wasm32-release/music_lyric_player.mjs';
+
+			const canvas = document.getElementById('canvas');
+			const status = document.getElementById('status');
+
+			try {
+				// Imported dynamically so a module that has not been built yet reports itself here
+				// rather than failing the whole script before anything can catch it.
+				const { default: createMusicLyricPlayerModule } = await import(MODULE_URL);
+				const module = await createMusicLyricPlayerModule();
+
+				const renderer = module.Renderer.create('#canvas');
+				if (!renderer) {
+					throw new Error('the browser gave no WebGL 2 context for #canvas');
+				}
+
+				// The canvas backbuffer is sized in physical pixels by the module itself, so the page
+				// only has to report the CSS box and the ratio to scale it by.
+				const sync = () => {
+					const dpr = window.devicePixelRatio || 1;
+					const rect = canvas.getBoundingClientRect();
+
+					renderer.configure(Math.round(rect.width * dpr), Math.round(rect.height * dpr), dpr);
+					status.textContent = `version: ${module.version()} · ${canvas.width}×${canvas.height} @${dpr}x`;
+				};
+
+				sync();
+				new ResizeObserver(sync).observe(canvas);
+				// A ResizeObserver stays quiet when only the pixel ratio changed, which is what moving
+				// the window across monitors of different densities looks like.
+				window.addEventListener('resize', sync);
+
+				const frame = () => {
+					renderer.renderFrame();
+					requestAnimationFrame(frame);
+				};
+				requestAnimationFrame(frame);
+			} catch (error) {
+				status.textContent = `failed: ${error.message}`;
+				throw error;
+			}
+		</script>
+	</body>
+</html>

@@ -7,6 +7,7 @@ assert(skia_emsdk_dir != "", "SKIA_EMSDK_DIR is required")
 extra_cflags = [
   "-DSKVX_DISABLE_SIMD",
   "-DSK_FORCE_8_BYTE_ALIGNMENT",
+  "-sSUPPORT_LONGJMP=wasm",
 ]
 
 skia_use_angle = false

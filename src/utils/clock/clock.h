@@ -13,4 +13,4 @@ namespace music_lyric_player::utils {
 	};
 } // namespace music_lyric_player::utils
 
-#endif
+#endif // MUSIC_LYRIC_PLAYER_UTILS_CLOCK_CLOCK_H_

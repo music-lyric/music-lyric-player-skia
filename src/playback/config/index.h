@@ -6,7 +6,7 @@
 
 namespace music_lyric_player::playback::config {
 	/**
-	 * Config store for the timing engine, bound to the root Root.
+	 * Config store for the timing engine.
 	 */
 	using Manager = ::music_lyric_player::utils::config::Manager<Root>;
 } // namespace music_lyric_player::playback::config

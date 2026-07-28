@@ -17,8 +17,8 @@ namespace example::widgets {
 		// imgui_internal.h keeps its own copy, and this file has no other reason to reach into the internals.
 		constexpr float kPi = 3.14159265358979323846f;
 
-		// The padding a container reserves around the items inside it. Indenting already narrows what ImGui
-		// reports as available, so only the right side has to be tracked, and the left only to undo it.
+		// The padding a container reserves around the items inside it.
+		// Indenting already narrows what ImGui reports as available, so only the right side has to be tracked, and the left only to undo it.
 		struct Inset {
 			float left  = 0.0f;
 			float right = 0.0f;
@@ -68,8 +68,7 @@ namespace example::widgets {
 		}
 
 		/**
-		 * Maps the twenty-four unit grid the playground's icons are drawn on onto the panel's pixels,
-		 * optionally turned about the icon's centre.
+		 * Maps the twenty-four unit grid the playground's icons are drawn on onto the panel's pixels, optionally turned about the icon's centre.
 		 */
 		struct Pen {
 			ImDrawList* list      = nullptr;

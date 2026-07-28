@@ -1,3 +1,7 @@
+"""
+Loads a `*.schema.json` into a `Module`: expands `mix` entries, resolves imports and validates the result.
+"""
+
 import copy
 import json
 

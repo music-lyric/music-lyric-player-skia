@@ -14,9 +14,9 @@ namespace music_lyric_player::playback::config {
 	 * The global layer of the three-layer offset (global + meta + temp).
 	 */
 	struct OffsetConfig {
-		::music_lyric_player::utils::config::Property<double> global = 0.0;  // ms applied to every song
-		::music_lyric_player::utils::config::Property<bool> useMeta = true;  // apply the lyric's own meta offset
-		::music_lyric_player::utils::config::Property<bool> resetTempOnLyricChange = true;  // clear the temp offset when a new lyric loads
+		::music_lyric_player::utils::config::Property<double> global = 0.0;  // Offset in milliseconds applied to every song.
+		::music_lyric_player::utils::config::Property<bool> useMeta = true;  // Whether the lyric's own meta offset is applied on top of the global one.
+		::music_lyric_player::utils::config::Property<bool> resetTempOnLyricChange = true;  // Whether the temporary offset is cleared when a new lyric loads.
 
 		bool operator==(const OffsetConfig&) const = default;
 
@@ -37,10 +37,10 @@ namespace music_lyric_player::playback::config {
 	 * Timing-engine configuration.
 	 */
 	struct Root {
-		::music_lyric_player::utils::config::Property<bool> bridgeActive = true;  // fill active-index gaps
-		::music_lyric_player::utils::config::Property<double> mergeWindow = 300.0;  // ms cluster for joint deactivation
-		::music_lyric_player::utils::config::Property<int> mergeLimit = 3;  // max lines per merge batch
-		OffsetConfig offset;  // the three-layer offset's global settings
+		::music_lyric_player::utils::config::Property<bool> bridgeActive = true;  // Whether gaps in the active-line indices are filled so the active range stays contiguous.
+		::music_lyric_player::utils::config::Property<double> mergeWindow = 300.0;  // Window in milliseconds within which consecutive lines cluster and deactivate together.
+		::music_lyric_player::utils::config::Property<int> mergeLimit = 3;  // Maximum number of lines in one merge batch; a value of 0 or less leaves it unbounded.
+		OffsetConfig offset;  // Global layer of the three-layer lyric offset.
 
 		bool operator==(const Root&) const = default;
 

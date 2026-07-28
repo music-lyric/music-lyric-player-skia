@@ -18,6 +18,7 @@ from common import (
 
 
 def match_change_log_by_version(content, version, include_header=False):
+    """Return one version's section out of the change log, or an empty string when it is absent."""
     target = re.sub(r"^v", "", version, flags=re.IGNORECASE).replace(".", r"\.")
     regex = re.compile(rf"(##\s*v{target}.*)[\r\n]+([\s\S]*?)(?=##\s*v|$)")
     match = regex.search(content)

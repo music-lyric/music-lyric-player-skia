@@ -1,3 +1,7 @@
+"""
+Emits the aggregate Glaze meta header that makes every enum of a schema tree serialize by name rather than by ordinal.
+"""
+
 from pathlib import Path
 
 from model import include_path_for

@@ -12,7 +12,7 @@
 namespace music_lyric_player::rendering::utils::fragment {
 	/**
 	 * A logical paint unit: one or more glyph fragments sharing layout metrics and a single paint entry.
-	 * Advance is the layout width; bounds is the visual box used for clipping and masks — never reuse one for both.
+	 * Advance is the layout width and bounds is the visual box used for clipping and masks; never reuse one for both.
 	 * Ascent, descent, and height describe the typographic stack the fragments were built from.
 	 */
 	struct FragmentGroup {

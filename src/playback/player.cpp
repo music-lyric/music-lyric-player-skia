@@ -59,8 +59,7 @@ namespace music_lyric_player::playback {
 
 		/**
 		 * Caret range check `^base`: at least the base and below the next breaking version.
-		 * The breaking bump follows the base's left-most non-zero component, so `^1.2.3` allows
-		 * up to `< 2.0.0`, `^0.2.3` up to `< 0.3.0` and `^0.0.3` up to `< 0.0.4`.
+		 * The breaking bump follows the base's left-most non-zero component, so `^1.2.3` allows up to `< 2.0.0`, `^0.2.3` up to `< 0.3.0` and `^0.0.3` up to `< 0.0.4`.
 		 */
 		bool satisfiesCaret(const std::string& version, const std::string& base) {
 			SemVer v;

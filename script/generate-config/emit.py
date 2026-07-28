@@ -1,3 +1,7 @@
+"""
+Renders a loaded schema into its C++ header: one struct per node, the hidden overlay / capture / resolve machinery and the default instance.
+"""
+
 from model import (
     ACCESS_INCLUDE,
     ACCESS_TYPE,

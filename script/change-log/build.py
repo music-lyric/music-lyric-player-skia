@@ -23,6 +23,7 @@ from common import (
 
 
 def handle_build(start, end, repo, show_head=True):
+    """Render every version section found in a revision range, newest first."""
     commits = get_commit_info(start, end)
 
     # Commits above the first release commit belong to the next, still-unreleased version.

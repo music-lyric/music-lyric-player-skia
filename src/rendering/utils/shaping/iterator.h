@@ -32,7 +32,7 @@ namespace music_lyric_player::rendering::utils::shaping {
 
 	/**
 	 * Builds the standard run iterators: font-manager fallback, ICU BiDi, HarfBuzz script, and a trivial language.
-	 * The empty language is a known limitation; section 5.2 of the text-layout-foundation plan replaces it with the resolved language.
+	 * The empty language is a known limitation, to be replaced with the resolved language of the text.
 	 */
 	inline ShapingIterators makeShapingIterators(const sk_sp<SkUnicode>& unicode, const sk_sp<SkFontMgr>& fontMgr, const SkFont& font, const char* utf8, std::size_t bytes) {
 		return ShapingIterators{

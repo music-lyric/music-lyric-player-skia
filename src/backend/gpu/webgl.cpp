@@ -37,8 +37,7 @@ namespace music_lyric_player::backend::gpu {
 
 		/**
 		 * A Skia surface wrapping the default framebuffer of one canvas' WebGL 2 context.
-		 * The canvas element itself is the single source of truth for the backbuffer size, so the surface
-		 * is rebuilt from a size read back off the element rather than from anything cached here.
+		 * The canvas element itself is the single source of truth for the backbuffer size, so the surface is rebuilt from a size read back off the element rather than from anything cached here.
 		 */
 		class WebGLSurface : public CanvasSurface {
 		public:
@@ -71,8 +70,7 @@ namespace music_lyric_player::backend::gpu {
 
 		private:
 			/**
-			 * Points GL calls at this surface's context, invalidating Skia's state cache when the
-			 * binding actually had to change.
+			 * Points GL calls at this surface's context, invalidating Skia's state cache when the binding actually had to change.
 			 */
 			bool makeCurrent();
 
@@ -151,8 +149,7 @@ namespace music_lyric_player::backend::gpu {
 				return false;
 			}
 
-			// Another context held the binding until now, so hand Skia's state cache back invalidated
-			// rather than let it skip binds it still believes are in effect.
+			// Another context held the binding until now, so hand Skia's state cache back invalidated rather than let it skip binds it still believes are in effect.
 			if (this->grContext != nullptr) {
 				this->grContext->resetContext();
 			}
@@ -180,10 +177,8 @@ namespace music_lyric_player::backend::gpu {
 
 			GrBackendRenderTarget renderTarget = GrBackendRenderTargets::MakeGL(width, height, kSampleCount, kStencilBits, framebuffer);
 
-			// A canvas' default framebuffer has its origin at the bottom left, the opposite of the window
-			// backbuffers every other backend wraps; taking the usual kTopLeft flips the whole frame.
-			// The color space stays null, as it does on the window backends, so colors reach the
-			// compositor exactly as the renderer wrote them.
+			// A canvas' default framebuffer has its origin at the bottom left, the opposite of the window backbuffers every other backend wraps, so taking the usual kTopLeft flips the whole frame.
+			// The color space stays null, as it does on the window backends, so colors reach the compositor exactly as the renderer wrote them.
 			this->surface =
 				SkSurfaces::WrapBackendRenderTarget(this->grContext.get(), renderTarget, kBottomLeft_GrSurfaceOrigin, kRGBA_8888_SkColorType, nullptr, nullptr);
 			if (this->surface == nullptr) {
@@ -205,8 +200,7 @@ namespace music_lyric_player::backend::gpu {
 
 			paint(this->surface->getCanvas());
 
-			// There is nothing to present to: the browser composites the canvas once the frame callback
-			// returns, so flushing the GPU work is all that ending a frame means here.
+			// There is nothing to present to: the browser composites the canvas once the frame callback returns, so flushing the GPU work is all that ending a frame means here.
 			this->grContext->flushAndSubmit(this->surface.get(), GrSyncCpu::kNo);
 		}
 
@@ -219,8 +213,7 @@ namespace music_lyric_player::backend::gpu {
 			this->dpr = devicePixelRatio > 0.0f ? devicePixelRatio : 1.0f;
 
 			if (width > 0 && height > 0) {
-				// Sizing the element from here keeps its backbuffer and the Skia surface in lockstep,
-				// leaving the page owning only the CSS size.
+				// Sizing the element from here keeps its backbuffer and the Skia surface in lockstep, leaving the page owning only the CSS size.
 				emscripten_set_canvas_element_size(this->selector.c_str(), width, height);
 			}
 			this->needRebuild = true;

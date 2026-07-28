@@ -74,10 +74,9 @@ namespace music_lyric_player::rendering {
 
 	/**
 	 * Resolves a length string into logical pixels.
-	 * A bare number (`"12"`) or a `px` value (`"12px"`) is absolute; a percentage (`"5%"`) is taken
-	 * relative to `base`, the resolved value of the parent config it inherits from.
-	 * On any parse failure (or a percentage with no finite `base`), resolves `fallback` the same way —
-	 * typically the config default; if that also fails, returns `0`.
+	 * A bare number (`"12"`) or a `px` value (`"12px"`) is absolute; a percentage (`"5%"`) is taken relative to `base`, the resolved value of the parent config it inherits from.
+	 * On any parse failure, or a percentage with no finite `base`, resolves `fallback` the same way, typically the config default.
+	 * Returns `0` when the fallback fails too.
 	 */
 	inline double resolveLength(const ::std::string& value, const ::std::string& fallback, ::std::optional<double> base = ::std::nullopt) {
 		if (const ::std::optional<double> resolved = detail::parseLength(value, base)) {

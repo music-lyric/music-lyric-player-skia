@@ -1,5 +1,6 @@
 include_guard(GLOBAL)
 
+# Resolve the emsdk install directory: an explicit hint first, then the EMSDK environment variable, then the copy Skia pins under its externals.
 function(emsdk_resolve hint out_dir)
 	if(NOT "${hint}" STREQUAL "")
 		set(_dir "${hint}")

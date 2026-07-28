@@ -8,9 +8,10 @@
 
 // Glaze is parsed before windows.h so none of the Win32 macros can leak into its templates.
 #include "glaze/json.hpp"
-// The config tree rides along in the state file, so its enum names and its sparse leaves need their glaze bindings here.
+// Win32 only supplies the module path lookup that locates the state file.
 #include <windows.h>
 
+// The config tree rides along in the state file, so its enum names and its sparse leaves need their glaze bindings here.
 #include "rendering/config/config.gen.glaze.h"
 #include "utils/config/property.glaze.h"
 

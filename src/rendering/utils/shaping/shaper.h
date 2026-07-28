@@ -23,7 +23,7 @@
 namespace music_lyric_player::rendering::utils::shaping {
 	namespace detail {
 		/**
-		 * Captures a shaper's full per-glyph output — id, absolute position, and absolute cluster — into a ShapedText.
+		 * Captures a shaper's full per-glyph output into a ShapedText: glyph id, absolute position and absolute cluster.
 		 * It reproduces the baseline and per-line advance the blob run handlers computed, so a rebuilt blob is identical.
 		 * The empty-language and single-shaper choices live in the iterators; this handler only records what shaping produced.
 		 */

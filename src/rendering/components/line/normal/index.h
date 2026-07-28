@@ -31,9 +31,6 @@ namespace music_lyric_player::rendering::components::line::normal {
 	 */
 	class Element : public base::Element {
 	public:
-		/**
-		 * Creates a normal line backed by the source parsed line and timing mode.
-		 */
 		Element(int index, const music_lyric_model::parsed::Line& info, bool isSyllable);
 
 		/**

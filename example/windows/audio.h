@@ -28,24 +28,12 @@ namespace example {
 		 */
 		bool load(const std::wstring& path);
 
-		/**
-		 * Reports whether a track is loaded and ready to play.
-		 */
 		bool loaded() const;
 
-		/**
-		 * Reports whether the play head is currently advancing.
-		 */
 		bool playing() const;
 
-		/**
-		 * Reports whether the current track has played through to its end.
-		 */
 		bool finished() const;
 
-		/**
-		 * Starts or resumes the current track.
-		 */
 		void play();
 
 		/**
@@ -63,9 +51,6 @@ namespace example {
 		 */
 		void setVolume(float value);
 
-		/**
-		 * Returns the current output level.
-		 */
 		float volume() const;
 
 		/**

@@ -35,4 +35,4 @@ namespace music_lyric_player::playback {
 	};
 } // namespace music_lyric_player::playback
 
-#endif
+#endif // MUSIC_LYRIC_PLAYER_PLAYBACK_MERGER_H_

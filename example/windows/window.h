@@ -21,8 +21,7 @@ namespace example {
 
 	/**
 	 * A thin GLFW window shell that owns no GPU state.
-	 * It exposes the native `HWND` so the backend surface can build and drive its own Vulkan swapchain,
-	 * and reports resize events so the caller can rebuild that swapchain on the next frame.
+	 * It exposes the native `HWND` so the backend surface can build and drive its own Vulkan swapchain, and reports resize events so the caller can rebuild that swapchain on the next frame.
 	 */
 	class Window {
 	public:
@@ -43,14 +42,8 @@ namespace example {
 		 */
 		GLFWwindow* handle() const;
 
-		/**
-		 * Reports whether the window has been asked to close.
-		 */
 		bool shouldClose() const;
 
-		/**
-		 * Pumps the platform event queue once.
-		 */
 		void pollEvents();
 
 		/**
@@ -68,9 +61,6 @@ namespace example {
 		 */
 		std::vector<InputAction> drainActions();
 
-		/**
-		 * Updates the window title bar text.
-		 */
 		void setTitle(const char* title);
 
 	private:

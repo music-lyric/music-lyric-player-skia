@@ -84,9 +84,6 @@ namespace music_lyric_player::playback {
 		 */
 		int currentActive() const;
 
-		/**
-		 * The current lyric info.
-		 */
 		const music_lyric_model::parsed::Info& currentInfo() const;
 
 		/**
@@ -164,4 +161,4 @@ namespace music_lyric_player::playback {
 	};
 } // namespace music_lyric_player::playback
 
-#endif
+#endif // MUSIC_LYRIC_PLAYER_PLAYBACK_PLAYER_H_

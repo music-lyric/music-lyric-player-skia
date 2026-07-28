@@ -80,9 +80,7 @@ def confirm(prompt):
 
 
 def resolve_target(args, current):
-    """
-    Prefer an explicit --version, then a semantic bump, then an interactive prompt.
-    """
+    """Prefer an explicit --version, then a semantic bump, then an interactive prompt."""
     if args.version:
         if not VERSION_REGEXP.match(args.version):
             raise SystemExit(f"invalid --version: {args.version!r} (expected X.Y.Z)")
@@ -122,9 +120,7 @@ def parse_args():
 
 
 def main():
-    """
-    Resolve the target version, confirm when interactive, then write, build, commit and tag.
-    """
+    """Resolve the target version, confirm when interactive, then write, build, commit and tag."""
     args = parse_args()
     current = read_current_version()
     print(f"current version : {current}")

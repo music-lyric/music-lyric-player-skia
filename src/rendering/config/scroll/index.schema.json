@@ -115,10 +115,10 @@
           "comment": [
             "Cascade mode distributing per-line transition delays.",
             "",
-            "- `Smooth` — all lines move together, no cascade",
-            "- `Ripple` — symmetric cascade outward from the active line",
-            "- `Directional` — nonlinear cascade following the latest active-line movement direction",
-            "- `Stagger` — linear cascade following the latest active-line movement direction"
+            "- `Smooth`: all lines move together, no cascade",
+            "- `Ripple`: symmetric cascade outward from the active line",
+            "- `Directional`: nonlinear cascade following the latest active-line movement direction",
+            "- `Stagger`: linear cascade following the latest active-line movement direction"
           ]
         },
         {
@@ -156,8 +156,8 @@
           "comment": [
             "Vertical anchor of the active line inside the viewport, as a ratio of its height.",
             "",
-            "- `0.5` — keep the active line at the vertical center",
-            "- `0.3` — keep the active line closer to the top"
+            "- `0.5`: keep the active line at the vertical center",
+            "- `0.3`: keep the active line closer to the top"
           ]
         },
         {

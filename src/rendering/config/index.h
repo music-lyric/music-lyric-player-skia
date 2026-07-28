@@ -10,7 +10,7 @@
 
 namespace music_lyric_player::rendering::config {
 	/**
-	 * Config store for the renderer, bound to the root Root.
+	 * Config store for the renderer.
 	 */
 	using Manager = ::music_lyric_player::utils::config::Manager<Root>;
 } // namespace music_lyric_player::rendering::config

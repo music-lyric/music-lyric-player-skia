@@ -1,3 +1,7 @@
+"""
+Shared vocabulary of the config generator: the loaded schema model, the C++ names it emits and the small predicates over a field.
+"""
+
 SKIP_DIRS = {"build", "third-party", ".history", ".git", "node_modules", ".turbo", ".vscode", ".claude"}
 
 # Format notes appended to a kind-typed leaf's doc.
@@ -55,6 +59,7 @@ def leaf_default(field):
 
 
 def is_valid_comment(value):
+    """A doc comment is either one string or a list of lines."""
     return isinstance(value, str) or (isinstance(value, list) and all(isinstance(line, str) for line in value))
 
 

@@ -38,9 +38,6 @@ namespace music_lyric_player::rendering::components::line::base {
 			return this->measuredHeight;
 		}
 
-		/**
-		 * The lyric line index this component maps to.
-		 */
 		int index() const {
 			return this->lineIndex;
 		}
@@ -94,7 +91,7 @@ namespace music_lyric_player::rendering::components::line::base {
 		float width          = 0.0f; // content width the line was laid out to
 
 	private:
-		// Line colour transition; a dedicated config (duration / easing) is not ported yet (M2.3+).
+		// Line colour transition; a dedicated config for its duration and easing is not ported yet.
 		static constexpr double kStateColorDuration = 300.0;
 
 		mutable animation::Tween<SkColor> colorTween;

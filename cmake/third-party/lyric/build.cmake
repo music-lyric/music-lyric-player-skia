@@ -128,7 +128,7 @@ if(LYRIC_BUILD_CLEAN AND EXISTS "${LYRIC_OUT}")
 	file(REMOVE_RECURSE "${LYRIC_OUT}")
 endif()
 
-# binary protobuf only + LTO.
+# Drop the JSON codec so only the binary protobuf path ships, and build the model with LTO.
 set(_configure_cmd
 	"${CMAKE_COMMAND}"
 	-S "${LYRIC_SRC}"

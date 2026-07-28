@@ -1,3 +1,9 @@
+"""
+Run clang-format in place over every tracked C++ source of the project.
+
+Usage: `python script/format-code.py`.
+"""
+
 import os
 import shutil
 import subprocess
@@ -22,6 +28,7 @@ EXTENSIONS = (".cpp", ".h")
 
 
 def handle(path: str, formater: str):
+    """Format every eligible source under one root, skipping vendored and generated files."""
     files = []
     for dirpath, dirnames, filenames in os.walk(path):
         dirnames[:] = [name for name in dirnames if name not in EXCLUDE_DIRS]

@@ -9,8 +9,7 @@ class SkCanvas;
 namespace music_lyric_player::backend::gpu {
 	/**
 	 * Opaque handle to the native window a surface draws into.
-	 * On Windows this carries an `HWND` and on the web a CSS selector picking the canvas element;
-	 * other platforms extend it with their own fields.
+	 * Windows carries an `HWND` and the web a CSS selector picking the canvas element; other platforms extend it with their own fields.
 	 */
 	struct NativeWindow {
 		void*       hwnd     = nullptr;
@@ -38,25 +37,25 @@ namespace music_lyric_player::backend::gpu {
 		virtual void onResize() = 0;
 
 		/**
-		 * Returns the current backbuffer width in physical pixels.
+		 * The current backbuffer width in physical pixels.
 		 */
 		virtual int width() const = 0;
 
 		/**
-		 * Returns the current backbuffer height in physical pixels.
+		 * The current backbuffer height in physical pixels.
 		 */
 		virtual int height() const = 0;
 
 		/**
-		 * Returns the window's device-pixel ratio (physical pixels per logical unit).
+		 * The window's device-pixel ratio, in physical pixels per logical unit.
 		 */
 		virtual float devicePixelRatio() const = 0;
 	};
 
 	/**
 	 * Creates a window-owned Vulkan surface for `window`, or null on failure.
-	 * The surface owns its swapchain, while the Vulkan instance, device and Skia context are shared
-	 * with every other live surface; the shared stack is built by the first one and freed with the last.
+	 * Each surface owns its swapchain, while the Vulkan instance, device and Skia context are shared with every other live surface.
+	 * The shared stack is built by the first surface and freed with the last.
 	 * Surfaces are not thread safe and all of them must be created and driven from the same thread.
 	 */
 	std::unique_ptr<Surface> createWindowSurface(const NativeWindow& window);

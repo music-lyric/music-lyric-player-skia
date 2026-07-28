@@ -33,8 +33,7 @@ namespace music_lyric_player::backend::font {
 			return false;
 		}
 
-		// The same file fetched twice arrives as two separate blobs, and handing both to the font manager
-		// would leave a lookup choosing between two identical families.
+		// The same file fetched twice arrives as two separate blobs, and handing both over would leave a lookup choosing between two identical families.
 		// SkData compares sizes before bytes, so this stays cheap for the usual case of distinct fonts.
 		for (const sk_sp<SkData>& entry : registry()) {
 			if (entry->equals(data.get())) {
@@ -53,8 +52,7 @@ namespace music_lyric_player::backend::font {
 
 	sk_sp<SkFontMgr> createFontMgr() {
 		// The browser exposes no system font stack, so families can only come from data registered at runtime.
-		// The result is immutable, which is why registering a font later builds a new manager to swap into the renderer
-		// rather than mutating this one.
+		// The result is immutable, which is why a later registration builds a new manager instead of mutating this one.
 		return SkFontMgr_New_Custom_Data(registry());
 	}
 } // namespace music_lyric_player::backend::font

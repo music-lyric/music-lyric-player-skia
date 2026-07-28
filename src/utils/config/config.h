@@ -5,6 +5,9 @@
 #include "utils/event/signal.h"
 
 namespace music_lyric_player::utils::config {
+	/**
+	 * Holds a config as accumulated sparse overrides plus the resolved value they produce, and signals consumers when that value changes.
+	 */
 	template <typename Config>
 	class Manager {
 	public:

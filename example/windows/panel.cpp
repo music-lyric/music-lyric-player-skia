@@ -230,8 +230,8 @@ namespace example {
 		ImGuiIO& io = ImGui::GetIO();
 		// The demo keeps its own state file, so ImGui should not drop an ini next to the executable.
 		io.IniFilename = nullptr;
-		// GLFW reports this window in physical pixels, so every length is scaled up rather than the panel shrinking
-		// on a high-DPI monitor; the theme folds that scale into its metrics.
+		// GLFW reports this window in physical pixels, so every length is scaled up rather than the panel shrinking on a high-DPI monitor.
+		// The theme folds that scale into its metrics.
 		theme::apply(this->scale);
 
 		// ImGui chains onto the callbacks the window already installed, so the demo's key bindings keep working.

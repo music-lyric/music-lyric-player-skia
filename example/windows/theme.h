@@ -8,7 +8,7 @@ namespace example::theme {
 	 * The playground's palette, one constant per custom property its stylesheet declares.
 	 */
 	namespace color {
-		// Brand — soft / light red.
+		// Brand: a soft, light red.
 		inline constexpr ImU32 primary       = IM_COL32(0xDC, 0x64, 0x64, 0xFF);
 		inline constexpr ImU32 primaryStrong = IM_COL32(0xC2, 0x51, 0x51, 0xFF);
 		inline constexpr ImU32 primarySoft   = IM_COL32(0xFB, 0xE6, 0xE6, 0xFF);
@@ -62,8 +62,7 @@ namespace example::theme {
 		float radiusLg   = 12.0f;
 		float radiusFull = 999.0f;
 
-		// Type scale, two steps above the stylesheet's: a desktop panel is read further away than a browser sidebar,
-		// and it has no page zoom to fall back on.
+		// Type scale, two steps above the stylesheet's: a desktop panel is read further away than a browser sidebar and has no page zoom to fall back on.
 		float fontTitle = 19.0f;
 		float fontBody  = 17.0f;
 		float fontSmall = 15.0f;
@@ -94,8 +93,7 @@ namespace example::theme {
 	};
 
 	/**
-	 * Loads the panel's faces, writes the playground's style into the current ImGui context and scales
-	 * every length for a display whose device pixel ratio is `scale`.
+	 * Loads the panel's faces, writes the playground's style into the current ImGui context and scales every length for a display whose device pixel ratio is `scale`.
 	 * The panel lays out in physical pixels, so the scale is folded into the metrics rather than left to ImGui.
 	 */
 	void apply(float scale);

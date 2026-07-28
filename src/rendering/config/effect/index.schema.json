@@ -24,8 +24,8 @@
       ],
       "fields": [
         { "name": "enabled", "type": "bool", "default": "true", "comment": "Whether to enable the blur effect." },
-        { "name": "min", "type": "double", "default": "0.4", "comment": "Blur radius of the active line, in `px` — the sharpest state." },
-        { "name": "max", "type": "double", "default": "4.5", "comment": "Blur radius of the farthest line, in `px` — the most blurred state." }
+        { "name": "min", "type": "double", "default": "0.4", "comment": "Blur radius of the active line in `px`, which is the sharpest state." },
+        { "name": "max", "type": "double", "default": "4.5", "comment": "Blur radius of the farthest line in `px`, which is the most blurred state." }
       ]
     },
     {

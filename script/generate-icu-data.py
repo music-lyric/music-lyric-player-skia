@@ -10,9 +10,7 @@ import sys
 
 
 def generate(src_path, dst_path):
-    """
-    Read the ICU data blob at src_path and write its C++ array definition to dst_path.
-    """
+    """Read the ICU data blob at src_path and write its C++ array definition to dst_path."""
     with open(src_path, "rb") as src:
         blob = src.read()
 

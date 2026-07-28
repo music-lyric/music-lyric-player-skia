@@ -16,7 +16,7 @@ namespace music_lyric_player::rendering::config::scroll {
 
 namespace music_lyric_player::rendering::core {
 	/**
-	 * Eases each line's focus effect — scale toward `1` and blur toward `0` as it nears the active line — with a clock-driven tween per line.
+	 * Eases each line's focus effect with a clock-driven tween per line, taking scale toward `1` and blur toward `0` as the line nears the active one.
 	 * Intensity follows a gaussian of the line's distance from the active line; a focus change cascades the eases with the same per-line delay the scroll uses.
 	 */
 	class EffectManager {

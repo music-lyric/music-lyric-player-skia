@@ -52,8 +52,7 @@ namespace music_lyric_player::backend::gpu {
 
 		/**
 		 * The Vulkan instance, logical device and Skia context that every window surface in the process shares.
-		 * A second instance and device per window makes the driver stand up a whole extra GPU stack, which several
-		 * drivers handle badly, so the first surface builds this one and later surfaces borrow it.
+		 * A second instance and device per window makes the driver stand up a whole extra GPU stack, which several drivers handle badly, so the first surface builds this one and later surfaces borrow it.
 		 * Sharing one `GrDirectContext` also means the windows share Skia's glyph and texture caches.
 		 * It is released once the last surface using it is gone, and is only touched from the thread driving them.
 		 */
@@ -63,9 +62,6 @@ namespace music_lyric_player::backend::gpu {
 				destroy();
 			}
 
-			/**
-			 * Creates the Vulkan instance with the surface extensions Win32 presentation needs.
-			 */
 			bool createInstance();
 
 			/**
@@ -92,9 +88,6 @@ namespace music_lyric_player::backend::gpu {
 			 */
 			bool createDevice();
 
-			/**
-			 * Builds the Skia Vulkan backend context and the GrDirectContext.
-			 */
 			bool createSkiaContext();
 
 			/**
@@ -133,14 +126,11 @@ namespace music_lyric_player::backend::gpu {
 		/**
 		 * A Vulkan swapchain bound to a Win32 `HWND`, exposing each backbuffer as a Skia surface.
 		 * Owns only the presentation objects; the instance, device and Skia context come from the shared stack.
-		 * Sync is intentionally simple: one queue-wait-idle per frame, no pipelining — enough for this use.
+		 * Sync is intentionally simple: one queue-wait-idle per frame, no pipelining, which is enough for this use.
 		 * Assumes the window is per-monitor DPI aware, so its client rect is already in physical pixels.
 		 */
 		class WindowSurface : public Surface {
 		public:
-			/**
-			 * Takes a reference to the GPU stack this surface presents through.
-			 */
 			explicit WindowSurface(std::shared_ptr<SharedContext> shared) : shared(std::move(shared)) {}
 
 			/**
@@ -176,9 +166,6 @@ namespace music_lyric_player::backend::gpu {
 			 */
 			void present();
 
-			/**
-			 * Creates the `VkSurfaceKHR` from the owned `HWND`.
-			 */
 			bool createSurface();
 
 			/**
@@ -187,12 +174,12 @@ namespace music_lyric_player::backend::gpu {
 			bool createSwapchain();
 
 			/**
-			 * Destroys the swapchain and the Skia surfaces wrapping its images.
+			 * Destroys the swapchain along with the Skia surfaces wrapping its images.
 			 */
 			void destroySwapchain();
 
 			/**
-			 * Waits for the device to idle, then rebuilds the swapchain (used on resize / out-of-date).
+			 * Waits for the device to idle, then rebuilds the swapchain; used on resize and on an out-of-date swapchain.
 			 */
 			bool recreateSwapchain();
 
@@ -312,8 +299,8 @@ namespace music_lyric_player::backend::gpu {
 				enabled.push_back(name.c_str());
 			}
 
-			// Enable all device-supported features through a features2 chain (Skia consumes the same
-			// struct as fDeviceFeatures2); pEnabledFeatures must stay null when pNext carries features2.
+			// Enable every device-supported feature through a features2 chain, the same struct Skia takes as fDeviceFeatures2.
+			// pEnabledFeatures must stay null while pNext carries features2.
 			this->deviceFeatures2       = VkPhysicalDeviceFeatures2{};
 			this->deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 			vkGetPhysicalDeviceFeatures2(this->physicalDevice, &this->deviceFeatures2);

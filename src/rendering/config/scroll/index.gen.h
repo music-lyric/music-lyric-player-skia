@@ -232,10 +232,10 @@ namespace music_lyric_player::rendering::config::scroll {
 		/**
 		 * Cascade mode distributing per-line transition delays.
 		 *
-		 * - `Smooth` — all lines move together, no cascade
-		 * - `Ripple` — symmetric cascade outward from the active line
-		 * - `Directional` — nonlinear cascade following the latest active-line movement direction
-		 * - `Stagger` — linear cascade following the latest active-line movement direction
+		 * - `Smooth`: all lines move together, no cascade
+		 * - `Ripple`: symmetric cascade outward from the active line
+		 * - `Directional`: nonlinear cascade following the latest active-line movement direction
+		 * - `Stagger`: linear cascade following the latest active-line movement direction
 		 *
 		 * @default Mode::Smooth
 		 */
@@ -283,8 +283,8 @@ namespace music_lyric_player::rendering::config::scroll {
 		/**
 		 * Vertical anchor of the active line inside the viewport, as a ratio of its height.
 		 *
-		 * - `0.5` — keep the active line at the vertical center
-		 * - `0.3` — keep the active line closer to the top
+		 * - `0.5`: keep the active line at the vertical center
+		 * - `0.3`: keep the active line closer to the top
 		 *
 		 * @default 0.5
 		 * @minimum 0

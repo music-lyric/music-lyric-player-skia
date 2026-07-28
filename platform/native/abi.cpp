@@ -192,8 +192,8 @@ void music_lyric_player_renderer_update_config_json(music_lyric_player_renderer_
 		if (renderer == nullptr || json == nullptr) {
 			return;
 		}
-		// Glaze reads the partial JSON straight into a Config: present keys set their leaf (and mark it assigned);
-		// Absent keys keep the schema default (still unset), so it doubles as a sparse patch.
+		// Glaze reads the partial JSON straight into a Config: a present key sets its leaf and marks it assigned.
+		// An absent key keeps the schema default and stays unset, so the same struct doubles as a sparse patch.
 		music_lyric_player::rendering::config::Root patch;
 		if (const glz::error_ctx error = glz::read_json(patch, std::string_view(json))) {
 			reportAbiException("malformed config json");

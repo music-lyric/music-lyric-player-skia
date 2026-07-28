@@ -225,7 +225,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 			return;
 		}
 
-		// Use the ceil'd layout box (not group.bounds) so the mask saveLayer size stays bit-identical to today.
+		// Use the ceil'd layout box rather than group.bounds so the mask saveLayer size stays unchanged.
 		const SkRect textBounds = SkRect::MakeXYWH(x, y, this->measuredWidth, this->measuredHeight);
 		// Emphasized cells scale and shift past the glyph outset, so their layer grows by the web word padding; the mask geometry itself stays on the unpadded box.
 		const SkRect drawBounds = this->useCells ? textBounds.makeOutset(kEmphasizePaddingX, kEmphasizePaddingY) : textBounds.makeOutset(kGlyphOutset, kGlyphOutset);

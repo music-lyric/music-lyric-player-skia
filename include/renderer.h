@@ -14,13 +14,22 @@ namespace music_lyric_player {
 	 */
 	class Renderer {
 	public:
+		/**
+		 * Adopts `handle` and destroys it with the renderer.
+		 */
 		explicit Renderer(music_lyric_player_renderer_handle* handle) noexcept : handle(handle) {}
 
 		Renderer(const Renderer&)            = delete;
 		Renderer& operator=(const Renderer&) = delete;
 
+		/**
+		 * Takes over `other`'s handle, leaving it empty.
+		 */
 		Renderer(Renderer&& other) noexcept : handle(std::exchange(other.handle, nullptr)) {}
 
+		/**
+		 * Destroys the current handle, then takes over `other`'s.
+		 */
 		Renderer& operator=(Renderer&& other) noexcept {
 			if (this != &other) {
 				this->reset();
@@ -29,34 +38,58 @@ namespace music_lyric_player {
 			return *this;
 		}
 
+		/**
+		 * Destroys the handle.
+		 */
 		~Renderer() {
 			this->reset();
 		}
 
+		/**
+		 * Paints one frame into the window.
+		 */
 		void render() {
 			music_lyric_player_renderer_render(this->handle);
 		}
 
+		/**
+		 * Rebuilds the surface after the host window resized.
+		 */
 		void resize() {
 			music_lyric_player_renderer_resize(this->handle);
 		}
 
+		/**
+		 * Merges a JSON config patch into the renderer's config; only the fields present in `json` take effect.
+		 */
 		void updateConfig(const char* json) {
 			music_lyric_player_renderer_update_config_json(this->handle, json);
 		}
 
+		/**
+		 * Merges a JSON config patch into the renderer's config; only the fields present in `json` take effect.
+		 */
 		void updateConfig(const std::string& json) {
 			music_lyric_player_renderer_update_config_json(this->handle, json.c_str());
 		}
 
+		/**
+		 * Whether the renderer holds a handle.
+		 */
 		explicit operator bool() const noexcept {
 			return this->handle != nullptr;
 		}
 
+		/**
+		 * The underlying handle, still owned by the renderer.
+		 */
 		music_lyric_player_renderer_handle* get() const noexcept {
 			return this->handle;
 		}
 
+		/**
+		 * Gives up ownership of the handle, which the caller must then destroy.
+		 */
 		music_lyric_player_renderer_handle* release() noexcept {
 			return std::exchange(this->handle, nullptr);
 		}

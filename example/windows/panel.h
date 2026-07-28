@@ -53,9 +53,8 @@ namespace example {
 
 	/**
 	 * The demo's controls, drawn with ImGui into the lyric window and styled after the web playground.
-	 * They occupy two regions the host reserves: a sidebar down the left, and a transport bar along the
-	 * bottom of whatever the sidebar leaves. The panel owns no window and no GPU state — the host hands
-	 * the same canvas over for it to paint itself onto.
+	 * They occupy two regions the host reserves: a sidebar down the left, and a transport bar along the bottom of whatever the sidebar leaves.
+	 * The panel owns no window and no GPU state, so the host hands the same canvas over for it to paint itself onto.
 	 */
 	class ControlPanel {
 	public:
@@ -78,8 +77,7 @@ namespace example {
 		PanelActions render(SkCanvas* canvas, const PanelState& state, int width, int height);
 
 		/**
-		 * Returns the width in physical pixels the sidebar reserves on the left, which follows it in and out
-		 * while it slides and reaches zero once it is hidden.
+		 * Returns the width in physical pixels the sidebar reserves on the left, which follows it in and out while it slides and reaches zero once it is hidden.
 		 */
 		int width() const;
 

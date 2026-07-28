@@ -219,9 +219,6 @@ namespace example {
 			return tags;
 		}
 
-		/**
-		 * Appends every group of `tail` to `groups`, keeping the declared order.
-		 */
 		void append(std::vector<Group>& groups, std::vector<Group> tail) {
 			groups.insert(groups.end(), std::make_move_iterator(tail.begin()), std::make_move_iterator(tail.end()));
 		}

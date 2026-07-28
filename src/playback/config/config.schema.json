@@ -8,19 +8,19 @@
       "name": "OffsetConfig",
       "comment": "The global layer of the three-layer offset (global + meta + temp).",
       "fields": [
-        { "name": "global", "type": "double", "default": "0.0", "comment": "ms applied to every song" },
-        { "name": "useMeta", "type": "bool", "default": "true", "comment": "apply the lyric's own meta offset" },
-        { "name": "resetTempOnLyricChange", "type": "bool", "default": "true", "comment": "clear the temp offset when a new lyric loads" }
+        { "name": "global", "type": "double", "default": "0.0", "comment": "Offset in milliseconds applied to every song." },
+        { "name": "useMeta", "type": "bool", "default": "true", "comment": "Whether the lyric's own meta offset is applied on top of the global one." },
+        { "name": "resetTempOnLyricChange", "type": "bool", "default": "true", "comment": "Whether the temporary offset is cleared when a new lyric loads." }
       ]
     },
     {
       "name": "Root",
       "comment": "Timing-engine configuration.",
       "fields": [
-        { "name": "bridgeActive", "type": "bool", "default": "true", "comment": "fill active-index gaps" },
-        { "name": "mergeWindow", "type": "double", "default": "300.0", "comment": "ms cluster for joint deactivation" },
-        { "name": "mergeLimit", "type": "int", "default": "3", "comment": "max lines per merge batch" },
-        { "name": "offset", "nested": "OffsetConfig", "comment": "the three-layer offset's global settings" }
+        { "name": "bridgeActive", "type": "bool", "default": "true", "comment": "Whether gaps in the active-line indices are filled so the active range stays contiguous." },
+        { "name": "mergeWindow", "type": "double", "default": "300.0", "comment": "Window in milliseconds within which consecutive lines cluster and deactivate together." },
+        { "name": "mergeLimit", "type": "int", "default": "3", "comment": "Maximum number of lines in one merge batch; a value of 0 or less leaves it unbounded." },
+        { "name": "offset", "nested": "OffsetConfig", "comment": "Global layer of the three-layer lyric offset." }
       ]
     }
   ]

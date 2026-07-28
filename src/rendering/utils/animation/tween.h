@@ -81,9 +81,6 @@ namespace music_lyric_player::rendering::animation {
 			return lerp(this->from, this->to, t);
 		}
 
-		/**
-		 * The landing value the tween is easing towards.
-		 */
 		const T& target() const {
 			return this->to;
 		}

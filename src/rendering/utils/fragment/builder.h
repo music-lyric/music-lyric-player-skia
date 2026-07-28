@@ -19,15 +19,15 @@
 namespace music_lyric_player::rendering::utils::fragment {
 	namespace detail {
 		/**
-		 * Builds the typographic box used as Phase-2 visual bounds (not true glyph ink).
-		 * Matching today's measured width × height keeps mask saveLayer sizes bit-identical.
+		 * Builds the typographic box used as visual bounds, which is not true glyph ink.
+		 * Matching the measured width by height keeps mask saveLayer sizes unchanged.
 		 */
 		inline SkRect typographicBounds(float advance, float height) {
 			return SkRect::MakeXYWH(0.0f, 0.0f, advance, height);
 		}
 
 		/**
-		 * Returns the absolute utf8 range covered by a shaped line's runs, or {0,0} when empty.
+		 * Writes the absolute utf8 range covered by a shaped line's runs, or {0,0} when it has none.
 		 */
 		inline void lineTextRange(const shaping::ShapedLine& line, std::size_t& start, std::size_t& end) {
 			start = 0;
@@ -68,7 +68,7 @@ namespace music_lyric_player::rendering::utils::fragment {
 
 	/**
 	 * Builds one fragment group from a whole ShapedText by concatenating every line into a single blob.
-	 * Matches today's Word path: advance is the max line width, metrics come from the last line.
+	 * Mirrors the Word path: advance is the max line width and metrics come from the last line.
 	 * Returns an empty group when the shaped text has no lines.
 	 */
 	inline FragmentGroup makeTextGroup(const shaping::ShapedText& text, const char* utf8) {

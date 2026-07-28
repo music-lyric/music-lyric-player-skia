@@ -8,8 +8,7 @@
 
 namespace example::theme {
 	namespace {
-		// The stylesheet asks for Segoe UI first and falls back to a CJK family, so the panel builds the same stack
-		// out of two sources: a latin face, and a CJK face merged in for the glyphs the first one lacks.
+		// The stylesheet asks for Segoe UI first and falls back to a CJK family, so the panel builds the same stack out of a latin face plus a CJK face merged in for the glyphs the first one lacks.
 		constexpr const char* kLatinRegular[] = {
 			"C:\\Windows\\Fonts\\segoeui.ttf",
 			"C:\\Windows\\Fonts\\tahoma.ttf",
@@ -174,8 +173,7 @@ namespace example::theme {
 			colors[ImGuiCol_PopupBg]      = toVec4(color::background);
 			colors[ImGuiCol_Border]       = toVec4(color::border);
 			colors[ImGuiCol_BorderShadow] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
-			// A control keeps its white fill through every state; the stylesheet moves its border instead,
-			// which the style table cannot express, so hover and focus lean on the faintest brand tints.
+			// A control keeps its white fill through every state and the stylesheet moves its border instead, which the style table cannot express, so hover and focus lean on the faintest brand tints.
 			colors[ImGuiCol_FrameBg]              = toVec4(color::background);
 			colors[ImGuiCol_FrameBgHovered]       = toVec4(color::backgroundAlt);
 			colors[ImGuiCol_FrameBgActive]        = toVec4(color::primaryFaint);

@@ -43,8 +43,7 @@ target_link_libraries(music_lyric_player_rendering PUBLIC
 	skia::skia)
 
 # The backend is the only layer that differs per platform.
-# Windows draws through Vulkan and resolves families from DirectWrite, while the web draws through WebGL
-# and has no system font stack to resolve from at all.
+# Windows draws through Vulkan and resolves families from DirectWrite, while the web draws through WebGL and has no system font stack to resolve from at all.
 if(EMSCRIPTEN)
 	set(_backend_sources
 		backend/gpu/webgl.cpp

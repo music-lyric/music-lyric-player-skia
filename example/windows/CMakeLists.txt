@@ -49,8 +49,7 @@ add_executable(music_lyric_player_example_windows
 target_compile_features(music_lyric_player_example_windows PRIVATE cxx_std_23)
 
 # The demo only plays local files, so leave out miniaudio's encoding and waveform-synthesis halves.
-# NOMINMAX stops windows.h from defining min/max as macros, which would otherwise break std::min / std::max
-# and every heavily templated header (Glaze, Skia) that a translation unit pulls in after it.
+# NOMINMAX stops windows.h from defining min/max as macros, which would otherwise break std::min / std::max and every heavily templated header such as Glaze or Skia that a translation unit pulls in after it.
 # The sidebar prints the release the demo was built from, which VERSION.txt is the only source of.
 target_compile_definitions(music_lyric_player_example_windows PRIVATE
 	MA_NO_ENCODING

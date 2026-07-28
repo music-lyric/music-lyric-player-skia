@@ -47,16 +47,10 @@ namespace music_lyric_player::rendering::core {
 			return this->lines;
 		}
 
-		/**
-		 * Whether there are no lines.
-		 */
 		bool empty() const {
 			return this->lines.empty();
 		}
 
-		/**
-		 * The number of lines.
-		 */
 		std::size_t size() const {
 			return this->lines.size();
 		}

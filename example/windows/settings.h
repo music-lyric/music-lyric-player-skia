@@ -10,7 +10,7 @@ namespace example {
 	struct SettingsEdit {
 		// A field changed a leaf, so the host merges the override store back into the renderer.
 		bool changed = false;
-		// An edit finished — a drag was released or a text box committed — so the host mirrors the store to disk.
+		// An edit finished, meaning a drag was released or a text box committed, so the host mirrors the store to disk.
 		bool committed = false;
 	};
 

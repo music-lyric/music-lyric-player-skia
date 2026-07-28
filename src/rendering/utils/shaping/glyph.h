@@ -33,7 +33,7 @@ namespace music_lyric_player::rendering::utils::shaping {
 	};
 
 	/**
-	 * One shaped line: its runs plus the metrics layout needs — top-to-baseline ascent, baseline-to-bottom descent, advance width.
+	 * One shaped line: its runs plus the metrics layout needs, namely top-to-baseline ascent, baseline-to-bottom descent and advance width.
 	 * Ascent and descent are positive distances; a multi-line result stacks lines top-down using their sum.
 	 */
 	struct ShapedLine {

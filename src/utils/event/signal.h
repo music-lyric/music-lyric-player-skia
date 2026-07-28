@@ -21,9 +21,6 @@ namespace music_lyric_player::utils {
 			return id;
 		}
 
-		/**
-		 * Removes a previously registered listener by id.
-		 */
 		void remove(std::size_t id) {
 			for (auto it = this->listeners.begin(); it != this->listeners.end(); ++it) {
 				if (it->id == id) {
@@ -34,8 +31,7 @@ namespace music_lyric_player::utils {
 		}
 
 		/**
-		 * Invokes every listener with the given arguments.
-		 * A throwing listener is isolated so it never interrupts the rest.
+		 * Invokes every listener, isolating a throwing one so it never interrupts the rest.
 		 */
 		void emit(Args... args) const {
 			const std::vector<Entry> snapshot = this->listeners;
@@ -46,9 +42,6 @@ namespace music_lyric_player::utils {
 			}
 		}
 
-		/**
-		 * Drops all listeners.
-		 */
 		void clear() {
 			this->listeners.clear();
 		}
@@ -64,4 +57,4 @@ namespace music_lyric_player::utils {
 	};
 } // namespace music_lyric_player::utils
 
-#endif
+#endif // MUSIC_LYRIC_PLAYER_UTILS_EVENT_SIGNAL_H_

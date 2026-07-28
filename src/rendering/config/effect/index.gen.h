@@ -63,13 +63,13 @@ namespace music_lyric_player::rendering::config::effect {
 		 */
 		::music_lyric_player::utils::config::Property<bool> enabled = true;
 		/**
-		 * Blur radius of the active line, in `px` — the sharpest state.
+		 * Blur radius of the active line in `px`, which is the sharpest state.
 		 *
 		 * @default 0.4
 		 */
 		::music_lyric_player::utils::config::Property<double> min = 0.4;
 		/**
-		 * Blur radius of the farthest line, in `px` — the most blurred state.
+		 * Blur radius of the farthest line in `px`, which is the most blurred state.
 		 *
 		 * @default 4.5
 		 */

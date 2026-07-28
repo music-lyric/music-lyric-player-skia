@@ -14,8 +14,7 @@ if(MSVC)
 	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "" FORCE)
 endif()
 
-# Emscripten catches nothing by default, which turns any throw into a module abort rather than an error
-# the caller can see.
+# Emscripten catches nothing by default, which turns any throw into a module abort rather than an error the caller can see.
 # The prebuilt lyric model is compiled the same way, and the web link opts into the same handling.
 if(EMSCRIPTEN)
 	add_compile_options(-fwasm-exceptions)

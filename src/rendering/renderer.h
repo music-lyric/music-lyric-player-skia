@@ -53,8 +53,7 @@ namespace music_lyric_player::rendering {
 
 		/**
 		 * Swaps in a different font manager and re-wraps every line on the next frame.
-		 * A font manager built from registered data is immutable, so adding a font means building a new one and
-		 * handing it over here.
+		 * A font manager built from registered data is immutable, so adding a font means building a new one and handing it over here.
 		 */
 		void setFontMgr(sk_sp<SkFontMgr> fontMgr);
 
@@ -71,9 +70,6 @@ namespace music_lyric_player::rendering {
 		config::Manager config;
 
 	private:
-		/**
-		 * Rebuilds the line list from a freshly loaded lyric.
-		 */
 		void handleLyricUpdate(const music_lyric_model::parsed::Info& info);
 
 		/**
@@ -116,4 +112,4 @@ namespace music_lyric_player::rendering {
 	};
 } // namespace music_lyric_player::rendering
 
-#endif
+#endif // MUSIC_LYRIC_PLAYER_RENDERING_RENDERER_H_

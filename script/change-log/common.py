@@ -1,3 +1,9 @@
+"""
+Shared change log helpers: reads conventional commits out of git and renders them as markdown sections.
+
+Both `build.py` and `match.py` sit on top of this module.
+"""
+
 import re
 import subprocess
 
@@ -69,6 +75,7 @@ def project_version():
 
 
 def parse_commit_message(message):
+    """Split a conventional commit subject into type, scope and message; None when it does not match."""
     match = COMMIT_MESSAGE_REGEXP.match(message or "")
     if not match:
         return None
@@ -80,6 +87,7 @@ def parse_commit_message(message):
 
 
 def get_repo_info():
+    """Read owner and name out of the origin remote, or None when it is missing or not a GitHub URL."""
     try:
         remote = run_git(["remote", "get-url", "origin"]).strip()
     except RuntimeError:
@@ -91,6 +99,7 @@ def get_repo_info():
 
 
 def get_commit_info(start="", end="HEAD"):
+    """Read the conventional commits in a revision range, dropping anything that does not parse."""
     if not start and end:
         range_args = [end]
     elif start or end:
@@ -144,6 +153,7 @@ def get_all_tags():
 
 
 def format_result(content):
+    """Collapse runs of blank lines and end the document with exactly one newline."""
     return re.sub(r"(\n\s*){2,}", "\n\n", content).strip() + "\n"
 
 
@@ -153,6 +163,7 @@ def write_output(name, content):
 
 
 def build_header(version, info):
+    """Render the version heading, dated from the newest commit or today when there is none."""
     commit_date = info.date if info else ""
     return f"## {version} ({commit_date or date.today().strftime('%Y-%m-%d')})"
 
@@ -175,6 +186,7 @@ def commit_link(commit, repo):
 
 
 def build_scope(commits, repo, is_common, breaking):
+    """Render one scope's commits as bullets, merging duplicates and collecting their breaking notes into `breaking`."""
     indent = "" if is_common else "  "
     grouped = {}
     for commit in commits:
@@ -189,6 +201,7 @@ def build_scope(commits, repo, is_common, breaking):
 
 
 def build_type_contents(scopes, repo):
+    """Render every scope of one commit type, with the unscoped ones first and the breaking notes last."""
     lines = []
     breaking = []
 
@@ -208,6 +221,7 @@ def build_type_contents(scopes, repo):
 
 
 def build_contents(infos, repo):
+    """Group commits by type and scope, then render each type in display order."""
     type_map = {}
     for info in infos:
         if info.type not in TYPE_ORDER:

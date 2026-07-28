@@ -13,7 +13,7 @@ namespace music_lyric_player::rendering::utils::fragment {
 	/**
 	 * One paintable glyph span: a cached blob plus its group-relative origin, layout advance, and source range.
 	 * The blob is an internal paint cache; consumers paint through FragmentGroup and never rebuild it.
-	 * Bounds are the typographic box in Phase 2 (not true ink), so mask layers stay bit-identical to today.
+	 * Bounds are the typographic box rather than true ink, which keeps mask layers at their existing sizes.
 	 * bidiLevel is stubbed to zero until a later phase records direction from the shaper.
 	 */
 	struct GlyphFragment {

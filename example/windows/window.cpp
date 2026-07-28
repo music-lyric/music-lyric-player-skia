@@ -27,8 +27,7 @@ namespace example {
 	}
 
 	bool Window::init(int width, int height, const char* title) {
-		// The backend surface reads the client rect in physical pixels and the window DPI directly,
-		// so the process must be per-monitor DPI aware or sizes and the device-pixel ratio go wrong.
+		// The backend surface reads the client rect in physical pixels and the window DPI directly, so the process must be per-monitor DPI aware or sizes and the device-pixel ratio go wrong.
 		if (liveWindows == 0) {
 			SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 

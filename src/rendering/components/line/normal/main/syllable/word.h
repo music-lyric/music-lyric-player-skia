@@ -64,19 +64,10 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		 */
 		animation::Mask::Input maskInput() const;
 
-		/**
-		 * Returns the number of explicit lyric spaces preceding this word.
-		 */
 		uint32_t spacesBefore() const;
 
-		/**
-		 * Returns the laid-out word width.
-		 */
 		float width() const;
 
-		/**
-		 * Returns the laid-out word height.
-		 */
 		float height() const;
 
 		/**
@@ -94,7 +85,7 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		};
 
 		/**
-		 * Paints the cached word blob — or its per-character cells with their emphasize transforms — at the word position in the supplied state color.
+		 * Paints the cached word blob at the word position in the supplied state color, or its per-character cells with their emphasize transforms.
 		 */
 		void paintGroup(SkCanvas* canvas, float x, float y, SkColor color, const std::vector<animation::Emphasize::Transform>* transforms) const;
 

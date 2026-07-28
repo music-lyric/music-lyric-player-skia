@@ -67,16 +67,10 @@ namespace music_lyric_player::rendering::animation {
 		}
 
 	private:
-		/**
-		 * Evaluates x at curve parameter `p`.
-		 */
 		float sampleX(float p) const {
 			return ((this->ax * p + this->bx) * p + this->cx) * p;
 		}
 
-		/**
-		 * Evaluates y at curve parameter `p`.
-		 */
 		float sampleY(float p) const {
 			return ((this->ay * p + this->by) * p + this->cy) * p;
 		}

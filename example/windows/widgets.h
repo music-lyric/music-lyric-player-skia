@@ -31,8 +31,7 @@ namespace example::widgets {
 	};
 
 	/**
-	 * What a card's title row reports when a switch owns it: whether the switch was clicked,
-	 * and whether the rest of the card follows below.
+	 * What a card's title row reports when a switch owns it: whether the switch was clicked, and whether the rest of the card follows below.
 	 */
 	struct Master {
 		bool toggled = false;

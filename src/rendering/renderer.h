@@ -52,6 +52,13 @@ namespace music_lyric_player::rendering {
 		void setViewport(int widthPx, int heightPx, float dpr = 1.0f);
 
 		/**
+		 * Swaps in a different font manager and re-wraps every line on the next frame.
+		 * A font manager built from registered data is immutable, so adding a font means building a new one and
+		 * handing it over here.
+		 */
+		void setFontMgr(sk_sp<SkFontMgr> fontMgr);
+
+		/**
 		 * Paints the current frame onto `canvas`; a no-op when the viewport is empty.
 		 */
 		void render(SkCanvas* canvas);

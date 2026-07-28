@@ -84,6 +84,16 @@ namespace music_lyric_player::rendering {
 		this->dpr       = dpr;
 	}
 
+	void Renderer::setFontMgr(sk_sp<SkFontMgr> fontMgr) {
+		if (fontMgr == this->fontMgr) {
+			return;
+		}
+		this->fontMgr = std::move(fontMgr);
+		// The shaper binds the font manager it was built with, so it has to be rebuilt before anything reshapes.
+		this->shaper = SkShapers::HB::ShaperDrivenWrapper(this->unicode, this->fontMgr);
+		this->lines.invalidateLayout();
+	}
+
 	void Renderer::handleLyricUpdate(const music_lyric_model::parsed::Info& info) {
 		rebuildLines(info);
 		this->activeIndex = -1;

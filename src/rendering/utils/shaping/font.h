@@ -26,6 +26,15 @@ namespace music_lyric_player::rendering::utils::shaping {
 		if (!typeface) {
 			typeface = fontMgr->matchFamilyStyle(nullptr, SkFontStyle::Normal());
 		}
+		// A font manager built from registered data has no platform default, so the null family above resolves to nothing.
+		// The first family it holds stands in for one.
+		// A system font stack resolves the null family itself and never reaches here.
+		if (!typeface && fontMgr->countFamilies() > 0) {
+			const sk_sp<SkFontStyleSet> fallback = fontMgr->createStyleSet(0);
+			if (fallback != nullptr) {
+				typeface = fallback->matchStyle(SkFontStyle::Normal());
+			}
+		}
 
 		SkFont font(typeface, static_cast<SkScalar>(size));
 		font.setSubpixel(subpixel);

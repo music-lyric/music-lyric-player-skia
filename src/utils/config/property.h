@@ -78,6 +78,18 @@ namespace music_lyric_player::utils::config {
 			return a.stored == b.stored;
 		}
 
+		/**
+		 * Compares against a bare value, which the homogeneous overload alone leaves ambiguous.
+		 * Reads convert to the value and writes convert from it, both implicitly, so a mixed comparison
+		 * offers two equally viable user-defined conversions until an exact match breaks the tie.
+		 * Deducing the operand rather than taking `const T&` keeps a string leaf comparable to a literal.
+		 */
+		template <typename U>
+			requires(!std::is_same_v<std::remove_cvref_t<U>, Property>)
+		friend bool operator==(const Property& a, const U& b) {
+			return a.stored == b;
+		}
+
 	private:
 		T    stored{};
 		bool isSet = false;

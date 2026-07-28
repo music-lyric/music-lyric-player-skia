@@ -26,6 +26,8 @@ include(cmake/third-party/include.cmake)
 
 add_subdirectory(src)
 
+add_subdirectory(platform)
+
 option(MUSIC_LYRIC_PLAYER_BUILD_EXAMPLE "Build Windows Example" OFF)
 if(MUSIC_LYRIC_PLAYER_BUILD_EXAMPLE)
 	add_subdirectory(example/windows)

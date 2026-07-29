@@ -1,0 +1,21 @@
+{
+  "name": "music-lyric-player-web-example",
+  "version": "0.0.0",
+  "description": "Skia lyric player demo.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "music-lyric-player-skia": "file:../../platform/web"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.1.5"
+  }
+}

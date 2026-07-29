@@ -1,4 +1,4 @@
-.PHONY: format config-generate clean third-party-build third-party-web-build third-party-lyric-build third-party-skia-build third-party-glaze-build web-build example-windows-build package-windows package-web change-log-build release
+.PHONY: format config-generate clean third-party-build third-party-web-build third-party-lyric-build third-party-skia-build third-party-glaze-build web-build example-windows-build example-web-dev package-windows package-web change-log-build release
 
 # Format Code.
 format:
@@ -40,15 +40,19 @@ third-party-skia-build:
 third-party-glaze-build:
 	cmake $(GLAZE_ARGS) -P cmake/third-party/glaze/build.cmake
 
-# Build the web module (configure, then Release build).
+# Build the web module.
 web-build:
 	cmake --preset web
 	cmake --build --preset web-release
 
-# Build the Windows example (configure, then Release build).
+# Build the Windows example.
 example-windows-build:
 	cmake --preset windows-example
 	cmake --build --preset windows-example-release
+
+# Serve the web example with hot reload.
+example-web-dev:
+	cd example/web && npm install && npm run dev
 
 # Build and package the Windows native distribution zip.
 package-windows:

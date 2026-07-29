@@ -1,81 +1,71 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>music-lyric-player-skia</title>
-		<style>
-			html,
-			body {
-				margin: 0;
-				height: 100%;
-				background: #101218;
-				color: #c8ccd4;
-				font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
-			}
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>music-lyric-player-skia</title>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
 
-			#canvas {
-				display: block;
-				width: 100vw;
-				height: 100vh;
-			}
+    <section id="panel">
+      <div class="row wrap">
+        <label>audio <input type="file" id="audio-file" accept="audio/*" /></label>
+        <label>font <input type="file" id="font-file" accept=".ttf,.otf,.ttc" /></label>
+        <label>lyric <input type="file" id="lyric-file" /></label>
+        <button id="lyric-paste">paste hex…</button>
+      </div>
 
-			#status {
-				position: fixed;
-				left: 12px;
-				bottom: 12px;
-				padding: 6px 10px;
-				border-radius: 6px;
-				background: rgba(0, 0, 0, 0.45);
-			}
-		</style>
-	</head>
-	<body>
-		<canvas id="canvas"></canvas>
-		<div id="status">loading…</div>
+      <div class="row">
+        <button id="toggle" disabled>play</button>
+        <input type="range" id="seek" min="0" max="0" step="0.001" value="0" disabled />
+        <span id="time" class="muted">0:00 / 0:00</span>
+      </div>
 
-		<script type="module">
-			const MODULE_URL = '../../out/app/build/web-wasm32-release/music_lyric_player.mjs';
+      <details id="config">
+        <summary>config</summary>
 
-			const canvas = document.getElementById('canvas');
-			const status = document.getElementById('status');
+        <div id="config-body">
+          <div class="row wrap">
+            <label>size <input type="range" id="config-size" min="12" max="96" step="1" value="34" /></label>
+            <span id="config-size-value" class="muted">34px</span>
 
-			try {
-				// Imported dynamically so a module that has not been built yet reports itself here
-				// rather than failing the whole script before anything can catch it.
-				const { default: createMusicLyricPlayerModule } = await import(MODULE_URL);
-				const module = await createMusicLyricPlayerModule();
+            <label>gap <input type="range" id="config-gap" min="0" max="64" step="1" value="16" /></label>
+            <span id="config-gap-value" class="muted">16px</span>
 
-				const renderer = module.Renderer.create('#canvas');
-				if (!renderer) {
-					throw new Error('the browser gave no WebGL 2 context for #canvas');
-				}
+            <label>
+              align
+              <select id="config-align">
+                <option value="Left" selected>Left</option>
+                <option value="Center">Center</option>
+                <option value="Right">Right</option>
+              </select>
+            </label>
+          </div>
 
-				// The canvas backbuffer is sized in physical pixels by the module itself, so the page
-				// only has to report the CSS box and the ratio to scale it by.
-				const sync = () => {
-					const dpr = window.devicePixelRatio || 1;
-					const rect = canvas.getBoundingClientRect();
+          <textarea id="config-patch" spellcheck="false" placeholder='extra JSON patch, e.g. {"container": {"backgroundColor": "#101218"}}'></textarea>
 
-					renderer.configure(Math.round(rect.width * dpr), Math.round(rect.height * dpr), dpr);
-					status.textContent = `version: ${module.version()} · ${canvas.width}×${canvas.height} @${dpr}x`;
-				};
+          <div class="row">
+            <button id="config-apply">apply</button>
+            <span class="grow"></span>
+          </div>
+        </div>
+      </details>
 
-				sync();
-				new ResizeObserver(sync).observe(canvas);
-				// A ResizeObserver stays quiet when only the pixel ratio changed, which is what moving
-				// the window across monitors of different densities looks like.
-				window.addEventListener('resize', sync);
+      <div id="notice"></div>
+      <div id="telemetry" class="muted">loading…</div>
+    </section>
 
-				const frame = () => {
-					renderer.renderFrame();
-					requestAnimationFrame(frame);
-				};
-				requestAnimationFrame(frame);
-			} catch (error) {
-				status.textContent = `failed: ${error.message}`;
-				throw error;
-			}
-		</script>
-	</body>
+    <dialog id="paste-dialog">
+      <form method="dialog">
+        <textarea id="paste-text" spellcheck="false" placeholder="hex-encoded parsed.Info protobuf"></textarea>
+        <button value="load">load</button>
+        <button value="cancel">cancel</button>
+      </form>
+    </dialog>
+
+    <audio id="audio" hidden></audio>
+
+    <script type="module" src="/main.ts"></script>
+  </body>
 </html>

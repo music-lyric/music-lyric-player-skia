@@ -22,7 +22,7 @@ jobs:
       cache-key: ${{ steps.key.outputs.value }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: false
           fetch-depth: 1
@@ -36,7 +36,7 @@ jobs:
 
       - name: Cache Skia
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: out/third-party/skia
           key: ${{ steps.key.outputs.value }}
@@ -48,7 +48,7 @@ jobs:
 
       - name: Setup Emsdk
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: mymindstorm/setup-emsdk@v14
+        uses: emscripten-core/setup-emsdk@v16
         with:
           version: ${{ env.EMSDK_VERSION }}
 
@@ -64,7 +64,7 @@ jobs:
       cache-key: ${{ steps.key.outputs.value }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: false
           fetch-depth: 1
@@ -78,7 +78,7 @@ jobs:
 
       - name: Cache Lyric
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: out/third-party/lyric
           key: ${{ steps.key.outputs.value }}
@@ -90,7 +90,7 @@ jobs:
 
       - name: Setup Emsdk
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: mymindstorm/setup-emsdk@v14
+        uses: emscripten-core/setup-emsdk@v16
         with:
           version: ${{ env.EMSDK_VERSION }}
 
@@ -107,27 +107,27 @@ jobs:
       artifact: ${{ steps.meta.outputs.name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
           fetch-depth: 1
 
       - name: Restore Skia
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: out/third-party/skia
           key: ${{ needs.build-third-party-skia.outputs.cache-key }}
           fail-on-cache-miss: true
 
       - name: Restore Lyric
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: out/third-party/lyric
           key: ${{ needs.build-third-party-lyric.outputs.cache-key }}
           fail-on-cache-miss: true
 
       - name: Setup Emsdk
-        uses: mymindstorm/setup-emsdk@v14
+        uses: emscripten-core/setup-emsdk@v16
         with:
           version: ${{ env.EMSDK_VERSION }}
 
@@ -145,7 +145,7 @@ jobs:
         run: echo "name=web-wasm32-release" >> "$GITHUB_OUTPUT"
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.meta.outputs.name }}
           path: out/app/dist/web-wasm32-release.zip

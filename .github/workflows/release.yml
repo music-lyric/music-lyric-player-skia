@@ -28,12 +28,12 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: dist
           merge-multiple: true
@@ -47,7 +47,7 @@ jobs:
         run: python3 script/change-log/build.py --current
 
       - name: Publish Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: dist/**/*
           body_path: CURRENT_CHANGELOG.md
@@ -63,12 +63,12 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
       - name: Download Package
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: web-wasm32-release
           path: out/app/dist
@@ -81,7 +81,7 @@ jobs:
           mv out/app/dist/web-wasm32-release/dist platform/web/dist
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org

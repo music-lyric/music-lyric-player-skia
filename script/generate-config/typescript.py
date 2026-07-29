@@ -2,7 +2,7 @@
 Emits the TypeScript declarations of a root config tree: one interface per node with every field optional, which is the shape of the sparse JSON patch that crosses the ABI.
 """
 
-from pathlib import Path
+import os
 
 from model import KIND_NOTES, SchemaError, is_nested, leaf_type, resolve_nested
 from emit import doc_lines, jsdoc
@@ -11,7 +11,9 @@ from glaze import collect_all_enums
 INDENT = "  "
 
 # Delivery root of the web package: the declarations ship from there rather than from the source tree, since nothing in-tree consumes them.
-OUT_DIR = Path(__file__).resolve().parents[2] / "platform" / "web" / "types"
+OUT_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "platform", "web", "types"
+)
 
 # C++ leaf types mapped onto TypeScript; a `kind` leaf is a ::std::string by definition and an enum resolves to its own alias.
 TYPE_MAP = {

@@ -2,6 +2,8 @@
 Shared vocabulary of the config generator: the loaded schema model, the C++ names it emits and the small predicates over a field.
 """
 
+import os
+
 SKIP_DIRS = {"build", "third-party", ".history", ".git", "node_modules", ".turbo", ".vscode", ".claude"}
 
 # Format notes appended to a kind-typed leaf's doc.
@@ -106,11 +108,11 @@ def resolve_field_path(module, cfg, path):
 
 def include_path_for(out_path):
     """Project-relative include path for a header, relative to the nearest src/."""
-    parts = out_path.resolve().parts
+    parts = os.path.abspath(out_path).replace(os.sep, "/").split("/")
     if "src" in parts:
         cut = len(parts) - 1 - parts[::-1].index("src")
         return "/".join(parts[cut + 1 :])
-    return out_path.name
+    return os.path.basename(out_path)
 
 
 def referenced_includes(module):
@@ -120,5 +122,5 @@ def referenced_includes(module):
         for field in cfg["fields"]:
             if is_nested(field) and "." in field["nested"]:
                 target = module.imports[field["nested"].split(".", 1)[0]]
-                paths.add(include_path_for(target.path.parent / target.file))
+                paths.add(include_path_for(os.path.join(os.path.dirname(target.path), target.file)))
     return sorted(paths)

@@ -4,6 +4,7 @@ Loads a `*.schema.json` into a `Module`: expands `mix` entries, resolves imports
 
 import copy
 import json
+import os
 
 from model import KIND_NOTES, Module, SchemaError, is_nested, is_valid_comment, resolve_field_path, resolve_nested
 
@@ -354,7 +355,7 @@ def validate_refs(module):
 
 def load_module(path, cache, loading=None):
     """Read, validate and resolve a schema and its imports into a Module, memoised by path."""
-    key = path.resolve()
+    key = os.path.normcase(os.path.abspath(path))
     if key in cache:
         return cache[key]
     loading = loading if loading is not None else set()
@@ -363,7 +364,8 @@ def load_module(path, cache, loading=None):
     loading.add(key)
 
     try:
-        raw = path.read_text(encoding="utf-8")
+        with open(path, encoding="utf-8") as handle:
+            raw = handle.read()
     except OSError as error:
         raise SchemaError(f"cannot read {path}: {error}")
     try:
@@ -377,9 +379,9 @@ def load_module(path, cache, loading=None):
     module = Module(path, schema)
 
     for imp in schema.get("imports", []):
-        imp_path = (path.parent / imp["schema"]).resolve()
-        if not imp_path.is_file():
-            raise SchemaError(f"import '{imp['as']}' of {path.name} points to missing schema {imp_path}")
+        imp_path = os.path.abspath(os.path.join(os.path.dirname(path), imp["schema"]))
+        if not os.path.isfile(imp_path):
+            raise SchemaError(f"import '{imp['as']}' of {os.path.basename(path)} points to missing schema {imp_path}")
         module.imports[imp["as"]] = load_module(imp_path, cache, loading)
 
     validate_refs(module)

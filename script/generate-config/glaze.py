@@ -2,7 +2,7 @@
 Emits the aggregate Glaze meta header that makes every enum of a schema tree serialize by name rather than by ordinal.
 """
 
-from pathlib import Path
+import os
 
 from model import include_path_for
 from emit import collect_enums
@@ -12,7 +12,7 @@ def collect_all_enums(module, seen=None, out=None):
     """Every (namespace, enum_name, values) across a module and its transitive imports, de-duplicated by path."""
     seen = seen if seen is not None else set()
     out = out if out is not None else []
-    key = module.path.resolve()
+    key = os.path.normcase(os.path.abspath(module.path))
     if key in seen:
         return out
     seen.add(key)
@@ -27,7 +27,7 @@ def glaze_file_name(header_file):
     """The Glaze meta header paired with a generated header (`x.gen.h` -> `x.gen.glaze.h`)."""
     if header_file.endswith(".gen.h"):
         return header_file[: -len(".gen.h")] + ".gen.glaze.h"
-    return Path(header_file).stem + ".gen.glaze.h"
+    return os.path.splitext(os.path.basename(header_file))[0] + ".gen.glaze.h"
 
 
 def render_glaze(module, schema_name):
@@ -46,7 +46,7 @@ def render_glaze(module, schema_name):
         f"#define {guard}",
         "",
         '#include "glaze/json.hpp"',
-        f'#include "{include_path_for(module.path.parent / module.file)}"',
+        f'#include "{include_path_for(os.path.join(os.path.dirname(module.path), module.file))}"',
     ]
     for namespace, name, values in enums:
         full = f"::{namespace}::{name}"

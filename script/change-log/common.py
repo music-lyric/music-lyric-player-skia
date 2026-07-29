@@ -2,14 +2,14 @@
 Shared change log helpers: reads conventional commits out of git and renders them as markdown sections.
 """
 
+import os
 import re
 import subprocess
 
 from dataclasses import dataclass, field
 from datetime import date
-from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 CHANGE_LOG_FILE = "CHANGELOG.md"
 CURRENT_CHANGE_LOG_FILE = "CURRENT_CHANGELOG.md"
@@ -83,10 +83,11 @@ def run_git(args):
 
 
 def project_version():
-    version_file = REPO_ROOT / "VERSION.txt"
-    if not version_file.exists():
+    version_file = os.path.join(REPO_ROOT, "VERSION.txt")
+    if not os.path.exists(version_file):
         return "0.0.0"
-    version = version_file.read_text(encoding="utf-8").strip()
+    with open(version_file, encoding="utf-8") as handle:
+        version = handle.read().strip()
     return version or "0.0.0"
 
 
@@ -199,7 +200,7 @@ def format_result(content):
 
 
 def write_output(name, content):
-    with open(REPO_ROOT / name, "w", encoding="utf-8", newline="\n") as handle:
+    with open(os.path.join(REPO_ROOT, name), "w", encoding="utf-8", newline="\n") as handle:
         handle.write(content)
 
 

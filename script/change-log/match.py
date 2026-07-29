@@ -5,6 +5,7 @@ Usage: match.py [--version <version>] [--include-header]
 """
 
 import argparse
+import os
 import re
 
 from common import (
@@ -40,10 +41,11 @@ def main():
     if not version:
         return
 
-    source = REPO_ROOT / CHANGE_LOG_FILE
-    if not source.exists():
+    source = os.path.join(REPO_ROOT, CHANGE_LOG_FILE)
+    if not os.path.exists(source):
         return
-    content = source.read_text(encoding="utf-8")
+    with open(source, encoding="utf-8") as handle:
+        content = handle.read()
     if not content:
         return
 

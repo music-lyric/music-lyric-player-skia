@@ -2,6 +2,8 @@
 Renders a loaded schema into its C++ header: one struct per node, the hidden overlay / capture / resolve machinery and the default instance.
 """
 
+import os
+
 from model import (
     ACCESS_INCLUDE,
     ACCESS_TYPE,
@@ -319,7 +321,10 @@ def collect_enums(module):
             name = field["enum"]
             values = tuple(field["values"])
             if name in enums and enums[name][0] != values:
-                raise SchemaError(f"enum '{name}' has conflicting 'values' across fields in {module.path.name}")
+                raise SchemaError(
+                    f"enum '{name}' has conflicting 'values' across fields in {os.path.basename(module.path)}"
+                )
+
             enums.setdefault(name, (values, field.get("enumComment")))
     return enums
 

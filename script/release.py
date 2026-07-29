@@ -6,16 +6,16 @@ Usage: release.py [major | minor | patch | --version X.Y.Z] [--dry-run]
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
-from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-VERSION_FILE = REPO_ROOT / "VERSION.txt"
-CHANGE_LOG_FILE = REPO_ROOT / "CHANGELOG.md"
-WEB_PACKAGE_FILE = REPO_ROOT / "platform" / "web" / "package.json"
-CHANGE_LOG_BUILDER = REPO_ROOT / "script" / "change-log" / "build.py"
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+VERSION_FILE = os.path.join(REPO_ROOT, "VERSION.txt")
+CHANGE_LOG_FILE = os.path.join(REPO_ROOT, "CHANGELOG.md")
+WEB_PACKAGE_FILE = os.path.join(REPO_ROOT, "platform", "web", "package.json")
+CHANGE_LOG_BUILDER = os.path.join(REPO_ROOT, "script", "change-log", "build.py")
 
 VERSION_REGEXP = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 PARTS = ("major", "minor", "patch")
@@ -26,7 +26,7 @@ RELEASE_FILES = (VERSION_FILE, CHANGE_LOG_FILE, WEB_PACKAGE_FILE)
 
 def repo_path(path):
     """Render a release file as a repo relative posix path, which is what git takes and the dry run prints."""
-    return path.relative_to(REPO_ROOT).as_posix()
+    return os.path.relpath(path, REPO_ROOT).replace(os.sep, "/")
 
 
 def run_git(args, capture=True):
@@ -44,11 +44,12 @@ def run_git(args, capture=True):
 
 
 def read_current_version():
-    if not VERSION_FILE.exists():
-        raise SystemExit(f"{VERSION_FILE.name} not found at repo root.")
-    raw = VERSION_FILE.read_text(encoding="utf-8").strip()
+    if not os.path.exists(VERSION_FILE):
+        raise SystemExit(f"{os.path.basename(VERSION_FILE)} not found at repo root.")
+    with open(VERSION_FILE, encoding="utf-8") as handle:
+        raw = handle.read().strip()
     if not VERSION_REGEXP.match(raw):
-        raise SystemExit(f"invalid version in {VERSION_FILE.name}: {raw!r} (expected X.Y.Z)")
+        raise SystemExit(f"invalid version in {os.path.basename(VERSION_FILE)}: {raw!r} (expected X.Y.Z)")
     return raw
 
 
@@ -112,7 +113,8 @@ def ensure_tag_absent(tag):
 
 
 def write_version(version):
-    VERSION_FILE.write_text(f"{version}\n", encoding="utf-8", newline="\n")
+    with open(VERSION_FILE, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(f"{version}\n")
 
 
 def write_web_package_version(version):
@@ -120,19 +122,21 @@ def write_web_package_version(version):
     Rewrite the version field of the web npm manifest so the published package tracks VERSION.txt.
     Parsing as JSON both validates the manifest and keeps the release from tagging a package npm would reject.
     """
-    if not WEB_PACKAGE_FILE.exists():
+    if not os.path.exists(WEB_PACKAGE_FILE):
         raise SystemExit(f"{repo_path(WEB_PACKAGE_FILE)} not found.")
     try:
-        manifest = json.loads(WEB_PACKAGE_FILE.read_text(encoding="utf-8"))
+        with open(WEB_PACKAGE_FILE, encoding="utf-8") as handle:
+            manifest = json.loads(handle.read())
     except json.JSONDecodeError as error:
         raise SystemExit(f"invalid JSON in {repo_path(WEB_PACKAGE_FILE)}: {error}")
     manifest["version"] = version
     serialized = json.dumps(manifest, indent=2, ensure_ascii=False)
-    WEB_PACKAGE_FILE.write_text(f"{serialized}\n", encoding="utf-8", newline="\n")
+    with open(WEB_PACKAGE_FILE, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(f"{serialized}\n")
 
 
 def build_change_log():
-    subprocess.run([sys.executable, str(CHANGE_LOG_BUILDER)], cwd=REPO_ROOT, check=True)
+    subprocess.run([sys.executable, CHANGE_LOG_BUILDER], cwd=REPO_ROOT, check=True)
 
 
 def parse_args():

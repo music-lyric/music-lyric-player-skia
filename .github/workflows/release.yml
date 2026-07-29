@@ -17,8 +17,11 @@ jobs:
   windows:
     uses: ./.github/workflows/release-windows.yml
 
+  web:
+    uses: ./.github/workflows/release-web.yml
+
   release:
-    needs: [windows]
+    needs: [windows, web]
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     permissions:
@@ -50,3 +53,51 @@ jobs:
           body_path: CURRENT_CHANGELOG.md
           prerelease: false
           fail_on_unmatched_files: true
+
+  publish-npm:
+    needs: [release]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Download Package
+        uses: actions/download-artifact@v4
+        with:
+          name: web-wasm32-release
+          path: out/app/dist
+
+      - name: Restore Package
+        shell: bash
+        run: |
+          unzip -q out/app/dist/web-wasm32-release.zip -d out/app/dist
+          rm -rf platform/web/dist
+          mv out/app/dist/web-wasm32-release/dist platform/web/dist
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Verify Version
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version=$(node -p "require('./platform/web/package.json').version")
+          if [ "$tag" != "$version" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package version $version" >&2
+            exit 1
+          fi
+
+      - name: Publish Package
+        shell: bash
+        run: npm publish platform/web --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

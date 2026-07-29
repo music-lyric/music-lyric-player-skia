@@ -83,8 +83,6 @@ file(MAKE_DIRECTORY "${_package_dist}")
 file(GLOB _artifacts "${_build_dir}/*")
 file(COPY ${_artifacts} DESTINATION "${_package_dist}")
 
-# The zip mirrors what `npm publish platform/web` would send, so the two distribution channels carry the same tree.
-# It tracks the `files` whitelist in package.json plus the three entries npm always includes on its own.
 set(_payload
 	"dist"
 	"types"

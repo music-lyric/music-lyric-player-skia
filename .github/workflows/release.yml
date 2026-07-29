@@ -98,6 +98,8 @@ jobs:
 
       - name: Publish Package
         shell: bash
-        run: npm publish platform/web --access public --provenance
+        run: |
+          cd platform/web
+          npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

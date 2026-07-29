@@ -1,7 +1,7 @@
 {
   "name": "music-lyric-player-skia",
   "version": "0.1.0",
-  "description": "Skia lyric player for the web, compiled to WebAssembly.",
+  "description": "Skia lyric player for the web.",
   "license": "MIT",
   "author": "folltoshe",
   "homepage": "https://github.com/music-lyric/music-lyric-player-skia#readme",
@@ -15,26 +15,25 @@
   },
   "keywords": [
     "lyric",
-    "karaoke",
-    "skia",
-    "wasm",
-    "webassembly",
-    "webgl"
+    "player",
+    "skia"
   ],
   "type": "module",
   "sideEffects": false,
-  "main": "./bin/music_lyric_player.mjs",
-  "types": "./types/music_lyric_player.d.ts",
+  "main": "./index.js",
+  "types": "./index.d.ts",
   "exports": {
     ".": {
-      "types": "./types/music_lyric_player.d.ts",
-      "import": "./bin/music_lyric_player.mjs"
+      "types": "./index.d.ts",
+      "import": "./index.js"
     },
-    "./music_lyric_player.wasm": "./bin/music_lyric_player.wasm",
+    "./music_lyric_player.wasm": "./dist/music_lyric_player.wasm",
     "./package.json": "./package.json"
   },
   "files": [
-    "bin",
-    "types"
+    "dist",
+    "types",
+    "index.js",
+    "index.d.ts"
   ]
 }

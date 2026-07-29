@@ -15,7 +15,7 @@ The package is browser only. It needs WebGL2 and WebAssembly exception handling,
 ## Usage
 
 ```js
-import createMusicLyricPlayerModule from 'music-lyric-player-skia';
+import { createMusicLyricPlayerModule } from 'music-lyric-player-skia';
 
 const runtime = await createMusicLyricPlayerModule();
 
@@ -72,7 +72,14 @@ The renderer takes a sparse JSON patch: whatever the object leaves out keeps its
 renderer.updateConfig(JSON.stringify({ line: { normal: { base: { font: { size: '32px' } } } } }));
 ```
 
-Malformed JSON throws. The shape of the patch is not part of the embind signature, so it is typed separately in `types/config.gen.d.ts`.
+Malformed JSON throws. The shape of the patch is not part of the embind signature, so it is generated from the schema instead and re-exported from the package root alongside the bindings:
+
+```ts
+import type { RenderingConfig } from 'music-lyric-player-skia';
+
+const patch: RenderingConfig = { line: { normal: { base: { font: { size: '32px' } } } } };
+renderer.updateConfig(JSON.stringify(patch));
+```
 
 ## Timing
 

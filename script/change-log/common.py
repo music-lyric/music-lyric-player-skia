@@ -1,13 +1,11 @@
 """
 Shared change log helpers: reads conventional commits out of git and renders them as markdown sections.
-
-Both `build.py` and `match.py` sit on top of this module.
 """
 
 import re
 import subprocess
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 
@@ -22,6 +20,9 @@ TYPE_ORDER = ["feat", "fix", "perf", "refactor", "revert", "docs"]
 # Scopes dropped from the change log; their commits do not ship in any released artifact.
 EXCLUDED_SCOPES = {"example"}
 
+# Body trailers that open a section of their own, in display order.
+MARKER_ORDER = ["breaking", "security", "deprecated"]
+
 TYPE_TITLE_MAP = {
     "feat": "Feature",
     "fix": "Fix",
@@ -30,13 +31,22 @@ TYPE_TITLE_MAP = {
     "revert": "Revert",
     "docs": "Document",
     "breaking": "Breaking",
+    "security": "Security",
+    "deprecated": "Deprecated",
 }
 
 COMMIT_MESSAGE_REGEXP = re.compile(
     r"^(feat|fix|perf|chore|docs|revert|refactor|test|release)(\([a-zA-Z0-9-_]+\))?:\s(.*)$"
 )
 
-BREAKING_CHANGE_REGEXP = re.compile(r"^breaking:\s*(.*)", re.IGNORECASE)
+# One note per line; repeat the key to record several notes on the same commit.
+MARKER_TRAILER_REGEXP = re.compile(rf"^({'|'.join(MARKER_ORDER)}):\s*(.+)$", re.IGNORECASE)
+
+# Issue trailers render inline after the commit links; `closes` is also what GitHub acts on.
+ISSUE_TRAILER_REGEXP = re.compile(r"^(refs|closes):\s*(.+)$", re.IGNORECASE)
+
+# Issue trailers hold bare numbers, so one line may carry several of them.
+ISSUE_NUMBER_REGEXP = re.compile(r"#(\d+)")
 
 # Fields are joined by an ASCII unit separator; NUL (via -z) separates whole records.
 FIELD_SEP = "\x1f"
@@ -54,6 +64,9 @@ class CommitInfo:
     date: str
     subject: str
     body: str
+    markers: dict = field(default_factory=dict)
+    refs: list = field(default_factory=list)
+    closes: list = field(default_factory=list)
 
 
 def run_git(args):
@@ -77,6 +90,11 @@ def project_version():
     return version or "0.0.0"
 
 
+def unique(values):
+    """Drop duplicates while keeping the order in which the values were first seen."""
+    return list(dict.fromkeys(values))
+
+
 def parse_commit_message(message):
     """Split a conventional commit subject into type, scope and message; None when it does not match."""
     match = COMMIT_MESSAGE_REGEXP.match(message or "")
@@ -87,6 +105,22 @@ def parse_commit_message(message):
         "scope": match.group(2)[1:-1] if match.group(2) else None,
         "message": match.group(3),
     }
+
+
+def parse_commit_trailers(body):
+    """Collect the `key: value` trailers of a commit body into its marker notes and issue references."""
+    markers = {}
+    issues = {"refs": [], "closes": []}
+    for raw in (body or "").splitlines():
+        line = raw.strip()
+        marker = MARKER_TRAILER_REGEXP.match(line)
+        if marker:
+            markers.setdefault(marker.group(1).lower(), []).append(marker.group(2).strip())
+            continue
+        issue = ISSUE_TRAILER_REGEXP.match(line)
+        if issue:
+            issues[issue.group(1).lower()].extend(ISSUE_NUMBER_REGEXP.findall(issue.group(2)))
+    return markers, unique(issues["refs"]), unique(issues["closes"])
 
 
 def get_repo_info():
@@ -123,6 +157,7 @@ def get_commit_info(start="", end="HEAD"):
         parsed = parse_commit_message(subject)
         if not parsed:
             continue
+        markers, refs, closes = parse_commit_trailers(body)
         commits.append(
             CommitInfo(
                 type=parsed["type"],
@@ -134,6 +169,9 @@ def get_commit_info(start="", end="HEAD"):
                 date=commit_date,
                 subject=subject,
                 body=body.strip(),
+                markers=markers,
+                refs=refs,
+                closes=closes,
             )
         )
     return commits
@@ -171,70 +209,79 @@ def build_header(version, info):
     return f"## {version} ({commit_date or date.today().strftime('%Y-%m-%d')})"
 
 
-def _extract_breaking_changes(body):
-    changes = []
-    for raw in (body or "").splitlines():
-        match = BREAKING_CHANGE_REGEXP.match(raw.strip())
-        if not match:
-            continue
-        target = match.group(1).strip()
-        if target:
-            changes.append(target)
-    return changes
-
-
 def commit_link(commit, repo):
     url = f"https://github.com/{repo['owner']}/{repo['name']}/commit/{commit.hash_full}"
     return f"[{commit.hash_short}]({url})"
 
 
-def build_scope(commits, repo, is_common, breaking):
-    """Render one scope's commits as bullets, merging duplicates and collecting their breaking notes into `breaking`."""
+def issue_link(number, repo):
+    url = f"https://github.com/{repo['owner']}/{repo['name']}/issues/{number}"
+    return f"[#{number}]({url})"
+
+
+def build_issue_suffix(commits, repo):
+    """Render the `refs` and `closes` trailers of one bullet's commits as a trailing clause each."""
+    suffix = ""
+    for name in ("refs", "closes"):
+        numbers = unique(number for commit in commits for number in getattr(commit, name))
+        if numbers:
+            suffix += f", {name} " + " ".join(issue_link(number, repo) for number in numbers)
+    return suffix
+
+
+def build_scope(commits, repo, is_common):
+    """Render one scope's commits as bullets, merging the ones that share a message."""
     indent = "" if is_common else "  "
     grouped = {}
     for commit in commits:
         grouped.setdefault(commit.message, []).append(commit)
-        breaking.extend(_extract_breaking_changes(commit.body))
 
     lines = []
     for message, items in grouped.items():
         links = ", ".join(commit_link(item, repo) for item in items)
-        lines.append(f"{indent}- {message} ({links})")
+        lines.append(f"{indent}- {message} ({links}){build_issue_suffix(items, repo)}")
     return lines
 
 
 def build_type_contents(scopes, repo):
-    """Render every scope of one commit type, with the unscoped ones first and the breaking notes last."""
+    """Render every scope of one commit type, with the unscoped ones first."""
     lines = []
-    breaking = []
 
     common = scopes.pop("common", None)
     if common:
-        lines.extend(build_scope(common, repo, True, breaking))
+        lines.extend(build_scope(common, repo, True))
 
     for scope in sorted(scopes):
         lines.append(f"- `{scope}`")
-        lines.extend(build_scope(scopes[scope], repo, False, breaking))
-
-    if breaking:
-        lines += ["\n", f"### {TYPE_TITLE_MAP['breaking']}", "\n"]
-        lines.extend(f"- {change}" for change in breaking)
+        lines.extend(build_scope(scopes[scope], repo, False))
 
     return lines
 
 
-def build_contents(infos, repo):
-    """Group commits by type and scope, then render each type in display order."""
-    type_map = {}
-    for info in infos:
-        if info.type not in TYPE_ORDER:
+def build_marker_contents(infos, repo):
+    """Render one section per marker trailer, each note carrying a link back to its commit."""
+    lines = []
+    for marker in MARKER_ORDER:
+        notes = [(note, info) for info in infos for note in info.markers.get(marker, [])]
+        if not notes:
             continue
-        if info.scope in EXCLUDED_SCOPES:
+        lines += ["\n", f"### {TYPE_TITLE_MAP[marker]}", "\n"]
+        lines.extend(f"- {note} ({commit_link(info, repo)})" for note, info in notes)
+    return lines
+
+
+def build_contents(infos, repo):
+    """Render the marker sections first, then group the commits by type and scope in display order."""
+    included = [info for info in infos if info.scope not in EXCLUDED_SCOPES]
+
+    type_map = {}
+    for info in included:
+        if info.type not in TYPE_ORDER:
             continue
         scope_map = type_map.setdefault(info.type, {})
         scope_map.setdefault(info.scope or "common", []).append(info)
 
-    lines = []
+    lines = build_marker_contents(included, repo)
     for type_name in TYPE_ORDER:
         scopes = type_map.get(type_name)
         if not scopes:

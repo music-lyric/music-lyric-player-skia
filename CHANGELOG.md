@@ -1,5 +1,56 @@
 # Changelog
 
+## v0.2.0 (2026-07-29)
+
+### Feature
+
+- support generating typescript types for config ([99f9467](https://github.com/music-lyric/music-lyric-player-skia/commit/99f94671cf0a8780986883d8734859bf40c127c2))
+- support leaf level config inheritance ([75db5a2](https://github.com/music-lyric/music-lyric-player-skia/commit/75db5a29b05fc44421c898161fd5d4213a8ef6d3))
+- support nested config inheritance ([9fbecbb](https://github.com/music-lyric/music-lyric-player-skia/commit/9fbecbb4d69e3da46eba080e90c8ad06d57e92ee))
+- `backend`
+  - add web font registry ([556ea97](https://github.com/music-lyric/music-lyric-player-skia/commit/556ea97a39a1a171c804344e6d99a9d87fadccb8))
+  - add webgl surface ([de84572](https://github.com/music-lyric/music-lyric-player-skia/commit/de84572fa4054b8e26ad5f7e914be6d8cfd7f9c9))
+- `platform`
+  - add web bindings ([51ddfdc](https://github.com/music-lyric/music-lyric-player-skia/commit/51ddfdc4c5fe52e7555644f3db2af370c8b67b1d))
+  - add web renderer bindings ([dcad547](https://github.com/music-lyric/music-lyric-player-skia/commit/dcad547c2764615b61de50cd42cf43eb295fdcac))
+- `rendering`
+  - support swapping the font manager ([f065305](https://github.com/music-lyric/music-lyric-player-skia/commit/f06530565b5a913939bab420120789e3ce7c0c41))
+  - add emphasized word glow ([b16268e](https://github.com/music-lyric/music-lyric-player-skia/commit/b16268ec9e33394ecf0c33a92e93b78c189b003b))
+  - add emphasized word float layer ([f413c24](https://github.com/music-lyric/music-lyric-player-skia/commit/f413c240ce58c9fe2d51cfc94ac01ea4766436c8))
+  - animate emphasized words with a scale pulse ([d71396d](https://github.com/music-lyric/music-lyric-player-skia/commit/d71396dbff4166cee8f71a62882d07a6a2434821))
+  - split emphasized words into per-character cells ([aca6fc9](https://github.com/music-lyric/music-lyric-player-skia/commit/aca6fc9ff4d02f698e25419291d1620679746a99))
+  - add emphasized word config ([eb005f6](https://github.com/music-lyric/music-lyric-player-skia/commit/eb005f63b7d6afbe7b4a8a65fa85659feb7cf30f))
+  - support annotation language selection ([30b935c](https://github.com/music-lyric/music-lyric-player-skia/commit/30b935c8ef31192a644642fbd61ecc44fd5fb314))
+  - support rendering line annotations ([6740089](https://github.com/music-lyric/music-lyric-player-skia/commit/6740089ffee414db2f3648cda6b97a7ab075c543))
+  - animate line and word opacity on playback state changes ([8d137a4](https://github.com/music-lyric/music-lyric-player-skia/commit/8d137a4bb03df29a78ac552b52e4011a6149a418))
+
+### Fix
+
+- correct config leaf value access ([2584135](https://github.com/music-lyric/music-lyric-player-skia/commit/2584135347b91bc8104f809641188075e1a5d8da))
+- `rendering`
+  - fallback to a registered font family ([0834f62](https://github.com/music-lyric/music-lyric-player-skia/commit/0834f62fb9223339eef1d82b67e6db3846e59d45))
+  - keep glyph weight stable through the reveal ([c8b4ee2](https://github.com/music-lyric/music-lyric-player-skia/commit/c8b4ee2aaa253c521b0254b7b1630fc4152ff943))
+  - keep resting text on the pixel grid ([6d9a975](https://github.com/music-lyric/music-lyric-player-skia/commit/6d9a975e630b5624f242bb6af5a3e657af832ab4))
+  - avoid collapsing semantic word whitespace ([9e96033](https://github.com/music-lyric/music-lyric-player-skia/commit/9e960335bf0a7d35bee5ea98decda2d97f87d269))
+  - dim plain lines in the played state ([916fd91](https://github.com/music-lyric/music-lyric-player-skia/commit/916fd918a4425610a14ef5e8f7f7735fde894c1a))
+- `utils`
+  - resolve ambiguous config property comparison ([c5d8620](https://github.com/music-lyric/music-lyric-player-skia/commit/c5d8620a2b9dee7e9656b41b8420aabc0f281391))
+  - omit unset leaves during config serialization ([ea73412](https://github.com/music-lyric/music-lyric-player-skia/commit/ea73412d358ac7fce4d22b9c9d9935aba3f5dd96))
+
+### Refactor
+
+- unify generated config types into one struct ([96ee3a5](https://github.com/music-lyric/music-lyric-player-skia/commit/96ee3a5143b71c8674bfa59c27cd01868f2b8fec))
+- `backend`
+  - share gpu context across surfaces ([6a28cda](https://github.com/music-lyric/music-lyric-player-skia/commit/6a28cda21ff474867a48919fd9b0c3f9957e7280))
+- `platform`
+  - move bindings ([2aaf07f](https://github.com/music-lyric/music-lyric-player-skia/commit/2aaf07fb0bda5c824056ee89a59cbfa3e077ce00))
+- `rendering`
+  - extract shared inline word flow ([65f2f82](https://github.com/music-lyric/music-lyric-player-skia/commit/65f2f82449ebb0beae0debddfab6ff7a28dff7cc))
+  - extract shared paragraph layout ([c45540c](https://github.com/music-lyric/music-lyric-player-skia/commit/c45540c1b135fbfb9378c8f85ad3b6d293d3019f))
+  - extract shared text fragment group ([4d9df2a](https://github.com/music-lyric/music-lyric-player-skia/commit/4d9df2a39fc3d92897c767d6c570e5b9d0c4bd65))
+  - extract shared text shaping result ([cf8cbb1](https://github.com/music-lyric/music-lyric-player-skia/commit/cf8cbb134724678bb4e1020e8dd29c808a2057f5))
+  - extract shared text shaping ([c5ca727](https://github.com/music-lyric/music-lyric-player-skia/commit/c5ca727d8c327971a96cec7ef1415ff1e34739f8))
+
 ## v0.1.0 (2026-07-23)
 
 ### Feature
@@ -12,8 +63,6 @@
   - embed icu data ([c956a7f](https://github.com/music-lyric/music-lyric-player-skia/commit/c956a7f09cece6f99098631358d1d89f66fc1ebb))
   - add font manager provider ([c31fc11](https://github.com/music-lyric/music-lyric-player-skia/commit/c31fc11f2f28b6e1a109475699c646f373878467))
   - add gpu surface ([4c621e9](https://github.com/music-lyric/music-lyric-player-skia/commit/4c621e9ca354d4873a8ede4391de131aff326f74))
-- `example`
-  - support load lyric ([8f42043](https://github.com/music-lyric/music-lyric-player-skia/commit/8f420431568cf1fcbc8975fa8d0c47e6e3231c3e))
 - `platform`
   - expose config update on native abi facade ([6204e46](https://github.com/music-lyric/music-lyric-player-skia/commit/6204e4621943c5cfa8d687500605b4e862af9f4a))
   - add config update to native abi ([7a071ec](https://github.com/music-lyric/music-lyric-player-skia/commit/7a071ec633f818f8d66250c689178b165d5e99e8))
@@ -62,8 +111,6 @@
 - extract common config ([982d974](https://github.com/music-lyric/music-lyric-player-skia/commit/982d97455f32544a9bcd201fe90347b57fd5f988))
 - unify member access convention ([1958af6](https://github.com/music-lyric/music-lyric-player-skia/commit/1958af6e72ab47de6af1186083af10013b40dd3b))
 - rename directory ([c58ee3c](https://github.com/music-lyric/music-lyric-player-skia/commit/c58ee3caa8679f5d6e29d8065679bfb35053cd7b))
-- `example`
-  - render through backend surface ([8da8708](https://github.com/music-lyric/music-lyric-player-skia/commit/8da8708323465dd5d84a65d4eb8ec69cfb455f52))
 - `playback`
   - restructure config namespace ([79f7947](https://github.com/music-lyric/music-lyric-player-skia/commit/79f7947dbae33ef47ac532c45db5d4f518482456))
   - rename directory ([dc5eb13](https://github.com/music-lyric/music-lyric-player-skia/commit/dc5eb1310037472941cffc9fe33e36ae99dc363f))

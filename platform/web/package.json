@@ -1,6 +1,6 @@
 {
   "name": "music-lyric-player-skia",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Skia lyric player for the web.",
   "license": "MIT",
   "author": "folltoshe",

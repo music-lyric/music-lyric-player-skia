@@ -19,6 +19,9 @@ CURRENT_CHANGE_LOG_FILE = "CURRENT_CHANGELOG.md"
 # Types rendered in the change log, in display order.
 TYPE_ORDER = ["feat", "fix", "perf", "refactor", "revert", "docs"]
 
+# Scopes dropped from the change log; their commits do not ship in any released artifact.
+EXCLUDED_SCOPES = {"example"}
+
 TYPE_TITLE_MAP = {
     "feat": "Feature",
     "fix": "Fix",
@@ -225,6 +228,8 @@ def build_contents(infos, repo):
     type_map = {}
     for info in infos:
         if info.type not in TYPE_ORDER:
+            continue
+        if info.scope in EXCLUDED_SCOPES:
             continue
         scope_map = type_map.setdefault(info.type, {})
         scope_map.setdefault(info.scope or "common", []).append(info)

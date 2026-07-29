@@ -166,6 +166,25 @@ def validate_structure(schema):
     if "defaultInstance" in schema and not isinstance(schema["defaultInstance"], bool):
         raise SchemaError("'defaultInstance' must be a boolean (emit the `Root` Default instance for this schema)")
 
+    typescript = schema.get("typescript", {})
+    if not isinstance(typescript, dict):
+        raise SchemaError("'typescript' must be an object with 'enable', 'out' and 'root'")
+    if typescript:
+        unknown = set(typescript) - {"enable", "out", "root"}
+        if unknown:
+            raise SchemaError(f"'typescript' has unknown keys {sorted(unknown)}")
+        if not isinstance(typescript.get("enable"), bool):
+            raise SchemaError("'typescript.enable' must be a boolean (whether to emit TypeScript at all)")
+        if typescript["enable"]:
+            out = typescript.get("out")
+            if not isinstance(out, str) or not out:
+                raise SchemaError("'typescript.out' must be a non-empty string (the declaration file to emit)")
+            if "/" in out or "\\" in out:
+                raise SchemaError("'typescript.out' must be a bare file name; the directory it lands in is fixed")
+            root = typescript.get("root")
+            if not isinstance(root, str) or not root.isidentifier():
+                raise SchemaError("'typescript.root' must be an identifier (the name of the root interface)")
+
     imports = schema.get("imports", [])
     if not isinstance(imports, list):
         raise SchemaError("'imports' must be an array")

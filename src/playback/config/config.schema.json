@@ -3,6 +3,11 @@
   "file": "config.gen.h",
   "inline": true,
   "defaultInstance": true,
+  "typescript": {
+    "enable": true,
+    "out": "playback.gen.d.ts",
+    "root": "PlaybackConfig"
+  },
   "items": [
     {
       "name": "OffsetConfig",

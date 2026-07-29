@@ -2,6 +2,11 @@
   "namespace": "music_lyric_player::rendering::config",
   "file": "config.gen.h",
   "defaultInstance": true,
+  "typescript": {
+    "enable": true,
+    "out": "rendering.gen.d.ts",
+    "root": "RenderingConfig"
+  },
   "root": {
     "comment": "Renderer configuration.",
     "modules": [

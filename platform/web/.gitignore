@@ -1,7 +1,5 @@
 # Build.
-bin/
-types/
+dist/
 
-# Cache.
+# Modules.
 node_modules/
-*.tgz

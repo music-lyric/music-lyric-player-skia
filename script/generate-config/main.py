@@ -1,7 +1,7 @@
 """
 Generate C++ config headers from JSON schema.
 
-Reads each `*.schema.json` (all of them under the project when no path is given) and writes its `file` header alongside: one config struct per node plus a Glaze enum-name meta header for `defaultInstance` roots.
+Reads each `*.schema.json` (all of them under the project when no path is given) and writes its `file` header alongside: one config struct per node, plus a Glaze enum-name meta header for `defaultInstance` roots and the TypeScript declarations a `typescript` block asks for.
 The schema shape is documented in the `*.schema.json` files themselves.
 
 Usage: `python script/generate-config/main.py [<schema.json> ...]`.
@@ -15,6 +15,7 @@ from model import SKIP_DIRS, SchemaError
 from schema import load_module
 from emit import render
 from glaze import glaze_file_name, render_glaze
+from typescript import OUT_DIR as TYPESCRIPT_OUT_DIR, render_typescript
 
 
 def scan_schemas(root):
@@ -48,6 +49,15 @@ def generate_one(schema_path):
             glaze_path = schema_path.parent / glaze_file_name(module.file)
             glaze_path.write_text(glaze, encoding="utf-8")
             print(f"generated {glaze_path} from {schema_path}")
+
+    # A schema opts into TypeScript through its `typescript` block, which lands in the web package rather than beside the schema.
+    if module.typescript.enable:
+        typescript = render_typescript(module, schema_path.name)
+        if typescript is not None:
+            typescript_path = TYPESCRIPT_OUT_DIR / module.typescript.out
+            typescript_path.parent.mkdir(parents=True, exist_ok=True)
+            typescript_path.write_text(typescript, encoding="utf-8")
+            print(f"generated {typescript_path} from {schema_path}")
     return 0
 
 

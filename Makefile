@@ -1,4 +1,4 @@
-.PHONY: format config-generate clean third-party-build third-party-web-build third-party-lyric-build third-party-skia-build third-party-glaze-build web-build example-windows-build package-windows change-log-build release
+.PHONY: format config-generate clean third-party-build third-party-web-build third-party-lyric-build third-party-skia-build third-party-glaze-build web-build example-windows-build package-windows package-web change-log-build release
 
 # Format Code.
 format:
@@ -53,4 +53,8 @@ example-windows-build:
 # Build and package the Windows native distribution zip.
 package-windows:
 	cmake -P cmake/package/windows.cmake
+
+# Build and package the Web wasm distribution zip.
+package-web:
+	cmake -P cmake/package/web.cmake
 

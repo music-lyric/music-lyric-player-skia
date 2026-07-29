@@ -5,6 +5,7 @@ Usage: release.py [major | minor | patch | --version X.Y.Z] [--dry-run]
 """
 
 import argparse
+import json
 import re
 import subprocess
 import sys
@@ -12,10 +13,20 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 VERSION_FILE = REPO_ROOT / "VERSION.txt"
+CHANGE_LOG_FILE = REPO_ROOT / "CHANGELOG.md"
+WEB_PACKAGE_FILE = REPO_ROOT / "platform" / "web" / "package.json"
 CHANGE_LOG_BUILDER = REPO_ROOT / "script" / "change-log" / "build.py"
 
 VERSION_REGEXP = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 PARTS = ("major", "minor", "patch")
+
+# Files the release rewrites, listed for the dry run and staged together in the release commit.
+RELEASE_FILES = (VERSION_FILE, CHANGE_LOG_FILE, WEB_PACKAGE_FILE)
+
+
+def repo_path(path):
+    """Render a release file as a repo relative posix path, which is what git takes and the dry run prints."""
+    return path.relative_to(REPO_ROOT).as_posix()
 
 
 def run_git(args, capture=True):
@@ -104,6 +115,22 @@ def write_version(version):
     VERSION_FILE.write_text(f"{version}\n", encoding="utf-8", newline="\n")
 
 
+def write_web_package_version(version):
+    """
+    Rewrite the version field of the web npm manifest so the published package tracks VERSION.txt.
+    Parsing as JSON both validates the manifest and keeps the release from tagging a package npm would reject.
+    """
+    if not WEB_PACKAGE_FILE.exists():
+        raise SystemExit(f"{repo_path(WEB_PACKAGE_FILE)} not found.")
+    try:
+        manifest = json.loads(WEB_PACKAGE_FILE.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise SystemExit(f"invalid JSON in {repo_path(WEB_PACKAGE_FILE)}: {error}")
+    manifest["version"] = version
+    serialized = json.dumps(manifest, indent=2, ensure_ascii=False)
+    WEB_PACKAGE_FILE.write_text(f"{serialized}\n", encoding="utf-8", newline="\n")
+
+
 def build_change_log():
     subprocess.run([sys.executable, str(CHANGE_LOG_BUILDER)], cwd=REPO_ROOT, check=True)
 
@@ -134,7 +161,7 @@ def main():
         print(f"[dry-run] version : {current} -> {target}")
         print(f"[dry-run] commit  : release: {tag}")
         print(f"[dry-run] tag     : {tag} (annotated, not pushed)")
-        print("[dry-run] files   : VERSION.txt, CHANGELOG.md")
+        print(f"[dry-run] files   : {', '.join(repo_path(file) for file in RELEASE_FILES)}")
         return
 
     if interactive and not confirm(f"release {tag}?"):
@@ -144,9 +171,10 @@ def main():
     ensure_tag_absent(tag)
 
     write_version(target)
+    write_web_package_version(target)
     build_change_log()
 
-    run_git(["add", "VERSION.txt", "CHANGELOG.md"], capture=False)
+    run_git(["add", *(repo_path(file) for file in RELEASE_FILES)], capture=False)
     run_git(["commit", "-m", f"release: {tag}"], capture=False)
     run_git(["tag", "-a", tag, "-m", f"release {tag}"], capture=False)
 

@@ -27,6 +27,9 @@ if(EMSCRIPTEN)
 		-sMAX_WEBGL_VERSION=2
 		-sEXIT_RUNTIME=0
 		-sSTACK_SIZE=1048576
+		# Emits the TypeScript definitions of the embind surface next to the module, which is what the npm package ships as its types.
+		# The flag and its file name travel together through SHELL: so option de-duplication cannot split the pair.
+		"SHELL:--emit-tsd music_lyric_player.d.ts"
 		"$<$<CONFIG:Release>:-O3;-sASSERTIONS=0>")
 
 	# Every dependency stays PRIVATE, exactly as on native, so only the embind surface is reachable from JS.

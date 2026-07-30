@@ -1,4 +1,4 @@
-.PHONY: format config-generate clean third-party-build example-windows-build example-web-dev package-windows package-web change-log-build release
+.PHONY: format config-generate clean third-party-build windows-build web-build android-build example-windows-build example-web-dev package-windows package-web change-log-build release
 
 # Format Code.
 format:
@@ -23,6 +23,18 @@ change-log-build:
 # Build third-party libraries.
 third-party-build:
 	cmake -DTHIRD_PARTY_LIBRARY=$(THIRD_PARTY_LIBRARY) -DTHIRD_PARTY_PLATFORM=$(THIRD_PARTY_PLATFORM) -DTHIRD_PARTY_ARCH=$(THIRD_PARTY_ARCH) $(THIRD_PARTY_ARGS) -P cmake/third-party/build.cmake
+
+# Build the Windows module.
+windows-build:
+	cmake $(BUILD_ARGS) -P cmake/build/windows.cmake
+
+# Build the Web module.
+web-build:
+	cmake $(BUILD_ARGS) -P cmake/build/web.cmake
+
+# Build the Android module (override the ABI with ANDROID_ABI=x86_64).
+android-build:
+	cmake -DANDROID_ABI=$(ANDROID_ABI) $(BUILD_ARGS) -P cmake/build/android.cmake
 
 # Build the Windows example.
 example-windows-build:

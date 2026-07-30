@@ -53,28 +53,11 @@ message(STATUS "[Package] Target : ${_triple}")
 message(STATUS "[Package] Build  : ${_build_dir}")
 message(STATUS "[Package] Output : ${_zip}")
 
-# The library no longer has a preset, so the build tree the former default preset described is spelled out here.
-set(_cache_dir "${_repo_root}/out/app/cache/windows")
-
 # Build the shared library the same way the project does, unless it is already built.
+# The build script owns how the module is configured, so packaging and `make windows-build` cannot drift apart.
 if(NOT PACKAGE_SKIP_BUILD)
-	message(STATUS "[Package] Configuring...")
-	execute_process(
-		COMMAND "${CMAKE_COMMAND}" -S "${_repo_root}" -B "${_cache_dir}" -G "Ninja Multi-Config"
-		WORKING_DIRECTORY "${_repo_root}"
-		RESULT_VARIABLE _configure_rc)
-	if(NOT _configure_rc EQUAL 0)
-		message(FATAL_ERROR "[Package] Configure failed (rc=${_configure_rc})")
-	endif()
-
-	message(STATUS "[Package] Building music_lyric_player_native...")
-	execute_process(
-		COMMAND "${CMAKE_COMMAND}" --build "${_cache_dir}" --config "${PACKAGE_CONFIG}" --target music_lyric_player_native
-		WORKING_DIRECTORY "${_repo_root}"
-		RESULT_VARIABLE _build_rc)
-	if(NOT _build_rc EQUAL 0)
-		message(FATAL_ERROR "[Package] Build failed (rc=${_build_rc})")
-	endif()
+	set(BUILD_CONFIG "${PACKAGE_CONFIG}")
+	include("${CMAKE_CURRENT_LIST_DIR}/../build/windows.cmake")
 endif()
 
 # Both the DLL and its import library must exist before staging; ICU is embedded, so no icudtl.dat ships.

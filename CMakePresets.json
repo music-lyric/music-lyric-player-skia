@@ -7,53 +7,10 @@
   },
   "configurePresets": [
     {
-      "name": "default",
-      "displayName": "Default",
-      "generator": "Ninja Multi-Config",
-      "binaryDir": "${sourceDir}/out/app/cache/windows"
-    },
-    {
-      "name": "web",
-      "displayName": "Web",
-      "description": "Web Module With Emscripten",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/out/app/cache/web",
-      "toolchainFile": "${sourceDir}/cmake/tools/emscripten.cmake",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    },
-    {
-      "name": "android",
-      "hidden": true,
-      "description": "Shared Android settings; the per-ABI presets below pick the ABI and the build tree",
-      "generator": "Ninja",
-      "toolchainFile": "${sourceDir}/cmake/tools/android.cmake",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "ANDROID_PLATFORM": "android-21",
-        "ANDROID_STL": "c++_static",
-        "ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES": {
-          "type": "BOOL",
-          "value": "ON"
-        }
-      }
-    },
-    {
-      "name": "android-arm64-v8a",
-      "displayName": "Android arm64-v8a",
-      "description": "Android Module With The NDK",
-      "inherits": "android",
-      "binaryDir": "${sourceDir}/out/app/cache/android/arm64-v8a",
-      "cacheVariables": {
-        "ANDROID_ABI": "arm64-v8a"
-      }
-    },
-    {
       "name": "windows-example",
       "displayName": "Windows Example",
       "description": "Windows Example With Vulkan",
-      "inherits": "default",
+      "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/out/example/cache",
       "condition": {
         "type": "equals",
@@ -66,29 +23,6 @@
           "value": "ON"
         }
       }
-    }
-  ],
-  "buildPresets": [
-    {
-      "name": "release",
-      "configurePreset": "default",
-      "configuration": "Release"
-    },
-    {
-      "name": "web-release",
-      "displayName": "Web Release",
-      "configurePreset": "web"
-    },
-    {
-      "name": "android-arm64-v8a-release",
-      "displayName": "Android arm64-v8a Release",
-      "configurePreset": "android-arm64-v8a"
-    },
-    {
-      "name": "windows-example-release",
-      "displayName": "Windows Example Release",
-      "configurePreset": "windows-example",
-      "configuration": "Release"
     }
   ]
 }

@@ -1,4 +1,4 @@
-.PHONY: format config-generate clean third-party-build third-party-web-build third-party-android-build third-party-lyric-build third-party-skia-build third-party-glaze-build web-build android-build example-windows-build example-web-dev package-windows package-web change-log-build release
+.PHONY: format config-generate clean third-party-build example-windows-build example-web-dev package-windows package-web change-log-build release
 
 # Format Code.
 format:
@@ -20,45 +20,14 @@ config-generate:
 change-log-build:
 	python script/change-log/build.py $(CHANGE_LOG_ARGS)
 
-# Build All Third-Party Libraries.
+# Build third-party libraries.
 third-party-build:
-	cmake $(THIRD_PARTY_ARGS) -P cmake/third-party/build.cmake
-
-# Build All Third-Party Libraries For Web (wasm32).
-third-party-web-build:
-	cmake -DSKIA_BUILD_PLATFORM=web -DLYRIC_BUILD_PLATFORM=web $(THIRD_PARTY_ARGS) -P cmake/third-party/build.cmake
-
-# Build All Third-Party Libraries For Android (override the ABI with ABI=x86_64).
-ABI ?= arm64-v8a
-third-party-android-build:
-	cmake -DSKIA_BUILD_PLATFORM=android -DLYRIC_BUILD_PLATFORM=android -DSKIA_BUILD_ARCH=$(ABI) -DLYRIC_BUILD_ARCH=$(ABI) $(THIRD_PARTY_ARGS) -P cmake/third-party/build.cmake
-
-# Build Lyric.
-third-party-lyric-build:
-	cmake $(LYRIC_ARGS) -P cmake/third-party/lyric/build.cmake
-
-# Build Skia.
-third-party-skia-build:
-	cmake $(SKIA_ARGS) -P cmake/third-party/skia/build.cmake
-
-# Build Glaze (header-only; verifies the submodule).
-third-party-glaze-build:
-	cmake $(GLAZE_ARGS) -P cmake/third-party/glaze/build.cmake
-
-# Build the web module.
-web-build:
-	cmake --preset web
-	cmake --build --preset web-release
-
-# Build the android module (override the ABI with ABI=x86_64).
-android-build:
-	cmake --preset android-$(ABI)
-	cmake --build --preset android-$(ABI)-release
+	cmake -DTHIRD_PARTY_LIBRARY=$(THIRD_PARTY_LIBRARY) -DTHIRD_PARTY_PLATFORM=$(THIRD_PARTY_PLATFORM) -DTHIRD_PARTY_ARCH=$(THIRD_PARTY_ARCH) $(THIRD_PARTY_ARGS) -P cmake/third-party/build.cmake
 
 # Build the Windows example.
 example-windows-build:
 	cmake --preset windows-example
-	cmake --build --preset windows-example-release
+	cmake --build out/example/cache --config Release
 
 # Serve the web example with hot reload.
 example-web-dev:

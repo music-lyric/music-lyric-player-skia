@@ -53,11 +53,14 @@ message(STATUS "[Package] Target : ${_triple}")
 message(STATUS "[Package] Build  : ${_build_dir}")
 message(STATUS "[Package] Output : ${_zip}")
 
-# Build the shared library through the same presets the project uses, unless it is already built.
+# The library no longer has a preset, so the build tree the former default preset described is spelled out here.
+set(_cache_dir "${_repo_root}/out/app/cache/windows")
+
+# Build the shared library the same way the project does, unless it is already built.
 if(NOT PACKAGE_SKIP_BUILD)
 	message(STATUS "[Package] Configuring...")
 	execute_process(
-		COMMAND "${CMAKE_COMMAND}" --preset default
+		COMMAND "${CMAKE_COMMAND}" -S "${_repo_root}" -B "${_cache_dir}" -G "Ninja Multi-Config"
 		WORKING_DIRECTORY "${_repo_root}"
 		RESULT_VARIABLE _configure_rc)
 	if(NOT _configure_rc EQUAL 0)
@@ -66,7 +69,7 @@ if(NOT PACKAGE_SKIP_BUILD)
 
 	message(STATUS "[Package] Building music_lyric_player_native...")
 	execute_process(
-		COMMAND "${CMAKE_COMMAND}" --build --preset release --target music_lyric_player_native
+		COMMAND "${CMAKE_COMMAND}" --build "${_cache_dir}" --config "${PACKAGE_CONFIG}" --target music_lyric_player_native
 		WORKING_DIRECTORY "${_repo_root}"
 		RESULT_VARIABLE _build_rc)
 	if(NOT _build_rc EQUAL 0)

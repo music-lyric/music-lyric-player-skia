@@ -39,6 +39,37 @@ if(EMSCRIPTEN)
 		music_lyric_player::playback
 		music_lyric::model
 		glaze::glaze)
+elseif(ANDROID)
+	add_library(music_lyric_player_jni SHARED
+		android/src/main/cpp/jni.cpp
+	)
+	add_library(music_lyric_player::jni ALIAS music_lyric_player_jni)
+
+	target_compile_features(music_lyric_player_jni PUBLIC cxx_std_20)
+
+	target_compile_definitions(music_lyric_player_jni PRIVATE
+		MUSIC_LYRIC_PLAYER_VERSION="${MUSIC_LYRIC_PLAYER_VERSION}")
+
+	set_target_properties(music_lyric_player_jni PROPERTIES
+		OUTPUT_NAME music_lyric_player
+		C_VISIBILITY_PRESET hidden
+		CXX_VISIBILITY_PRESET hidden
+		VISIBILITY_INLINES_HIDDEN ON
+		LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/out/app/build/${SKIA_PLATFORM}-${SKIA_ARCH}-$<LOWER_CASE:$<CONFIG>>")
+
+	# The aar ships into arbitrary apps, so nothing beyond the JNI entry points may stay visible.
+	# --exclude-libs localises what the static archives bring in, and the version script whitelists the rest, so a host app linking its own Skia cannot collide.
+	# The NDK toolchain already passes -ffunction-sections, -fdata-sections and --gc-sections.
+	target_link_options(music_lyric_player_jni PRIVATE
+		-Wl,--exclude-libs,ALL
+		"-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/android/exports.map")
+
+	target_link_libraries(music_lyric_player_jni PRIVATE
+		music_lyric_player::backend
+		music_lyric_player::rendering
+		music_lyric_player::playback
+		music_lyric::model
+		glaze::glaze)
 else()
 	add_library(music_lyric_player_native SHARED
 		native/abi.cpp

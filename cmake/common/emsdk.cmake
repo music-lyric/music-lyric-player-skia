@@ -23,12 +23,7 @@ function(emsdk_require_compiler dir)
 	endif()
 
 	if(NOT EXISTS "${_compiler}")
-		message(FATAL_ERROR
-			"[Emsdk] Compiler not found: ${_compiler}\n"
-			"        Bootstrap the pinned emsdk once:\n"
-			"          python third-party/skia/tools/git-sync-deps\n"
-			"          python third-party/skia/bin/activate-emsdk\n"
-			"        Or set EMSDK to an install matching the version in third-party/skia/bin/activate-emsdk")
+		message(FATAL_ERROR "[Emsdk] Compiler not found: ${_compiler}")
 	endif()
 endfunction()
 

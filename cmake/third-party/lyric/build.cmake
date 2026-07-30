@@ -4,6 +4,7 @@ if(NOT CMAKE_SCRIPT_MODE_FILE)
 	message(FATAL_ERROR "[Lyric] Must be run in script mode")
 endif()
 
+include("${CMAKE_CURRENT_LIST_DIR}/../../common/android.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/../../common/emsdk.cmake")
 
 if(NOT DEFINED LYRIC_BUILD_CONFIG)
@@ -104,11 +105,11 @@ if(NOT DEFINED LYRIC_TOOLCHAIN_FILE AND DEFINED CMAKE_TOOLCHAIN_FILE)
 endif()
 
 if(_platform STREQUAL "android" AND NOT DEFINED LYRIC_TOOLCHAIN_FILE)
-	if(DEFINED ENV{ANDROID_NDK_ROOT} AND NOT "$ENV{ANDROID_NDK_ROOT}" STREQUAL "")
-		set(LYRIC_TOOLCHAIN_FILE "$ENV{ANDROID_NDK_ROOT}/build/cmake/android.toolchain.cmake")
-	elseif(DEFINED ENV{ANDROID_NDK_HOME} AND NOT "$ENV{ANDROID_NDK_HOME}" STREQUAL "")
-		set(LYRIC_TOOLCHAIN_FILE "$ENV{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake")
-	endif()
+	# Share the NDK Skia was built with; a version split there breaks the libc++ ABI they link against.
+	android_resolve_ndk("" _ndk_dir)
+	android_require_ndk("${_ndk_dir}")
+	android_resolve_toolchain("${_ndk_dir}" LYRIC_TOOLCHAIN_FILE)
+	message(STATUS "[Lyric] Ndk      : ${_ndk_dir}")
 elseif(_platform STREQUAL "web" AND NOT DEFINED LYRIC_TOOLCHAIN_FILE)
 	# Share the emsdk Skia was built with; a version split there breaks the libc++ ABI they link against.
 	emsdk_resolve("" _emsdk_dir)

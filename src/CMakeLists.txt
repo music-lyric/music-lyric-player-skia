@@ -43,13 +43,19 @@ target_link_libraries(music_lyric_player_rendering PUBLIC
 	skia::skia)
 
 # The backend is the only layer that differs per platform.
-# Windows draws through Vulkan and resolves families from DirectWrite, while the web draws through WebGL and has no system font stack to resolve from at all.
+# Windows draws through Vulkan and resolves families from DirectWrite, Android draws through EGL, and the web draws through WebGL with no system font stack at all.
 if(EMSCRIPTEN)
 	set(_backend_sources
 		backend/gpu/webgl.cpp
 		backend/font/font_web.cpp
 		backend/font/registry.cpp
 	)
+	set(_backend_libraries "")
+elseif(ANDROID)
+	set(_backend_sources
+		backend/font/registry.cpp
+	)
+	set(_backend_libraries "")
 else()
 	find_package(Vulkan REQUIRED)
 
@@ -58,6 +64,7 @@ else()
 		backend/font/font_win.cpp
 		backend/font/registry.cpp
 	)
+	set(_backend_libraries Vulkan::Vulkan)
 endif()
 
 add_library(music_lyric_player_backend ${_backend_sources})
@@ -68,12 +75,8 @@ target_compile_features(music_lyric_player_backend PUBLIC cxx_std_20)
 target_include_directories(music_lyric_player_backend PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
 target_link_libraries(music_lyric_player_backend PUBLIC
-	skia::skia)
-
-if(NOT EMSCRIPTEN)
-	target_link_libraries(music_lyric_player_backend PUBLIC
-		Vulkan::Vulkan)
-endif()
+	skia::skia
+	${_backend_libraries})
 
 # Embed ICU data on Windows, where Skia leaves SkLoadICU() for the embedder to supply.
 # Other platforms assemble ICU in through Skia itself, so this path is Windows-only.

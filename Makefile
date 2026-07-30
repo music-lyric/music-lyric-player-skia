@@ -1,4 +1,4 @@
-.PHONY: format config-generate clean third-party-build third-party-web-build third-party-lyric-build third-party-skia-build third-party-glaze-build web-build example-windows-build example-web-dev package-windows package-web change-log-build release
+.PHONY: format config-generate clean third-party-build third-party-web-build third-party-android-build third-party-lyric-build third-party-skia-build third-party-glaze-build web-build android-build example-windows-build example-web-dev package-windows package-web change-log-build release
 
 # Format Code.
 format:
@@ -28,6 +28,11 @@ third-party-build:
 third-party-web-build:
 	cmake -DSKIA_BUILD_PLATFORM=web -DLYRIC_BUILD_PLATFORM=web $(THIRD_PARTY_ARGS) -P cmake/third-party/build.cmake
 
+# Build All Third-Party Libraries For Android (override the ABI with ABI=x86_64).
+ABI ?= arm64-v8a
+third-party-android-build:
+	cmake -DSKIA_BUILD_PLATFORM=android -DLYRIC_BUILD_PLATFORM=android -DSKIA_BUILD_ARCH=$(ABI) -DLYRIC_BUILD_ARCH=$(ABI) $(THIRD_PARTY_ARGS) -P cmake/third-party/build.cmake
+
 # Build Lyric.
 third-party-lyric-build:
 	cmake $(LYRIC_ARGS) -P cmake/third-party/lyric/build.cmake
@@ -44,6 +49,11 @@ third-party-glaze-build:
 web-build:
 	cmake --preset web
 	cmake --build --preset web-release
+
+# Build the android module (override the ABI with ABI=x86_64).
+android-build:
+	cmake --preset android-$(ABI)
+	cmake --build --preset android-$(ABI)-release
 
 # Build the Windows example.
 example-windows-build:

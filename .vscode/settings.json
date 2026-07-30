@@ -1,3 +1,10 @@
 {
-	"git.detectSubmodules": false
+	"git.detectSubmodules": false,
+	"git.ignoreSubmodules": true,
+	"search.exclude": {
+		"**/third-party": true
+	},
+	"files.watcherExclude": {
+		"**/third-party/**": true
+	}
 }

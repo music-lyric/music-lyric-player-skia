@@ -48,6 +48,7 @@ if(EMSCRIPTEN)
 	set(_backend_sources
 		backend/gpu/webgl.cpp
 		backend/font/font_web.cpp
+		backend/font/registry.cpp
 	)
 else()
 	find_package(Vulkan REQUIRED)
@@ -55,6 +56,7 @@ else()
 	set(_backend_sources
 		backend/gpu/vulkan.cpp
 		backend/font/font_win.cpp
+		backend/font/registry.cpp
 	)
 endif()
 

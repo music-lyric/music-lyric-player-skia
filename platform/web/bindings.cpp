@@ -11,7 +11,6 @@
 #include <emscripten/val.h>
 
 #include "backend/font/font.h"
-#include "backend/font/registry.h"
 #include "backend/gpu/webgl/webgl.h"
 #include "clock.h"
 #include "include/core/SkCanvas.h"

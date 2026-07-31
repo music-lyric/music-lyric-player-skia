@@ -1,10 +1,13 @@
-#include "backend/font/registry.h"
+#include "backend/font/font.h"
 
-#include <cstddef>
 #include <utility>
 #include <vector>
 
+#include "backend/font/composite.h"
+#include "backend/font/platform.h"
 #include "include/core/SkData.h"
+#include "include/core/SkFontMgr.h"
+#include "include/core/SkSpan.h"
 
 namespace music_lyric_player::backend::font {
 	namespace {
@@ -14,14 +17,6 @@ namespace music_lyric_player::backend::font {
 		std::vector<sk_sp<SkData>>& registry() {
 			static std::vector<sk_sp<SkData>> entries;
 			return entries;
-		}
-
-		/**
-		 * Counts changes to the registry, so a stale font manager can be spotted without comparing contents.
-		 */
-		std::size_t& generation() {
-			static std::size_t count = 0;
-			return count;
 		}
 	} // namespace
 
@@ -39,15 +34,15 @@ namespace music_lyric_player::backend::font {
 		}
 
 		registry().push_back(std::move(data));
-		++generation();
 		return true;
 	}
 
-	std::size_t fontGeneration() {
-		return generation();
-	}
+	sk_sp<SkFontMgr> createFontMgr() {
+		// Every registered file goes into a single layer rather than one layer each, because a lookup stops at the first layer carrying the family name.
+		// Split across layers, a family's bold would sit below its regular and never be reached.
+		sk_sp<SkFontMgr> registered = registry().empty() ? nullptr : createDataFontMgr(SkSpan<sk_sp<SkData>>(registry()));
 
-	SkSpan<sk_sp<SkData>> registeredFonts() {
-		return SkSpan<sk_sp<SkData>>(registry());
+		// The registered layer sits on top, so a font the host supplied shadows the system family of that name while everything it does not carry still resolves.
+		return createCompositeFontMgr({std::move(registered), createSystemFontMgr()});
 	}
 } // namespace music_lyric_player::backend::font

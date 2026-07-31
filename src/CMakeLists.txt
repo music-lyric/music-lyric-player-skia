@@ -43,12 +43,13 @@ target_link_libraries(music_lyric_player_rendering PUBLIC
 	skia::skia)
 
 # The backend is the only layer that differs per platform.
-# Windows draws through Vulkan and resolves families from DirectWrite, Android draws through EGL, and the web draws through WebGL with no system font stack at all.
+# Windows draws through Vulkan and resolves families from DirectWrite, Android draws through Vulkan or GLES and reads the system font stack through the NDK, and the web draws through WebGL with no system font stack at all.
 if(EMSCRIPTEN)
 	set(_backend_sources
 		backend/gpu/webgl/webgl.cpp
-		backend/font/font_web.cpp
-		backend/font/registry.cpp
+		backend/font/font.cpp
+		backend/font/composite.cpp
+		backend/font/platform_web.cpp
 	)
 	set(_backend_libraries "")
 elseif(ANDROID)
@@ -56,9 +57,9 @@ elseif(ANDROID)
 		backend/gpu/vulkan/vulkan.cpp
 		backend/gpu/vulkan/platform_android.cpp
 		backend/gpu/gles/gles.cpp
-		backend/font/font_android.cpp
+		backend/font/font.cpp
 		backend/font/composite.cpp
-		backend/font/registry.cpp
+		backend/font/platform_android.cpp
 	)
 	# libvulkan reached the platform in Android 7.0, so this is what pins the module to android-24.
 	# EGL stands the GLES context up, and GLESv2 resolves the entry points Skia calls straight rather than through the interface it loads at runtime.
@@ -70,8 +71,9 @@ else()
 	set(_backend_sources
 		backend/gpu/vulkan/vulkan.cpp
 		backend/gpu/vulkan/platform_windows.cpp
-		backend/font/font_win.cpp
-		backend/font/registry.cpp
+		backend/font/font.cpp
+		backend/font/composite.cpp
+		backend/font/platform_windows.cpp
 	)
 	set(_backend_libraries Vulkan::Vulkan)
 endif()

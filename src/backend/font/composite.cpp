@@ -1,7 +1,9 @@
 #include "backend/font/composite.h"
 
+#include <cstddef>
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "include/core/SkData.h"
 #include "include/core/SkFontArguments.h"
@@ -14,135 +16,177 @@
 namespace music_lyric_player::backend::font {
 	namespace {
 		/**
-		 * A font manager laying one manager over another, answering from the overlay and falling through to the base.
-		 * Only the public entry points of the two are reachable from here, since each manager's `on*` overrides are protected to its own type; that costs nothing, as every public one is a thin forward to its override.
+		 * A font manager stacking several others, answering from the topmost layer that can and falling through to the next.
+		 * Only the public entry points of the layers are reachable from here, since each manager's `on*` overrides are protected to its own type.
+		 * That costs nothing, as every public one is a thin forward to its override.
 		 */
 		class CompositeFontMgr : public SkFontMgr {
 		public:
 			/**
-			 * Composes `overlay` over `base`, holding a reference to each for as long as this manager lives.
+			 * Stacks `layers` top first, holding a reference to each and taking their family counts as fixed.
 			 */
-			CompositeFontMgr(sk_sp<SkFontMgr> overlay, sk_sp<SkFontMgr> base) : overlay(std::move(overlay)), base(std::move(base)) {}
+			explicit CompositeFontMgr(std::vector<sk_sp<SkFontMgr>> layers) : layers(std::move(layers)) {
+				// Each entry is where that layer's families start in the concatenated list, and the closing one is the total.
+				// Counting once is what keeps indexed access from walking a chain of `countFamilies()` calls, and it holds because a font manager never gains or loses a family.
+				this->familyStarts.reserve(this->layers.size() + 1);
+				this->familyStarts.push_back(0);
+				for (const sk_sp<SkFontMgr>& layer : this->layers) {
+					this->familyStarts.push_back(this->familyStarts.back() + layer->countFamilies());
+				}
+			}
 
 		protected:
 			/**
-			 * Returns the two family lists laid end to end.
+			 * Returns how many families the layers hold between them.
 			 */
 			int onCountFamilies() const override {
-				return this->overlay->countFamilies() + this->base->countFamilies();
+				return this->familyStarts.back();
 			}
 
 			/**
-			 * Names the family at `index`, which belongs to the base once it runs past the overlay's own count.
+			 * Names the family at `index` in the concatenated list, leaving `familyName` untouched when the index names none.
 			 */
 			void onGetFamilyName(int index, SkString* familyName) const override {
-				const int overlayCount = this->overlay->countFamilies();
-				if (index < overlayCount) {
-					this->overlay->getFamilyName(index, familyName);
+				const std::size_t layer = layerOf(index);
+				if (layer == this->layers.size()) {
 					return;
 				}
-				this->base->getFamilyName(index - overlayCount, familyName);
+				this->layers[layer]->getFamilyName(index - this->familyStarts[layer], familyName);
 			}
 
 			/**
-			 * Opens the style set at `index`, split between the two the same way the names are.
+			 * Opens the style set of the family at `index`, split across the layers the same way the names are.
 			 */
 			sk_sp<SkFontStyleSet> onCreateStyleSet(int index) const override {
-				const int overlayCount = this->overlay->countFamilies();
-				if (index < overlayCount) {
-					return this->overlay->createStyleSet(index);
+				const std::size_t layer = layerOf(index);
+				if (layer == this->layers.size()) {
+					return nullptr;
 				}
-				return this->base->createStyleSet(index - overlayCount);
+				return this->layers[layer]->createStyleSet(index - this->familyStarts[layer]);
 			}
 
 			/**
-			 * Resolves `familyName` against the overlay, then the base.
+			 * Resolves `familyName` in the topmost layer that carries it.
 			 * A miss has to be read off the count, because the public entry point turns the null its override returns into an empty set.
 			 */
 			sk_sp<SkFontStyleSet> onMatchFamily(const char familyName[]) const override {
-				sk_sp<SkFontStyleSet> matched = this->overlay->matchFamily(familyName);
-				if (matched->count() > 0) {
-					return matched;
+				for (const sk_sp<SkFontMgr>& layer : this->layers) {
+					sk_sp<SkFontStyleSet> matched = layer->matchFamily(familyName);
+					if (matched->count() > 0) {
+						return matched;
+					}
 				}
-				return this->base->matchFamily(familyName);
+				return nullptr;
 			}
 
 			/**
-			 * Picks the closest face to `style` within `familyName`, from the overlay when it carries that family and from the base otherwise.
+			 * Picks the closest face to `style` within `familyName`, from the topmost layer that carries that family.
 			 */
 			sk_sp<SkTypeface> onMatchFamilyStyle(const char familyName[], const SkFontStyle& style) const override {
-				sk_sp<SkTypeface> matched = this->overlay->matchFamilyStyle(familyName, style);
-				return matched != nullptr ? matched : this->base->matchFamilyStyle(familyName, style);
+				for (const sk_sp<SkFontMgr>& layer : this->layers) {
+					sk_sp<SkTypeface> matched = layer->matchFamilyStyle(familyName, style);
+					if (matched != nullptr) {
+						return matched;
+					}
+				}
+				return nullptr;
 			}
 
 			/**
-			 * Finds any face covering `character`, asking both layers.
-			 * This is the per-character fallback a shaper reaches for once a run has no typeface, so stopping at the overlay would drop every character the registered fonts do not cover, which on a CJK or emoji run is most of them.
+			 * Finds any face covering `character`, asking every layer rather than stopping at the first that knows the family.
+			 * This is the per-character fallback a shaper reaches for once a run has no typeface of its own.
+			 * Stopping early would drop every character the upper layers do not cover, which on a CJK or emoji run is most of them.
 			 */
 			sk_sp<SkTypeface> onMatchFamilyStyleCharacter(const char familyName[],
 				const SkFontStyle&                               style,
 				const char*                                      bcp47[],
 				int                                              bcp47Count,
 				SkUnichar                                        character) const override {
-				sk_sp<SkTypeface> matched = this->overlay->matchFamilyStyleCharacter(familyName, style, bcp47, bcp47Count, character);
-				return matched != nullptr ? matched : this->base->matchFamilyStyleCharacter(familyName, style, bcp47, bcp47Count, character);
+				for (const sk_sp<SkFontMgr>& layer : this->layers) {
+					sk_sp<SkTypeface> matched = layer->matchFamilyStyleCharacter(familyName, style, bcp47, bcp47Count, character);
+					if (matched != nullptr) {
+						return matched;
+					}
+				}
+				return nullptr;
 			}
 
 			/**
-			 * Builds a face out of `data`, which is the overlay's job: it is the manager made out of font data in the first place, while the base speaks for what the platform already has installed.
+			 * Builds a face out of `data`, which the top layer answers alone.
+			 * Parsing font bytes does not depend on which families a layer knows, so walking down the stack would only parse the same bytes again.
 			 */
 			sk_sp<SkTypeface> onMakeFromData(sk_sp<SkData> data, int ttcIndex) const override {
-				return this->overlay->makeFromData(std::move(data), ttcIndex);
+				return this->layers.front()->makeFromData(std::move(data), ttcIndex);
 			}
 
 			/**
 			 * Builds a face out of `stream`, taking the face at `ttcIndex` in a collection.
 			 */
 			sk_sp<SkTypeface> onMakeFromStreamIndex(std::unique_ptr<SkStreamAsset> stream, int ttcIndex) const override {
-				return this->overlay->makeFromStream(std::move(stream), ttcIndex);
+				return this->layers.front()->makeFromStream(std::move(stream), ttcIndex);
 			}
 
 			/**
 			 * Builds a face out of `stream` with `args` selecting the instance of a variable font.
 			 */
 			sk_sp<SkTypeface> onMakeFromStreamArgs(std::unique_ptr<SkStreamAsset> stream, const SkFontArguments& args) const override {
-				return this->overlay->makeFromStream(std::move(stream), args);
+				return this->layers.front()->makeFromStream(std::move(stream), args);
 			}
 
 			/**
 			 * Builds a face out of the file at `path`.
 			 */
 			sk_sp<SkTypeface> onMakeFromFile(const char path[], int ttcIndex) const override {
-				return this->overlay->makeFromFile(path, ttcIndex);
+				return this->layers.front()->makeFromFile(path, ttcIndex);
 			}
 
 			/**
 			 * Answers the legacy request that must not come back empty handed.
-			 * The overlay is asked through the matching entry point rather than its own legacy one, which never fails and so would answer for system families too; a null family name asks for the default font, which only the base can speak for.
+			 * Each layer is asked through its matching entry point rather than its own legacy one, which on a data-backed manager never fails and would therefore answer for system families too.
+			 * Whatever is left over goes to the bottom layer, the one standing for the platform, and so does the null family name that asks for the default font.
 			 */
 			sk_sp<SkTypeface> onLegacyMakeTypeface(const char familyName[], SkFontStyle style) const override {
 				if (familyName != nullptr) {
-					sk_sp<SkTypeface> matched = this->overlay->matchFamilyStyle(familyName, style);
-					if (matched != nullptr) {
-						return matched;
+					for (const sk_sp<SkFontMgr>& layer : this->layers) {
+						sk_sp<SkTypeface> matched = layer->matchFamilyStyle(familyName, style);
+						if (matched != nullptr) {
+							return matched;
+						}
 					}
 				}
-				return this->base->legacyMakeTypeface(familyName, style);
+				return this->layers.back()->legacyMakeTypeface(familyName, style);
 			}
 
 		private:
-			sk_sp<SkFontMgr> overlay;
-			sk_sp<SkFontMgr> base;
+			/**
+			 * Returns which layer the family at `index` sits in, or the layer count when `index` names no family at all.
+			 */
+			std::size_t layerOf(int index) const {
+				if (index < 0) {
+					return this->layers.size();
+				}
+				for (std::size_t layer = 0; layer < this->layers.size(); ++layer) {
+					if (index < this->familyStarts[layer + 1]) {
+						return layer;
+					}
+				}
+				return this->layers.size();
+			}
+
+			std::vector<sk_sp<SkFontMgr>> layers;
+			std::vector<int>              familyStarts;
 		};
 	} // namespace
 
-	sk_sp<SkFontMgr> createCompositeFontMgr(sk_sp<SkFontMgr> overlay, sk_sp<SkFontMgr> base) {
-		if (overlay == nullptr) {
-			return base;
+	sk_sp<SkFontMgr> createCompositeFontMgr(std::vector<sk_sp<SkFontMgr>> layers) {
+		std::erase(layers, nullptr);
+
+		if (layers.empty()) {
+			return SkFontMgr::RefEmpty();
 		}
-		if (base == nullptr) {
-			return overlay;
+		if (layers.size() == 1) {
+			return std::move(layers.front());
 		}
-		return sk_make_sp<CompositeFontMgr>(std::move(overlay), std::move(base));
+		return sk_make_sp<CompositeFontMgr>(std::move(layers));
 	}
 } // namespace music_lyric_player::backend::font

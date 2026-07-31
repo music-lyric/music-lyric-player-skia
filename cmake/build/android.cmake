@@ -30,14 +30,15 @@ message(STATUS "[Build] Target: android ${ANDROID_ABI} (${BUILD_CONFIG})")
 message(STATUS "[Build] Cache : ${_cache_dir}")
 
 # ANDROID_PLATFORM and ANDROID_STL are pinned here rather than exposed as arguments.
-# They have to match what Skia and the lyric model were prebuilt with, and a mismatched STL links two copies of libc++ into one library.
+# The STL has to match what Skia and the lyric model were prebuilt with, since a mismatch links two copies of libc++ into one library.
+# The platform is android-24 because that is where Vulkan reached the platform: linking libvulkan below that leaves a library the loader refuses outright.
 # ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES is what supplies the 16 KB page alignment, which the NDK toolchain does not turn on by itself.
 message(STATUS "[Build] Configuring...")
 execute_process(
 	COMMAND "${CMAKE_COMMAND}" -S "${_repo_root}" -B "${_cache_dir}" -G "Ninja"
 		"-DCMAKE_TOOLCHAIN_FILE=${_toolchain}" "-DCMAKE_BUILD_TYPE=${BUILD_CONFIG}"
 		"-DANDROID_ABI=${ANDROID_ABI}"
-		"-DANDROID_PLATFORM=android-21"
+		"-DANDROID_PLATFORM=android-24"
 		"-DANDROID_STL=c++_static"
 		"-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
 	WORKING_DIRECTORY "${_repo_root}"

@@ -53,6 +53,7 @@ if(EMSCRIPTEN)
 	set(_backend_libraries "")
 elseif(ANDROID)
 	set(_backend_sources
+		backend/gpu/gles.cpp
 		backend/font/registry.cpp
 	)
 	set(_backend_libraries "")

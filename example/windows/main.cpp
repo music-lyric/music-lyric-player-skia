@@ -27,6 +27,9 @@ namespace {
 	// How far the arrow keys move the play head.
 	constexpr double kSeekStepMs = 5000.0;
 
+	// How fast the frame-timing readout eases toward its latest sample: low enough that the digits settle, high enough that a stall still shows up.
+	constexpr double kTimingSmoothing = 0.1;
+
 	/**
 	 * Returns the file name shown for an audio path.
 	 */
@@ -239,6 +242,15 @@ int main() {
 
 	logger.info("controls: L = load hex lyric, O = open audio, P = toggle panel, R = restart, Space = pause, Left/Right = seek 5s.");
 
+	// Frame timing for the bar's readout: the loop's rate, plus the three spans the host can time from outside the surface.
+	// Raw numbers change far too fast to read, so what the panel shows is eased toward each new sample.
+	example::FrameTiming sample;
+	example::FrameTiming timing;
+	double               frameStartMs = renderClock.now();
+
+	// Eases one displayed number toward its latest sample, starting from the sample itself so the first frame is not a ramp up from zero.
+	const auto ease = [](double& shown, double value) { shown = shown > 0.0 ? shown + (value - shown) * kTimingSmoothing : value; };
+
 	while (!window.shouldClose()) {
 		window.pollEvents();
 
@@ -304,8 +316,26 @@ int main() {
 		view.config     = &renderer.config.current();
 		view.overrides  = &state.settings;
 
+		// Raw per-frame numbers change far too fast to read, so both are eased toward the latest sample.
+		const double frameEndMs = renderClock.now();
+		sample.fps              = frameEndMs > frameStartMs ? 1000.0 / (frameEndMs - frameStartMs) : 0.0;
+		frameStartMs            = frameEndMs;
+
+		ease(timing.fps, sample.fps);
+		ease(timing.totalMs, sample.totalMs);
+		ease(timing.acquireMs, sample.acquireMs);
+		ease(timing.drawMs, sample.drawMs);
+		ease(timing.presentMs, sample.presentMs);
+		view.timing = timing;
+
+		const double acquireStartMs = renderClock.now();
+		double       drawStartMs    = 0.0;
+		double       drawEndMs      = 0.0;
+
 		example::PanelActions actions;
 		surface->renderFrame([&](SkCanvas* canvas) {
+			drawStartMs = renderClock.now();
+
 			const int panelWidth  = panel.width();
 			const int frameWidth  = surface->width();
 			const int frameHeight = surface->height();
@@ -324,7 +354,17 @@ int main() {
 			}
 
 			actions = panel.render(canvas, view, frameWidth, frameHeight);
+
+			drawEndMs = renderClock.now();
 		});
+
+		// The callback is skipped whenever the surface cannot present, so a frame that drew nothing books its whole span as waiting for a backbuffer.
+		const double surfaceEndMs = renderClock.now();
+		const bool   drew         = drawEndMs > 0.0;
+		sample.totalMs            = surfaceEndMs - acquireStartMs;
+		sample.acquireMs          = (drew ? drawStartMs : surfaceEndMs) - acquireStartMs;
+		sample.drawMs             = drew ? drawEndMs - drawStartMs : 0.0;
+		sample.presentMs          = drew ? surfaceEndMs - drawEndMs : 0.0;
 
 		// Applied once the frame is done, so a seek or a modal file dialog never runs mid-paint.
 		if (actions.settingsReset) {

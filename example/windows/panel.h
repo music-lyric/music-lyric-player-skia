@@ -12,6 +12,22 @@ struct ImGuiContext;
 
 namespace example {
 	/**
+	 * How long one frame took, split into the three spans the host can time from outside the GPU surface.
+	 * A vsync bound loop should spend nearly all of its wait in `acquireMs`: waiting there is waiting for the display, while waiting in `presentMs` is waiting for the GPU to catch up.
+	 */
+	struct FrameTiming {
+		double fps = 0.0;
+		// The whole span the surface was busy, which is the three below added up.
+		double totalMs = 0.0;
+		// Waiting for a free backbuffer.
+		double acquireMs = 0.0;
+		// Recording the lyrics and the panel.
+		double drawMs = 0.0;
+		// Flushing, submitting and presenting.
+		double presentMs = 0.0;
+	};
+
+	/**
 	 * What the host tells the panel to display for the current frame.
 	 */
 	struct PanelState {
@@ -26,6 +42,8 @@ namespace example {
 		std::string trackName;
 		std::string lyricName;
 		std::string activeText;
+		// Describes the frame before this one: the panel that displays it is painted inside the span it measures.
+		FrameTiming timing;
 		// The resolved config the settings editor displays, and the sparse override store its edits accumulate into.
 		const music_lyric_player::rendering::config::Root* config    = nullptr;
 		music_lyric_player::rendering::config::Root*       overrides = nullptr;

@@ -351,13 +351,19 @@ namespace example {
 			char elapsed[40] = {};
 			std::snprintf(elapsed, sizeof(elapsed), "%s / %s", position, total);
 
+			char timing[48] = {};
+			std::snprintf(timing, sizeof(timing), "%.0fFPS - %.2fms / %.2fms", state.timing.fps, state.timing.drawMs, state.timing.totalMs);
+
 			ImGui::PushFont(nullptr, metrics.fontSmall);
-			const float timeWidth = ImGui::CalcTextSize(elapsed).x;
+			const float timeWidth   = ImGui::CalcTextSize(elapsed).x;
+			const float timingWidth = ImGui::CalcTextSize(timing).x;
+			// The slot is measured from an all-digit template rather than from the text itself, so a frame rate crossing a digit boundary cannot twitch the seek track.
+			const float readoutWidth = ImGui::CalcTextSize("000FPS - 00.00ms / 00.00ms").x;
 			ImGui::PopFont();
 
 			const float gap     = 12.0f * metrics.scale;
 			const float padding = metrics.framePadding;
-			const float fixed   = padding * 2.0f + metrics.iconButton * 3.0f + metrics.playButton + timeWidth + metrics.volumeWidth + gap * 5.0f;
+			const float fixed   = padding * 2.0f + metrics.iconButton * 3.0f + metrics.playButton + timeWidth + metrics.volumeWidth + readoutWidth + gap * 6.0f;
 			const float track   = std::max(40.0f * metrics.scale, frameWidth - sidebar - fixed);
 
 			const ImVec2 origin = ImGui::GetCursorScreenPos();
@@ -425,6 +431,18 @@ namespace example {
 			if (level.released) {
 				actions.volumeCommitted = true;
 			}
+
+			// The readout closes the bar, so it is right-aligned inside its reserved slot instead of leaving a ragged edge as the digits change.
+			place(readoutWidth, metrics.fontSmall);
+			const ImVec2 readout = ImGui::GetCursorScreenPos();
+			ImGui::SetCursorScreenPos(ImVec2(readout.x + readoutWidth - timingWidth, readout.y));
+			ImGui::PushFont(nullptr, metrics.fontSmall);
+			ImGui::PushStyleColor(ImGuiCol_Text, ImGui::ColorConvertU32ToFloat4(color::textMuted));
+			ImGui::TextUnformatted(timing);
+			ImGui::PopStyleColor();
+			ImGui::PopFont();
+			// The total says how long the surface was busy but not where it waited, which is the one thing worth knowing: a vsync bound loop should be waiting in acquire, and waiting in present instead means the GPU is behind.
+			ImGui::SetItemTooltip("acquire %.2fms\ndraw %.2fms\npresent %.2fms", state.timing.acquireMs, state.timing.drawMs, state.timing.presentMs);
 		}
 		ImGui::End();
 		ImGui::PopStyleVar();

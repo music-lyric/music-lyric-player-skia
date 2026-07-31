@@ -1,12 +1,20 @@
 #include "backend/gpu/vulkan.h"
 
 #include <algorithm>
+#include <cstdarg>
 #include <cstdint>
-#include <cstdio>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
+#if defined(__ANDROID__)
+#include <android/log.h>
+#include <android/native_window.h>
+
+#define VK_USE_PLATFORM_ANDROID_KHR
+#else
+#include <cstdio>
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -17,6 +25,8 @@
 #include <windows.h>
 
 #define VK_USE_PLATFORM_WIN32_KHR
+#endif
+
 #include <vulkan/vulkan.h>
 
 #include "include/core/SkCanvas.h"
@@ -40,6 +50,113 @@
 
 namespace music_lyric_player::backend::gpu {
 	namespace {
+#if defined(__ANDROID__)
+		// A window here is an `ANativeWindow*`, which is refcounted and drawn into through the Android surface extension.
+		constexpr const char* kSurfaceExtension = VK_KHR_ANDROID_SURFACE_EXTENSION_NAME;
+
+		/**
+		 * Logs a backend failure to logcat.
+		 * An Android process has its stdout and stderr wired to /dev/null unless the platform is told otherwise, so nothing written there would reach anyone.
+		 */
+		void logError(const char* format, ...) {
+			std::va_list args;
+			va_start(args, format);
+			__android_log_vprint(ANDROID_LOG_ERROR, "music-lyric-player", format, args);
+			va_end(args);
+		}
+
+		/**
+		 * Creates a Vulkan surface for the platform window `handle`, or a null handle on failure.
+		 */
+		VkSurfaceKHR createPlatformSurface(VkInstance instance, void* handle) {
+			VkAndroidSurfaceCreateInfoKHR createInfo{};
+			createInfo.sType  = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
+			createInfo.window = static_cast<ANativeWindow*>(handle);
+
+			VkSurfaceKHR surface = VK_NULL_HANDLE;
+			if (vkCreateAndroidSurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) {
+				logError("[backend] vkCreateAndroidSurfaceKHR failed");
+				return VK_NULL_HANDLE;
+			}
+			return surface;
+		}
+
+		/**
+		 * Reads the window's drawable area in physical pixels.
+		 */
+		void queryWindowSize(void* handle, int& width, int& height) {
+			auto* window = static_cast<ANativeWindow*>(handle);
+			width        = ANativeWindow_getWidth(window);
+			height       = ANativeWindow_getHeight(window);
+		}
+
+		/**
+		 * Takes a reference on the window for as long as a surface draws into it.
+		 * The host owns a reference of its own and may drop it as soon as it has handed the window over.
+		 */
+		void retainWindow(void* handle) {
+			ANativeWindow_acquire(static_cast<ANativeWindow*>(handle));
+		}
+
+		/**
+		 * Drops the reference `retainWindow` took.
+		 */
+		void releaseWindow(void* handle) {
+			ANativeWindow_release(static_cast<ANativeWindow*>(handle));
+		}
+#else
+		// A window here is an `HWND`, drawn into through the Win32 surface extension.
+		constexpr const char* kSurfaceExtension = VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
+
+		/**
+		 * Logs a backend failure to stderr, appending the line break itself.
+		 */
+		void logError(const char* format, ...) {
+			std::va_list args;
+			va_start(args, format);
+			std::vfprintf(stderr, format, args);
+			va_end(args);
+			std::fputc('\n', stderr);
+		}
+
+		/**
+		 * Creates a Vulkan surface for the platform window `handle`, or a null handle on failure.
+		 */
+		VkSurfaceKHR createPlatformSurface(VkInstance instance, void* handle) {
+			VkWin32SurfaceCreateInfoKHR createInfo{};
+			createInfo.sType     = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+			createInfo.hinstance = GetModuleHandle(nullptr);
+			createInfo.hwnd      = static_cast<HWND>(handle);
+
+			VkSurfaceKHR surface = VK_NULL_HANDLE;
+			if (vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) {
+				logError("[backend] vkCreateWin32SurfaceKHR failed");
+				return VK_NULL_HANDLE;
+			}
+			return surface;
+		}
+
+		/**
+		 * Reads the window's client area in physical pixels, which is what it is as long as the window is per-monitor DPI aware.
+		 */
+		void queryWindowSize(void* handle, int& width, int& height) {
+			RECT rect{};
+			GetClientRect(static_cast<HWND>(handle), &rect);
+			width  = rect.right - rect.left;
+			height = rect.bottom - rect.top;
+		}
+
+		/**
+		 * Does nothing: an `HWND` is not refcounted and stays valid until its owner destroys the window.
+		 */
+		void retainWindow(void*) {}
+
+		/**
+		 * Does nothing, matching `retainWindow`.
+		 */
+		void releaseWindow(void*) {}
+#endif
+
 		/**
 		 * Resolves a Vulkan entry point from the device when available, else from the instance.
 		 */
@@ -124,19 +241,18 @@ namespace music_lyric_player::backend::gpu {
 		}
 
 		/**
-		 * A Vulkan swapchain bound to a Win32 `HWND`, exposing each backbuffer as a Skia surface.
+		 * A Vulkan swapchain bound to a platform window, exposing each backbuffer as a Skia surface.
 		 * Owns only the presentation objects; the instance, device and Skia context come from the shared stack.
 		 * Sync is intentionally simple: one queue-wait-idle per frame, no pipelining, which is enough for this use.
-		 * Assumes the window is per-monitor DPI aware, so its client rect is already in physical pixels.
 		 */
 		class SwapchainSurface : public Surface {
 		public:
 			explicit SwapchainSurface(std::shared_ptr<SharedContext> shared) : shared(std::move(shared)) {}
 
 			/**
-			 * Binds the surface to `hwnd` and builds its swapchain; returns false on any failure.
+			 * Binds the surface to the platform window `handle` and builds its swapchain; returns false on any failure.
 			 */
-			bool init(HWND hwnd);
+			bool init(void* handle);
 
 			~SwapchainSurface() override {
 				cleanup();
@@ -186,13 +302,8 @@ namespace music_lyric_player::backend::gpu {
 			 */
 			void cleanup();
 
-			/**
-			 * Reads the window's client area in physical pixels.
-			 */
-			void queryClientSize(int& width, int& height) const;
-
 			std::shared_ptr<SharedContext> shared;
-			HWND                           hwnd    = nullptr;
+			void*                          window  = nullptr;
 			VkSurfaceKHR                   surface = VK_NULL_HANDLE;
 
 			VkSwapchainKHR                swapchain       = VK_NULL_HANDLE;
@@ -212,7 +323,7 @@ namespace music_lyric_player::backend::gpu {
 		bool SharedContext::createInstance() {
 			this->instanceExtensionNames = {
 				VK_KHR_SURFACE_EXTENSION_NAME,
-				VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
+				kSurfaceExtension,
 			};
 			std::vector<const char*> enabled;
 			enabled.reserve(this->instanceExtensionNames.size());
@@ -234,7 +345,7 @@ namespace music_lyric_player::backend::gpu {
 			createInfo.ppEnabledExtensionNames = enabled.data();
 
 			if (vkCreateInstance(&createInfo, nullptr, &this->instance) != VK_SUCCESS) {
-				std::fprintf(stderr, "[backend] vkCreateInstance failed\n");
+				logError("[backend] vkCreateInstance failed");
 				return false;
 			}
 			return true;
@@ -246,7 +357,7 @@ namespace music_lyric_player::backend::gpu {
 				VkBool32 supported = VK_FALSE;
 				vkGetPhysicalDeviceSurfaceSupportKHR(this->physicalDevice, this->queueFamilyIndex, surface, &supported);
 				if (supported != VK_TRUE) {
-					std::fprintf(stderr, "[backend] the shared queue family cannot present to this window\n");
+					logError("[backend] the shared queue family cannot present to this window");
 					return false;
 				}
 				return true;
@@ -258,7 +369,7 @@ namespace music_lyric_player::backend::gpu {
 			std::uint32_t deviceCount = 0;
 			vkEnumeratePhysicalDevices(this->instance, &deviceCount, nullptr);
 			if (deviceCount == 0) {
-				std::fprintf(stderr, "[backend] no Vulkan physical devices found\n");
+				logError("[backend] no Vulkan physical devices found");
 				return false;
 			}
 			std::vector<VkPhysicalDevice> devices(deviceCount);
@@ -281,7 +392,7 @@ namespace music_lyric_player::backend::gpu {
 					}
 				}
 			}
-			std::fprintf(stderr, "[backend] no graphics+present queue family found\n");
+			logError("[backend] no graphics+present queue family found");
 			return false;
 		}
 
@@ -315,7 +426,7 @@ namespace music_lyric_player::backend::gpu {
 			createInfo.ppEnabledExtensionNames = enabled.data();
 
 			if (vkCreateDevice(this->physicalDevice, &createInfo, nullptr, &this->device) != VK_SUCCESS) {
-				std::fprintf(stderr, "[backend] vkCreateDevice failed\n");
+				logError("[backend] vkCreateDevice failed");
 				return false;
 			}
 			vkGetDeviceQueue(this->device, this->queueFamilyIndex, 0, &this->queue);
@@ -354,7 +465,7 @@ namespace music_lyric_player::backend::gpu {
 
 			this->context = GrDirectContexts::MakeVulkan(backend);
 			if (this->context == nullptr) {
-				std::fprintf(stderr, "[backend] GrDirectContexts::MakeVulkan failed\n");
+				logError("[backend] GrDirectContexts::MakeVulkan failed");
 				return false;
 			}
 			return true;
@@ -376,22 +487,21 @@ namespace music_lyric_player::backend::gpu {
 			}
 		}
 
-		bool SwapchainSurface::init(HWND hwnd) {
-			this->hwnd = hwnd;
+		bool SwapchainSurface::init(void* handle) {
+			if (handle == nullptr) {
+				logError("[backend] a native window is required");
+				return false;
+			}
+
+			retainWindow(handle);
+			this->window = handle;
+
 			return createSurface() && this->shared->completeFor(this->surface) && createSwapchain();
 		}
 
 		bool SwapchainSurface::createSurface() {
-			VkWin32SurfaceCreateInfoKHR createInfo{};
-			createInfo.sType     = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-			createInfo.hinstance = GetModuleHandle(nullptr);
-			createInfo.hwnd      = this->hwnd;
-
-			if (vkCreateWin32SurfaceKHR(this->shared->instance, &createInfo, nullptr, &this->surface) != VK_SUCCESS) {
-				std::fprintf(stderr, "[backend] vkCreateWin32SurfaceKHR failed\n");
-				return false;
-			}
-			return true;
+			this->surface = createPlatformSurface(this->shared->instance, this->window);
+			return this->surface != VK_NULL_HANDLE;
 		}
 
 		bool SwapchainSurface::createSwapchain() {
@@ -401,7 +511,7 @@ namespace music_lyric_player::backend::gpu {
 			std::uint32_t formatCount = 0;
 			vkGetPhysicalDeviceSurfaceFormatsKHR(this->shared->physicalDevice, this->surface, &formatCount, nullptr);
 			if (formatCount == 0) {
-				std::fprintf(stderr, "[backend] no surface formats\n");
+				logError("[backend] no surface formats");
 				return false;
 			}
 			std::vector<VkSurfaceFormatKHR> formats(formatCount);
@@ -418,9 +528,9 @@ namespace music_lyric_player::backend::gpu {
 
 			int clientWidth  = this->requestedWidth;
 			int clientHeight = this->requestedHeight;
-			// Nothing has reported a size yet, so the first swapchain falls back to the window's own client rect.
+			// Nothing has reported a size yet, so the first swapchain falls back to asking the window itself.
 			if (clientWidth <= 0 || clientHeight <= 0) {
-				queryClientSize(clientWidth, clientHeight);
+				queryWindowSize(this->window, clientWidth, clientHeight);
 			}
 
 			VkExtent2D extent = capabilities.currentExtent;
@@ -441,6 +551,10 @@ namespace music_lyric_player::backend::gpu {
 			VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 			usage &= capabilities.supportedUsageFlags;
 
+			// Declaring the current transform would promise that the frame is drawn already rotated, which is a promise a 2D renderer laying out from the top left cannot keep.
+			// Asking for the identity instead leaves the rotation to the compositor, at the cost of one extra pass on the platforms where a window is ever rotated at all.
+			const bool rotatesItself = (capabilities.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) == 0;
+
 			VkSwapchainCreateInfoKHR createInfo{};
 			createInfo.sType            = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 			createInfo.surface          = this->surface;
@@ -451,14 +565,14 @@ namespace music_lyric_player::backend::gpu {
 			createInfo.imageArrayLayers = 1;
 			createInfo.imageUsage       = usage;
 			createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-			createInfo.preTransform     = capabilities.currentTransform;
+			createInfo.preTransform     = rotatesItself ? capabilities.currentTransform : VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 			createInfo.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 			createInfo.presentMode      = VK_PRESENT_MODE_FIFO_KHR; // always supported
 			createInfo.clipped          = VK_TRUE;
 			createInfo.oldSwapchain     = VK_NULL_HANDLE;
 
 			if (vkCreateSwapchainKHR(this->shared->device, &createInfo, nullptr, &this->swapchain) != VK_SUCCESS) {
-				std::fprintf(stderr, "[backend] vkCreateSwapchainKHR failed\n");
+				logError("[backend] vkCreateSwapchainKHR failed");
 				return false;
 			}
 
@@ -486,7 +600,7 @@ namespace music_lyric_player::backend::gpu {
 				this->surfaces[i] =
 					SkSurfaces::WrapBackendRenderTarget(this->shared->context.get(), renderTarget, kTopLeft_GrSurfaceOrigin, colorType, nullptr, nullptr);
 				if (this->surfaces[i] == nullptr) {
-					std::fprintf(stderr, "[backend] WrapBackendRenderTarget failed\n");
+					logError("[backend] WrapBackendRenderTarget failed");
 					return false;
 				}
 			}
@@ -602,14 +716,12 @@ namespace music_lyric_player::backend::gpu {
 				vkDestroySurfaceKHR(this->shared->instance, this->surface, nullptr);
 				this->surface = VK_NULL_HANDLE;
 			}
+			if (this->window != nullptr) {
+				releaseWindow(this->window);
+				this->window = nullptr;
+			}
 		}
 
-		void SwapchainSurface::queryClientSize(int& width, int& height) const {
-			RECT rect{};
-			GetClientRect(this->hwnd, &rect);
-			width  = rect.right - rect.left;
-			height = rect.bottom - rect.top;
-		}
 	} // namespace
 
 	std::unique_ptr<Surface> createVulkanSurface(const NativeWindow& window) {
@@ -619,7 +731,7 @@ namespace music_lyric_player::backend::gpu {
 		}
 
 		auto surface = std::make_unique<SwapchainSurface>(std::move(shared));
-		if (!surface->init(static_cast<HWND>(window.handle))) {
+		if (!surface->init(window.handle)) {
 			return nullptr;
 		}
 		return surface;

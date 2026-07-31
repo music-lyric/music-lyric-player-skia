@@ -53,10 +53,12 @@ if(EMSCRIPTEN)
 	set(_backend_libraries "")
 elseif(ANDROID)
 	set(_backend_sources
+		backend/gpu/vulkan.cpp
 		backend/gpu/gles.cpp
 		backend/font/registry.cpp
 	)
-	set(_backend_libraries "")
+	# libvulkan reached the platform in Android 7.0, so this is what pins the module to android-24.
+	set(_backend_libraries vulkan)
 else()
 	find_package(Vulkan REQUIRED)
 

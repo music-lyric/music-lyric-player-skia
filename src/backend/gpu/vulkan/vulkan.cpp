@@ -120,7 +120,8 @@ namespace music_lyric_player::backend::gpu::vulkan {
 		/**
 		 * A Vulkan swapchain bound to a platform window, exposing each backbuffer as a Skia surface.
 		 * Owns only the presentation objects; the instance, device and Skia context come from the shared stack.
-		 * Sync is intentionally simple: one queue-wait-idle per frame, no pipelining, which is enough for this use.
+		 * Frames pipeline: each one waits on its own acquire semaphore and presents on its backbuffer's render semaphore, and nothing on the CPU side ever waits for the GPU.
+		 * What keeps that from running away is `vkAcquireNextImageKHR`, which blocks once every backbuffer is spoken for.
 		 */
 		class SwapchainSurface : public Surface {
 		public:
@@ -188,6 +189,7 @@ namespace music_lyric_player::backend::gpu::vulkan {
 			VkExtent2D                    swapchainExtent = {0, 0};
 			std::vector<VkImage>          swapchainImages;
 			std::vector<sk_sp<SkSurface>> surfaces;
+			std::vector<VkSemaphore>      renderSemaphores; // one per backbuffer, signalled by its frame's GPU work and waited on by its present
 
 			int requestedWidth  = 0; // host's view of the client size, superseded by whatever the surface reports
 			int requestedHeight = 0;
@@ -460,7 +462,18 @@ namespace music_lyric_player::backend::gpu::vulkan {
 			const SkColorType colorType = this->swapchainFormat == VK_FORMAT_B8G8R8A8_UNORM ? kBGRA_8888_SkColorType : kRGBA_8888_SkColorType;
 
 			this->surfaces.assign(imageCount, nullptr);
+			this->renderSemaphores.assign(imageCount, VK_NULL_HANDLE);
+
+			VkSemaphoreCreateInfo semaphoreInfo{};
+			semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
 			for (std::uint32_t i = 0; i < imageCount; ++i) {
+				// One render semaphore per backbuffer rather than per frame in flight: an image cannot come back around until the present waiting on its semaphore has gone through, so a single one per image can never be signalled twice over.
+				if (vkCreateSemaphore(this->shared->device, &semaphoreInfo, nullptr, &this->renderSemaphores[i]) != VK_SUCCESS) {
+					logger.error("vkCreateSemaphore failed");
+					return false;
+				}
+
 				GrVkImageInfo imageInfo;
 				imageInfo.fImage              = this->swapchainImages[i];
 				imageInfo.fImageTiling        = VK_IMAGE_TILING_OPTIMAL;
@@ -487,6 +500,15 @@ namespace music_lyric_player::backend::gpu::vulkan {
 		void SwapchainSurface::destroySwapchain() {
 			this->surfaces.clear();
 			this->swapchainImages.clear();
+
+			// Both callers wait for the device to go idle first, which is what retires the presents still holding these.
+			for (VkSemaphore semaphore : this->renderSemaphores) {
+				if (semaphore != VK_NULL_HANDLE) {
+					vkDestroySemaphore(this->shared->device, semaphore, nullptr);
+				}
+			}
+			this->renderSemaphores.clear();
+
 			if (this->swapchain != VK_NULL_HANDLE) {
 				vkDestroySwapchainKHR(this->shared->device, this->swapchain, nullptr);
 				this->swapchain = VK_NULL_HANDLE;
@@ -552,15 +574,25 @@ namespace music_lyric_player::backend::gpu::vulkan {
 		}
 
 		void SwapchainSurface::present() {
-			GrFlushInfo                flushInfo{};
-			skgpu::MutableTextureState presentState = skgpu::MutableTextureStates::MakeVulkan(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, this->shared->queueFamilyIndex);
-			this->shared->context->flush(this->currentSurface, flushInfo, &presentState);
+			// Skia signals this once the frame's GPU work is done, which is what the present waits on instead of the CPU waiting for the queue to drain.
+			VkSemaphore        renderSemaphore = this->renderSemaphores[this->currentImageIndex];
+			GrBackendSemaphore backendRender   = GrBackendSemaphores::MakeVk(renderSemaphore);
+
+			GrFlushInfo flushInfo{};
+			flushInfo.fNumSemaphores    = 1;
+			flushInfo.fSignalSemaphores = &backendRender;
+
+			skgpu::MutableTextureState  presentState = skgpu::MutableTextureStates::MakeVulkan(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, this->shared->queueFamilyIndex);
+			const GrSemaphoresSubmitted submitted    = this->shared->context->flush(this->currentSurface, flushInfo, &presentState);
 			this->shared->context->submit();
 
-			vkQueueWaitIdle(this->shared->queue);
-
 			VkPresentInfoKHR presentInfo{};
-			presentInfo.sType          = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+			presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+			// Presenting without the wait races the renderer, but waiting on a semaphore Skia declined to signal hangs the queue outright, so the wait only goes in when the signal was taken.
+			if (submitted == GrSemaphoresSubmitted::kYes) {
+				presentInfo.waitSemaphoreCount = 1;
+				presentInfo.pWaitSemaphores    = &renderSemaphore;
+			}
 			presentInfo.swapchainCount = 1;
 			presentInfo.pSwapchains    = &this->swapchain;
 			presentInfo.pImageIndices  = &this->currentImageIndex;

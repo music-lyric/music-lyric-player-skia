@@ -18,10 +18,6 @@
 #endif
 
 namespace music_lyric_player::utils {
-	/**
-	 * A tagged sink that writes each message as `[time] [LyricPlayer:tag] [level] message`, wherever the host platform expects to find it.
-	 * Android has to use logcat because its processes wire stdout and stderr to /dev/null.
-	 */
 	class Logger {
 	public:
 		/**
@@ -87,10 +83,9 @@ namespace music_lyric_player::utils {
 		};
 
 		/**
-		 * Returns the word `level` is written as, held to four characters so the column lines up.
-		 * That is why `eror` and `dbug` are spelt short rather than misspelt.
+		 * Returns the single letter `level` is written as, which keeps that field one column wide however many levels there are.
 		 */
-		static const char* nameOf(Level level) {
+		static const char* resolveLevel(Level level) {
 			switch (level) {
 			case Level::Error:
 				return "E";
@@ -98,6 +93,8 @@ namespace music_lyric_player::utils {
 				return "W";
 			case Level::Debug:
 				return "D";
+			case Level::Info:
+				break;
 			}
 			return "I";
 		}
@@ -123,9 +120,6 @@ namespace music_lyric_player::utils {
 		 * Formats one message and writes it as a single line, which is where the platform difference lives.
 		 */
 		void write(Level level, const char* format, std::va_list args) const {
-			char timestamp[kTimeLimit];
-			formatTime(timestamp, sizeof(timestamp));
-
 #if defined(__ANDROID__)
 			int priority = ANDROID_LOG_INFO;
 			switch (level) {
@@ -142,14 +136,18 @@ namespace music_lyric_player::utils {
 				break;
 			}
 
-			// Logcat filters on the tag, so the project name claims it and the whole formatted line still goes into the text.
+			// Logcat gives the time, the level and the tag it filters on their own columns, so repeating any of them in the text would only push the message further right.
+			// That leaves the module name, which logcat has nowhere to put because the tag column is spoken for by the project.
 			char message[kMessageLimit];
 			std::vsnprintf(message, sizeof(message), format, args);
-			__android_log_print(priority, kProject, "[%s] [%s:%s] [%s] %s", timestamp, nameOf(level), kProject, this->tag, message);
+			__android_log_print(priority, kProject, "[%s] %s", this->tag, message);
 #else
+			char timestamp[kTimeLimit];
+			formatTime(timestamp, sizeof(timestamp));
+
 			// Only the levels reporting a problem take stderr, which is what sorts them onto console.error in the browser.
 			std::FILE* stream = level == Level::Error || level == Level::Warn ? stderr : stdout;
-			std::fprintf(stream, "[%s] [%s] [%s:%s] ", timestamp, nameOf(level), kProject, this->tag);
+			std::fprintf(stream, "[%s] [%s] [%s:%s] ", timestamp, resolveLevel(level), kProject, this->tag);
 			std::vfprintf(stream, format, args);
 			std::fputc('\n', stream);
 #endif

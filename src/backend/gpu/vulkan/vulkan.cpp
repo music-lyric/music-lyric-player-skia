@@ -7,24 +7,9 @@
 #include <utility>
 #include <vector>
 
-#if defined(__ANDROID__)
-#include <android/native_window.h>
-
-#define VK_USE_PLATFORM_ANDROID_KHR
-#else
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
-
-#define VK_USE_PLATFORM_WIN32_KHR
-#endif
-
 #include <vulkan/vulkan.h>
 
+#include "backend/gpu/vulkan/platform.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkColorSpace.h"
 #include "include/core/SkColorType.h"
@@ -48,91 +33,6 @@
 namespace music_lyric_player::backend::gpu::vulkan {
 	namespace {
 		constexpr utils::Logger logger{"VulkanSurface"};
-
-#if defined(__ANDROID__)
-		// A window here is an `ANativeWindow*`, which is refcounted and drawn into through the Android surface extension.
-		constexpr const char* kSurfaceExtension = VK_KHR_ANDROID_SURFACE_EXTENSION_NAME;
-
-		/**
-		 * Creates a Vulkan surface for the platform window `handle`, or a null handle on failure.
-		 */
-		VkSurfaceKHR createPlatformSurface(VkInstance instance, void* handle) {
-			VkAndroidSurfaceCreateInfoKHR createInfo{};
-			createInfo.sType  = VK_STRUCTURE_TYPE_ANDROID_SURFACE_CREATE_INFO_KHR;
-			createInfo.window = static_cast<ANativeWindow*>(handle);
-
-			VkSurfaceKHR surface = VK_NULL_HANDLE;
-			if (vkCreateAndroidSurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) {
-				logger.error("vkCreateAndroidSurfaceKHR failed");
-				return VK_NULL_HANDLE;
-			}
-			return surface;
-		}
-
-		/**
-		 * Reads the window's drawable area in physical pixels.
-		 */
-		void queryWindowSize(void* handle, int& width, int& height) {
-			auto* window = static_cast<ANativeWindow*>(handle);
-			width        = ANativeWindow_getWidth(window);
-			height       = ANativeWindow_getHeight(window);
-		}
-
-		/**
-		 * Takes a reference on the window for as long as a surface draws into it.
-		 * The host owns a reference of its own and may drop it as soon as it has handed the window over.
-		 */
-		void retainWindow(void* handle) {
-			ANativeWindow_acquire(static_cast<ANativeWindow*>(handle));
-		}
-
-		/**
-		 * Drops the reference `retainWindow` took.
-		 */
-		void releaseWindow(void* handle) {
-			ANativeWindow_release(static_cast<ANativeWindow*>(handle));
-		}
-#else
-		// A window here is an `HWND`, drawn into through the Win32 surface extension.
-		constexpr const char* kSurfaceExtension = VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
-
-		/**
-		 * Creates a Vulkan surface for the platform window `handle`, or a null handle on failure.
-		 */
-		VkSurfaceKHR createPlatformSurface(VkInstance instance, void* handle) {
-			VkWin32SurfaceCreateInfoKHR createInfo{};
-			createInfo.sType     = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-			createInfo.hinstance = GetModuleHandle(nullptr);
-			createInfo.hwnd      = static_cast<HWND>(handle);
-
-			VkSurfaceKHR surface = VK_NULL_HANDLE;
-			if (vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) {
-				logger.error("vkCreateWin32SurfaceKHR failed");
-				return VK_NULL_HANDLE;
-			}
-			return surface;
-		}
-
-		/**
-		 * Reads the window's client area in physical pixels, which is what it is as long as the window is per-monitor DPI aware.
-		 */
-		void queryWindowSize(void* handle, int& width, int& height) {
-			RECT rect{};
-			GetClientRect(static_cast<HWND>(handle), &rect);
-			width  = rect.right - rect.left;
-			height = rect.bottom - rect.top;
-		}
-
-		/**
-		 * Does nothing: an `HWND` is not refcounted and stays valid until its owner destroys the window.
-		 */
-		void retainWindow(void*) {}
-
-		/**
-		 * Does nothing, matching `retainWindow`.
-		 */
-		void releaseWindow(void*) {}
-#endif
 
 		/**
 		 * Resolves a Vulkan entry point from the device when available, else from the instance.
@@ -300,7 +200,7 @@ namespace music_lyric_player::backend::gpu::vulkan {
 		bool SharedContext::createInstance() {
 			this->instanceExtensionNames = {
 				VK_KHR_SURFACE_EXTENSION_NAME,
-				kSurfaceExtension,
+				surfaceExtension(),
 			};
 			std::vector<const char*> enabled;
 			enabled.reserve(this->instanceExtensionNames.size());
@@ -477,7 +377,7 @@ namespace music_lyric_player::backend::gpu::vulkan {
 		}
 
 		bool SwapchainSurface::createSurface() {
-			this->surface = createPlatformSurface(this->shared->instance, this->window);
+			this->surface = createWindowSurface(this->shared->instance, this->window);
 			return this->surface != VK_NULL_HANDLE;
 		}
 

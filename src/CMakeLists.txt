@@ -54,6 +54,7 @@ if(EMSCRIPTEN)
 elseif(ANDROID)
 	set(_backend_sources
 		backend/gpu/vulkan/vulkan.cpp
+		backend/gpu/vulkan/platform_android.cpp
 		backend/gpu/gles/gles.cpp
 		backend/font/registry.cpp
 	)
@@ -64,6 +65,7 @@ else()
 
 	set(_backend_sources
 		backend/gpu/vulkan/vulkan.cpp
+		backend/gpu/vulkan/platform_windows.cpp
 		backend/font/font_win.cpp
 		backend/font/registry.cpp
 	)

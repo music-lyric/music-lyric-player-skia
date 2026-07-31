@@ -1,9 +1,9 @@
+#include "backend/gpu/webgl.h"
+
 #include <cstdio>
 #include <memory>
 #include <string>
 #include <utility>
-
-#include "backend/gpu/webgl.h"
 
 #include <GLES3/gl3.h>
 #include <emscripten/html5.h>
@@ -39,9 +39,9 @@ namespace music_lyric_player::backend::gpu {
 		 * A Skia surface wrapping the default framebuffer of one canvas' WebGL 2 context.
 		 * The canvas element itself is the single source of truth for the backbuffer size, so the surface is rebuilt from a size read back off the element rather than from anything cached here.
 		 */
-		class WebGLSurface : public CanvasSurface {
+		class CanvasSurface : public Surface {
 		public:
-			~WebGLSurface() override {
+			~CanvasSurface() override {
 				cleanup();
 			}
 
@@ -51,8 +51,8 @@ namespace music_lyric_player::backend::gpu {
 			 */
 			bool init(const char* selector);
 
-			void renderFrame(const std::function<void(SkCanvas*)>& paint) override;
-			void onResize() override;
+			void renderFrame(const std::function<void(SkCanvas*)>& draw) override;
+			void handleResize(int width, int height) override;
 
 			int width() const override {
 				return this->backbufferWidth;
@@ -61,12 +61,6 @@ namespace music_lyric_player::backend::gpu {
 			int height() const override {
 				return this->backbufferHeight;
 			}
-
-			float devicePixelRatio() const override {
-				return this->dpr;
-			}
-
-			void configure(int width, int height, float devicePixelRatio) override;
 
 		private:
 			/**
@@ -91,13 +85,12 @@ namespace music_lyric_player::backend::gpu {
 			sk_sp<GrDirectContext>          grContext;
 			sk_sp<SkSurface>                surface;
 
-			int   backbufferWidth  = 0;
-			int   backbufferHeight = 0;
-			float dpr              = 1.0f;
-			bool  needRebuild      = true; // rebuild the Skia surface before the next frame
+			int  backbufferWidth  = 0;
+			int  backbufferHeight = 0;
+			bool needRebuild      = true; // rebuild the Skia surface before the next frame
 		};
 
-		bool WebGLSurface::init(const char* selector) {
+		bool CanvasSurface::init(const char* selector) {
 			if (selector == nullptr || *selector == '\0') {
 				std::fprintf(stderr, "[backend] a canvas selector is required\n");
 				return false;
@@ -140,7 +133,7 @@ namespace music_lyric_player::backend::gpu {
 			return true;
 		}
 
-		bool WebGLSurface::makeCurrent() {
+		bool CanvasSurface::makeCurrent() {
 			if (emscripten_webgl_get_current_context() == this->context) {
 				return true;
 			}
@@ -156,7 +149,7 @@ namespace music_lyric_player::backend::gpu {
 			return true;
 		}
 
-		bool WebGLSurface::rebuildSurface() {
+		bool CanvasSurface::rebuildSurface() {
 			this->surface.reset();
 
 			int width  = 0;
@@ -190,7 +183,7 @@ namespace music_lyric_player::backend::gpu {
 			return true;
 		}
 
-		void WebGLSurface::renderFrame(const std::function<void(SkCanvas*)>& paint) {
+		void CanvasSurface::renderFrame(const std::function<void(SkCanvas*)>& draw) {
 			if (!makeCurrent()) {
 				return;
 			}
@@ -198,28 +191,21 @@ namespace music_lyric_player::backend::gpu {
 				return; // the canvas has no area yet; skip the frame and try again on the next one
 			}
 
-			paint(this->surface->getCanvas());
+			draw(this->surface->getCanvas());
 
 			// There is nothing to present to: the browser composites the canvas once the frame callback returns, so flushing the GPU work is all that ending a frame means here.
 			this->grContext->flushAndSubmit(this->surface.get(), GrSyncCpu::kNo);
 		}
 
-		void WebGLSurface::onResize() {
-			// The new size is read back off the canvas at rebuild time, so there is nothing to record here.
-			this->needRebuild = true;
-		}
-
-		void WebGLSurface::configure(int width, int height, float devicePixelRatio) {
-			this->dpr = devicePixelRatio > 0.0f ? devicePixelRatio : 1.0f;
-
+		void CanvasSurface::handleResize(int width, int height) {
 			if (width > 0 && height > 0) {
-				// Sizing the element from here keeps its backbuffer and the Skia surface in lockstep, leaving the page owning only the CSS size.
+				// The page owns layout, so its numbers are the truth here: sizing the element from them keeps its backbuffer and the Skia surface in lockstep.
 				emscripten_set_canvas_element_size(this->selector.c_str(), width, height);
 			}
 			this->needRebuild = true;
 		}
 
-		void WebGLSurface::cleanup() {
+		void CanvasSurface::cleanup() {
 			if (this->context <= 0) {
 				return;
 			}
@@ -234,8 +220,8 @@ namespace music_lyric_player::backend::gpu {
 		}
 	} // namespace
 
-	std::unique_ptr<CanvasSurface> createCanvasSurface(const NativeWindow& window) {
-		auto surface = std::make_unique<WebGLSurface>();
+	std::unique_ptr<Surface> createWebglSurface(const NativeWindow& window) {
+		auto surface = std::make_unique<CanvasSurface>();
 		if (!surface->init(window.selector)) {
 			return nullptr;
 		}

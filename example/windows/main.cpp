@@ -6,7 +6,7 @@
 
 #include "audio.h"
 #include "backend/font/font.h"
-#include "backend/gpu/surface.h"
+#include "backend/gpu/vulkan.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkFontMgr.h"
 #include "include/core/SkRect.h"
@@ -56,7 +56,7 @@ int main() {
 		return 1;
 	}
 
-	auto surface = music_lyric_player::backend::gpu::createWindowSurface({window.hwnd()});
+	auto surface = music_lyric_player::backend::gpu::createVulkanSurface({window.hwnd()});
 	if (surface == nullptr) {
 		std::fprintf(stderr, "[example] failed to create the backend surface\n");
 		return 1;
@@ -105,7 +105,7 @@ int main() {
 	applyDefaults();
 
 	example::ControlPanel panel;
-	if (!panel.init(window.handle(), surface->devicePixelRatio())) {
+	if (!panel.init(window.handle(), window.devicePixelRatio())) {
 		std::fprintf(stderr, "[example] the control panel is unavailable; keyboard controls still work\n");
 	}
 
@@ -276,7 +276,10 @@ int main() {
 		}
 
 		if (window.pollResized()) {
-			surface->onResize();
+			int frameWidth  = 0;
+			int frameHeight = 0;
+			window.framebufferSize(frameWidth, frameHeight);
+			surface->handleResize(frameWidth, frameHeight);
 		}
 		player.tick();
 
@@ -315,7 +318,7 @@ int main() {
 				canvas->save();
 				canvas->clipRect(SkRect::MakeXYWH(static_cast<float>(panelWidth), 0.0f, static_cast<float>(lyricWidth), static_cast<float>(lyricHeight)));
 				canvas->translate(static_cast<float>(panelWidth), 0.0f);
-				renderer.setViewport(lyricWidth, lyricHeight, surface->devicePixelRatio());
+				renderer.setViewport(lyricWidth, lyricHeight, window.devicePixelRatio());
 				renderer.render(canvas);
 				canvas->restore();
 			}

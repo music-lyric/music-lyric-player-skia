@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "backend/font/font.h"
-#include "backend/gpu/surface.h"
+#include "backend/gpu/vulkan.h"
 #include "include/core/SkFontMgr.h"
 #include "music_lyric_model.h"
 #include "playback/player.h"
@@ -67,13 +67,15 @@ struct music_lyric_player_handle {
 
 /**
  * The GPU surface and renderer behind a renderer C-ABI handle; the renderer borrows an external player.
+ * The device-pixel ratio is kept here rather than in the surface: the host reports it alongside every resize, and no backend consumes it.
  */
 struct music_lyric_player_renderer_handle {
 	std::unique_ptr<music_lyric_player::backend::gpu::Surface> surface;
 	music_lyric_player::rendering::Renderer                    renderer;
+	float                                                      devicePixelRatio = 1.0f;
 
 	music_lyric_player_renderer_handle(music_lyric_player::playback::Player& player, void* window)
-	    : surface(music_lyric_player::backend::gpu::createWindowSurface({window})), renderer(player, music_lyric_player::backend::font::createFontMgr(), player.clock()) {}
+	    : surface(music_lyric_player::backend::gpu::createVulkanSurface({window})), renderer(player, music_lyric_player::backend::font::createFontMgr(), player.clock()) {}
 };
 
 music_lyric_player_handle* music_lyric_player_create(void) {
@@ -177,14 +179,17 @@ void music_lyric_player_renderer_destroy(music_lyric_player_renderer_handle* ren
 void music_lyric_player_renderer_render(music_lyric_player_renderer_handle* renderer) {
 	guardVoid([&] {
 		renderer->surface->renderFrame([renderer](SkCanvas* canvas) {
-			renderer->renderer.setViewport(renderer->surface->width(), renderer->surface->height(), renderer->surface->devicePixelRatio());
+			renderer->renderer.setViewport(renderer->surface->width(), renderer->surface->height(), renderer->devicePixelRatio);
 			renderer->renderer.render(canvas);
 		});
 	});
 }
 
-void music_lyric_player_renderer_resize(music_lyric_player_renderer_handle* renderer) {
-	guardVoid([&] { renderer->surface->onResize(); });
+void music_lyric_player_renderer_set_viewport(music_lyric_player_renderer_handle* renderer, int width, int height, float device_pixel_ratio) {
+	guardVoid([&] {
+		renderer->devicePixelRatio = device_pixel_ratio > 0.0f ? device_pixel_ratio : 1.0f;
+		renderer->surface->handleResize(width, height);
+	});
 }
 
 void music_lyric_player_renderer_update_config_json(music_lyric_player_renderer_handle* renderer, const char* json) {

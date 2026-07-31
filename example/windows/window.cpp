@@ -27,7 +27,7 @@ namespace example {
 	}
 
 	bool Window::init(int width, int height, const char* title) {
-		// The backend surface reads the client rect in physical pixels and the window DPI directly, so the process must be per-monitor DPI aware or sizes and the device-pixel ratio go wrong.
+		// The backend surface reads the client rect in physical pixels, and the host reports the device-pixel ratio from here, so the process must be per-monitor DPI aware or both go wrong.
 		if (liveWindows == 0) {
 			SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
@@ -116,6 +116,26 @@ namespace example {
 		const bool wasResized = this->resized;
 		this->resized         = false;
 		return wasResized;
+	}
+
+	void Window::framebufferSize(int& width, int& height) const {
+		width  = 0;
+		height = 0;
+		if (this->window != nullptr) {
+			glfwGetFramebufferSize(this->window, &width, &height);
+		}
+	}
+
+	float Window::devicePixelRatio() const {
+		if (this->window == nullptr) {
+			return 1.0f;
+		}
+
+		// GLFW reports the content scale as the window DPI over the platform baseline, which is exactly the ratio the renderer scales by.
+		float scaleX = 1.0f;
+		float scaleY = 1.0f;
+		glfwGetWindowContentScale(this->window, &scaleX, &scaleY);
+		return scaleX > 0.0f ? scaleX : 1.0f;
 	}
 
 	std::vector<InputAction> Window::drainActions() {

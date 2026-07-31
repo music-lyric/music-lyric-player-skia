@@ -255,7 +255,7 @@ namespace music_lyric_player::platform::web {
 					backend::gpu::NativeWindow window;
 					window.selector = selector.c_str();
 
-					std::unique_ptr<backend::gpu::CanvasSurface> surface = backend::gpu::createCanvasSurface(window);
+					std::unique_ptr<backend::gpu::Surface> surface = backend::gpu::createWebglSurface(window);
 					if (surface == nullptr) {
 						return nullptr;
 					}
@@ -275,8 +275,9 @@ namespace music_lyric_player::platform::web {
 			 */
 			void configure(int width, int height, float devicePixelRatio) {
 				guard([&] {
+					this->devicePixelRatio = devicePixelRatio > 0.0f ? devicePixelRatio : 1.0f;
 					if (this->surface != nullptr) {
-						this->surface->configure(width, height, devicePixelRatio);
+						this->surface->handleResize(width, height);
 					}
 				});
 			}
@@ -290,7 +291,7 @@ namespace music_lyric_player::platform::web {
 						return;
 					}
 					this->surface->renderFrame([this](SkCanvas* canvas) {
-						this->renderer.setViewport(this->surface->width(), this->surface->height(), this->surface->devicePixelRatio());
+						this->renderer.setViewport(this->surface->width(), this->surface->height(), this->devicePixelRatio);
 						this->renderer.render(canvas);
 					});
 				});
@@ -331,13 +332,15 @@ namespace music_lyric_player::platform::web {
 			}
 
 		private:
-			Renderer(Player& player, std::unique_ptr<backend::gpu::CanvasSurface> surface)
+			Renderer(Player& player, std::unique_ptr<backend::gpu::Surface> surface)
 			    : surface(std::move(surface)), renderer(player.engine(), backend::font::createFontMgr(), player.engine().clock()) {
 				liveRenderers().push_back(this);
 			}
 
-			std::unique_ptr<backend::gpu::CanvasSurface> surface;
-			rendering::Renderer                          renderer;
+			std::unique_ptr<backend::gpu::Surface> surface;
+			rendering::Renderer                    renderer;
+			// The page reports the ratio with every resize and no backend consumes it, so it is carried here and handed to the renderer each frame.
+			float devicePixelRatio = 1.0f;
 		};
 
 		/**

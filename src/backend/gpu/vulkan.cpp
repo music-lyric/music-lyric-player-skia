@@ -1,3 +1,5 @@
+#include "backend/gpu/vulkan.h"
+
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
@@ -5,8 +7,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "backend/gpu/surface.h"
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -129,21 +129,21 @@ namespace music_lyric_player::backend::gpu {
 		 * Sync is intentionally simple: one queue-wait-idle per frame, no pipelining, which is enough for this use.
 		 * Assumes the window is per-monitor DPI aware, so its client rect is already in physical pixels.
 		 */
-		class WindowSurface : public Surface {
+		class SwapchainSurface : public Surface {
 		public:
-			explicit WindowSurface(std::shared_ptr<SharedContext> shared) : shared(std::move(shared)) {}
+			explicit SwapchainSurface(std::shared_ptr<SharedContext> shared) : shared(std::move(shared)) {}
 
 			/**
 			 * Binds the surface to `hwnd` and builds its swapchain; returns false on any failure.
 			 */
 			bool init(HWND hwnd);
 
-			~WindowSurface() override {
+			~SwapchainSurface() override {
 				cleanup();
 			}
 
-			void renderFrame(const std::function<void(SkCanvas*)>& paint) override;
-			void onResize() override;
+			void renderFrame(const std::function<void(SkCanvas*)>& draw) override;
+			void handleResize(int width, int height) override;
 
 			int width() const override {
 				return static_cast<int>(this->swapchainExtent.width);
@@ -152,8 +152,6 @@ namespace music_lyric_player::backend::gpu {
 			int height() const override {
 				return static_cast<int>(this->swapchainExtent.height);
 			}
-
-			float devicePixelRatio() const override;
 
 		private:
 			/**
@@ -202,6 +200,9 @@ namespace music_lyric_player::backend::gpu {
 			VkExtent2D                    swapchainExtent = {0, 0};
 			std::vector<VkImage>          swapchainImages;
 			std::vector<sk_sp<SkSurface>> surfaces;
+
+			int requestedWidth  = 0; // host's view of the client size, superseded by whatever the surface reports
+			int requestedHeight = 0;
 
 			bool          needRecreate      = false; // rebuild the swapchain before the next frame
 			std::uint32_t currentImageIndex = 0;     // backbuffer index acquire selected, presented by present
@@ -375,12 +376,12 @@ namespace music_lyric_player::backend::gpu {
 			}
 		}
 
-		bool WindowSurface::init(HWND hwnd) {
+		bool SwapchainSurface::init(HWND hwnd) {
 			this->hwnd = hwnd;
 			return createSurface() && this->shared->completeFor(this->surface) && createSwapchain();
 		}
 
-		bool WindowSurface::createSurface() {
+		bool SwapchainSurface::createSurface() {
 			VkWin32SurfaceCreateInfoKHR createInfo{};
 			createInfo.sType     = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
 			createInfo.hinstance = GetModuleHandle(nullptr);
@@ -393,7 +394,7 @@ namespace music_lyric_player::backend::gpu {
 			return true;
 		}
 
-		bool WindowSurface::createSwapchain() {
+		bool SwapchainSurface::createSwapchain() {
 			VkSurfaceCapabilitiesKHR capabilities{};
 			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->shared->physicalDevice, this->surface, &capabilities);
 
@@ -415,9 +416,12 @@ namespace music_lyric_player::backend::gpu {
 			}
 			this->swapchainFormat = chosen.format;
 
-			int clientWidth  = 0;
-			int clientHeight = 0;
-			queryClientSize(clientWidth, clientHeight);
+			int clientWidth  = this->requestedWidth;
+			int clientHeight = this->requestedHeight;
+			// Nothing has reported a size yet, so the first swapchain falls back to the window's own client rect.
+			if (clientWidth <= 0 || clientHeight <= 0) {
+				queryClientSize(clientWidth, clientHeight);
+			}
 
 			VkExtent2D extent = capabilities.currentExtent;
 			if (capabilities.currentExtent.width == UINT32_MAX) {
@@ -489,7 +493,7 @@ namespace music_lyric_player::backend::gpu {
 			return true;
 		}
 
-		void WindowSurface::destroySwapchain() {
+		void SwapchainSurface::destroySwapchain() {
 			this->surfaces.clear();
 			this->swapchainImages.clear();
 			if (this->swapchain != VK_NULL_HANDLE) {
@@ -498,7 +502,7 @@ namespace music_lyric_player::backend::gpu {
 			}
 		}
 
-		bool WindowSurface::recreateSwapchain() {
+		bool SwapchainSurface::recreateSwapchain() {
 			if (this->shared->device != VK_NULL_HANDLE) {
 				vkDeviceWaitIdle(this->shared->device);
 			}
@@ -506,16 +510,16 @@ namespace music_lyric_player::backend::gpu {
 			return createSwapchain();
 		}
 
-		void WindowSurface::renderFrame(const std::function<void(SkCanvas*)>& paint) {
+		void SwapchainSurface::renderFrame(const std::function<void(SkCanvas*)>& draw) {
 			SkCanvas* canvas = acquire();
 			if (canvas == nullptr) {
 				return; // minimized or swapchain out of date; skip this frame
 			}
-			paint(canvas);
+			draw(canvas);
 			present();
 		}
 
-		SkCanvas* WindowSurface::acquire() {
+		SkCanvas* SwapchainSurface::acquire() {
 			if (this->needRecreate || this->swapchain == VK_NULL_HANDLE) {
 				this->needRecreate = false;
 				if (!recreateSwapchain()) {
@@ -556,7 +560,7 @@ namespace music_lyric_player::backend::gpu {
 			return target->getCanvas();
 		}
 
-		void WindowSurface::present() {
+		void SwapchainSurface::present() {
 			GrFlushInfo                flushInfo{};
 			skgpu::MutableTextureState presentState = skgpu::MutableTextureStates::MakeVulkan(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, this->shared->queueFamilyIndex);
 			this->shared->context->flush(this->currentSurface, flushInfo, &presentState);
@@ -577,16 +581,14 @@ namespace music_lyric_player::backend::gpu {
 			this->currentSurface = nullptr;
 		}
 
-		void WindowSurface::onResize() {
-			this->needRecreate = true;
+		void SwapchainSurface::handleResize(int width, int height) {
+			// Win32 reports the client size back through the surface capabilities, so these numbers only stand in until the next swapchain asks for them.
+			this->requestedWidth  = width;
+			this->requestedHeight = height;
+			this->needRecreate    = true;
 		}
 
-		float WindowSurface::devicePixelRatio() const {
-			const UINT dpi = GetDpiForWindow(this->hwnd);
-			return dpi > 0 ? static_cast<float>(dpi) / 96.0f : 1.0f;
-		}
-
-		void WindowSurface::cleanup() {
+		void SwapchainSurface::cleanup() {
 			if (this->shared == nullptr) {
 				return;
 			}
@@ -602,7 +604,7 @@ namespace music_lyric_player::backend::gpu {
 			}
 		}
 
-		void WindowSurface::queryClientSize(int& width, int& height) const {
+		void SwapchainSurface::queryClientSize(int& width, int& height) const {
 			RECT rect{};
 			GetClientRect(this->hwnd, &rect);
 			width  = rect.right - rect.left;
@@ -610,14 +612,14 @@ namespace music_lyric_player::backend::gpu {
 		}
 	} // namespace
 
-	std::unique_ptr<Surface> createWindowSurface(const NativeWindow& window) {
+	std::unique_ptr<Surface> createVulkanSurface(const NativeWindow& window) {
 		std::shared_ptr<SharedContext> shared = acquireSharedContext();
 		if (shared == nullptr) {
 			return nullptr;
 		}
 
-		auto surface = std::make_unique<WindowSurface>(std::move(shared));
-		if (!surface->init(static_cast<HWND>(window.hwnd))) {
+		auto surface = std::make_unique<SwapchainSurface>(std::move(shared));
+		if (!surface->init(static_cast<HWND>(window.handle))) {
 			return nullptr;
 		}
 		return surface;

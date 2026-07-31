@@ -2,17 +2,16 @@
 #define MUSIC_LYRIC_PLAYER_BACKEND_GPU_SURFACE_H_
 
 #include <functional>
-#include <memory>
 
 class SkCanvas;
 
 namespace music_lyric_player::backend::gpu {
 	/**
 	 * Opaque handle to the native window a surface draws into.
-	 * Windows carries an `HWND` and the web a CSS selector picking the canvas element; other platforms extend it with their own fields.
+	 * `handle` carries the platform's own window pointer, an `HWND` on Windows and an `ANativeWindow*` on Android; the web has no such object and names its canvas with a CSS selector instead.
 	 */
 	struct NativeWindow {
-		void*       hwnd     = nullptr;
+		void*       handle   = nullptr;
 		const char* selector = nullptr;
 	};
 
@@ -20,21 +19,23 @@ namespace music_lyric_player::backend::gpu {
 	 * A GPU-backed drawing target bound to a native window.
 	 * Owns its swapchain and is driven once per frame by the caller, drawing through a shared GPU context.
 	 * The renderer never sees this type; the platform layer drives it and hands the canvas to the renderer.
+	 * The device-pixel ratio deliberately lives outside this interface: no backend consumes it, and the host that reports a resize already knows it.
 	 */
 	class Surface {
 	public:
 		virtual ~Surface() = default;
 
 		/**
-		 * Draws one frame: acquires a backbuffer, invokes `paint` with its canvas, then presents it.
-		 * When the surface cannot present (window minimized or swapchain out of date), `paint` is skipped.
+		 * Draws one frame: acquires a backbuffer, invokes `draw` with its canvas, then presents it.
+		 * When the surface cannot present (window minimized or swapchain out of date), `draw` is skipped.
 		 */
-		virtual void renderFrame(const std::function<void(SkCanvas*)>& paint) = 0;
+		virtual void renderFrame(const std::function<void(SkCanvas*)>& draw) = 0;
 
 		/**
-		 * Rebuilds the swapchain against the window's current client size; call after the window resized.
+		 * Reports that the drawing area became `width` by `height` physical pixels, rebuilding against it before the next frame.
+		 * Backends whose platform reports the drawable size authoritatively verify these numbers and override them; only the web takes them as the truth, because nothing else there knows the page's layout.
 		 */
-		virtual void onResize() = 0;
+		virtual void handleResize(int width, int height) = 0;
 
 		/**
 		 * The current backbuffer width in physical pixels.
@@ -45,20 +46,7 @@ namespace music_lyric_player::backend::gpu {
 		 * The current backbuffer height in physical pixels.
 		 */
 		virtual int height() const = 0;
-
-		/**
-		 * The window's device-pixel ratio, in physical pixels per logical unit.
-		 */
-		virtual float devicePixelRatio() const = 0;
 	};
-
-	/**
-	 * Creates a window-owned Vulkan surface for `window`, or null on failure.
-	 * Each surface owns its swapchain, while the Vulkan instance, device and Skia context are shared with every other live surface.
-	 * The shared stack is built by the first surface and freed with the last.
-	 * Surfaces are not thread safe and all of them must be created and driven from the same thread.
-	 */
-	std::unique_ptr<Surface> createWindowSurface(const NativeWindow& window);
 } // namespace music_lyric_player::backend::gpu
 
 #endif // MUSIC_LYRIC_PLAYER_BACKEND_GPU_SURFACE_H_

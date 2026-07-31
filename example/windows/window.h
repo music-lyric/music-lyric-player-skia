@@ -57,6 +57,17 @@ namespace example {
 		bool pollResized();
 
 		/**
+		 * Reads the framebuffer size in physical pixels.
+		 */
+		void framebufferSize(int& width, int& height) const;
+
+		/**
+		 * Returns the window's device-pixel ratio, in physical pixels per logical unit.
+		 * The backend does not track it, so the host reads it here and passes it on to whatever scales by it.
+		 */
+		float devicePixelRatio() const;
+
+		/**
 		 * Returns the navigation actions queued from key presses since the last call, clearing the queue.
 		 */
 		std::vector<InputAction> drainActions();

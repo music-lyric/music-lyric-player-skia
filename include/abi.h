@@ -138,9 +138,10 @@ extern "C" {
 	MUSIC_LYRIC_PLAYER_API void music_lyric_player_renderer_render(music_lyric_player_renderer_handle* renderer);
 
 	/**
-	 * Rebuilds the surface after the host window resized.
+	 * Reports the host window's drawing area: `width` by `height` physical pixels, at `device_pixel_ratio` physical pixels per logical unit.
+	 * The surface rebuilds against the size before the next frame, and the ratio scales the lyric layout from the next frame on.
 	 */
-	MUSIC_LYRIC_PLAYER_API void music_lyric_player_renderer_resize(music_lyric_player_renderer_handle* renderer);
+	MUSIC_LYRIC_PLAYER_API void music_lyric_player_renderer_set_viewport(music_lyric_player_renderer_handle* renderer, int width, int height, float device_pixel_ratio);
 
 	/**
 	 * Merges a JSON config patch into the renderer's config; only the fields present in `json` take effect.

@@ -53,10 +53,10 @@ namespace music_lyric_player {
 		}
 
 		/**
-		 * Rebuilds the surface after the host window resized.
+		 * Reports the window's drawing area in physical pixels, at `devicePixelRatio` physical pixels per logical unit.
 		 */
-		void resize() {
-			music_lyric_player_renderer_resize(this->handle);
+		void setViewport(int width, int height, float devicePixelRatio) {
+			music_lyric_player_renderer_set_viewport(this->handle, width, height, devicePixelRatio);
 		}
 
 		/**

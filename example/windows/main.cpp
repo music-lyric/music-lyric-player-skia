@@ -5,7 +5,7 @@
 
 #include "audio.h"
 #include "backend/font/font.h"
-#include "backend/gpu/vulkan/index.h"
+#include "backend/gpu/vulkan/vulkan.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkFontMgr.h"
 #include "include/core/SkRect.h"
@@ -13,7 +13,7 @@
 #include "music_lyric_model.h"
 #include "panel.h"
 #include "playback/player.h"
-#include "rendering/config/index.h"
+#include "rendering/config/config.h"
 #include "rendering/renderer.h"
 #include "state.h"
 #include "text.h"

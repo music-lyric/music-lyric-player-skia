@@ -6,8 +6,8 @@
 
 #include "include/core/SkRefCnt.h"
 #include "music_lyric_model.h"
-#include "rendering/components/container/index.h"
-#include "rendering/config/index.h"
+#include "rendering/components/container/container.h"
+#include "rendering/config/config.h"
 #include "rendering/core/effect.h"
 #include "rendering/core/layout.h"
 #include "rendering/core/line.h"

@@ -9,12 +9,12 @@
 #include <vector>
 
 #include "backend/font/font.h"
-#include "backend/gpu/vulkan/index.h"
+#include "backend/gpu/vulkan/vulkan.h"
 #include "include/core/SkFontMgr.h"
 #include "music_lyric_model.h"
 #include "playback/player.h"
 #include "rendering/config/config.gen.glaze.h"
-#include "rendering/config/index.h"
+#include "rendering/config/config.h"
 #include "rendering/renderer.h"
 #include "utils/config/property.glaze.h"
 #include "utils/logger/logger.h"

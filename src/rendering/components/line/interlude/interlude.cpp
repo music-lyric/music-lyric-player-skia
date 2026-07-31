@@ -1,4 +1,4 @@
-#include "rendering/components/line/interlude/index.h"
+#include "rendering/components/line/interlude/interlude.h"
 
 #include <algorithm>
 #include <cmath>

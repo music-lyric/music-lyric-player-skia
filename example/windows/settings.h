@@ -1,7 +1,7 @@
 #ifndef MUSIC_LYRIC_PLAYER_EXAMPLE_SETTINGS_H_
 #define MUSIC_LYRIC_PLAYER_EXAMPLE_SETTINGS_H_
 
-#include "rendering/config/index.h"
+#include "rendering/config/config.h"
 
 namespace example {
 	/**

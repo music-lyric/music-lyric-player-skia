@@ -2,7 +2,7 @@
 #define MUSIC_LYRIC_PLAYER_RENDERING_COMMON_CONTEXT_H_
 
 #include "include/core/SkRefCnt.h"
-#include "rendering/config/index.h"
+#include "rendering/config/config.h"
 
 class SkUnicode;
 class SkFontMgr;

@@ -1,4 +1,4 @@
-#include "backend/gpu/webgl/index.h"
+#include "backend/gpu/webgl/webgl.h"
 
 #include <memory>
 #include <string>

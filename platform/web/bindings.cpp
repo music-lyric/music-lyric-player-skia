@@ -12,7 +12,7 @@
 
 #include "backend/font/font.h"
 #include "backend/font/registry.h"
-#include "backend/gpu/webgl/index.h"
+#include "backend/gpu/webgl/webgl.h"
 #include "clock.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkData.h"
@@ -20,7 +20,7 @@
 #include "music_lyric_model.h"
 #include "playback/player.h"
 #include "rendering/config/config.gen.glaze.h"
-#include "rendering/config/index.h"
+#include "rendering/config/config.h"
 #include "rendering/renderer.h"
 #include "utils/config/property.glaze.h"
 

@@ -1,4 +1,4 @@
-#include "rendering/components/line/normal/main/syllable/index.h"
+#include "rendering/components/line/normal/main/syllable/syllable.h"
 
 #include <algorithm>
 #include <cstddef>

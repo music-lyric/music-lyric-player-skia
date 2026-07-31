@@ -1,11 +1,11 @@
-#ifndef MUSIC_LYRIC_PLAYER_RENDERING_COMPONENTS_LINE_INTERLUDE_INDEX_H_
-#define MUSIC_LYRIC_PLAYER_RENDERING_COMPONENTS_LINE_INTERLUDE_INDEX_H_
+#ifndef MUSIC_LYRIC_PLAYER_RENDERING_COMPONENTS_LINE_INTERLUDE_INTERLUDE_H_
+#define MUSIC_LYRIC_PLAYER_RENDERING_COMPONENTS_LINE_INTERLUDE_INTERLUDE_H_
 
 #include <array>
 #include <cstddef>
 
 #include "music_lyric_model.h"
-#include "rendering/components/line/base/index.h"
+#include "rendering/components/line/base/base.h"
 #include "rendering/utils/animation/tween.h"
 
 class SkCanvas;
@@ -64,4 +64,4 @@ namespace music_lyric_player::rendering::components::line::interlude {
 	};
 } // namespace music_lyric_player::rendering::components::line::interlude
 
-#endif // MUSIC_LYRIC_PLAYER_RENDERING_COMPONENTS_LINE_INTERLUDE_INDEX_H_
+#endif // MUSIC_LYRIC_PLAYER_RENDERING_COMPONENTS_LINE_INTERLUDE_INTERLUDE_H_

@@ -1,5 +1,5 @@
-#ifndef MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_INDEX_H_
-#define MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_INDEX_H_
+#ifndef MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_CONFIG_H_
+#define MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_CONFIG_H_
 
 #include "rendering/config/config.gen.h"
 #include "rendering/config/container/index.gen.h"
@@ -15,4 +15,4 @@ namespace music_lyric_player::rendering::config {
 	using Manager = ::music_lyric_player::utils::config::Manager<Root>;
 } // namespace music_lyric_player::rendering::config
 
-#endif // MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_INDEX_H_
+#endif // MUSIC_LYRIC_PLAYER_RENDERING_CONFIG_CONFIG_H_

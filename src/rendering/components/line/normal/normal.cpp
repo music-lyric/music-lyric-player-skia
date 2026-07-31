@@ -1,4 +1,4 @@
-#include "rendering/components/line/normal/index.h"
+#include "rendering/components/line/normal/normal.h"
 
 #include <algorithm>
 #include <cmath>
@@ -12,9 +12,9 @@
 #include "include/core/SkRect.h"
 #include "music_lyric_model.h"
 #include "rendering/common/context.h"
-#include "rendering/components/line/normal/annotation/index.h"
-#include "rendering/components/line/normal/main/plain/index.h"
-#include "rendering/components/line/normal/main/syllable/index.h"
+#include "rendering/components/line/normal/annotation/annotation.h"
+#include "rendering/components/line/normal/main/plain/plain.h"
+#include "rendering/components/line/normal/main/syllable/syllable.h"
 #include "rendering/utils/animation/easing.h"
 #include "rendering/utils/color/parse.h"
 #include "rendering/utils/length.h"

@@ -14,16 +14,16 @@ target_link_libraries(music_lyric_player_playback PUBLIC
 	music_lyric::model)
 
 add_library(music_lyric_player_rendering
-	rendering/components/container/index.cpp
-	rendering/components/line/normal/index.cpp
-	rendering/components/line/normal/annotation/index.cpp
-	rendering/components/line/normal/main/plain/index.cpp
-	rendering/components/line/normal/main/syllable/index.cpp
+	rendering/components/container/container.cpp
+	rendering/components/line/normal/normal.cpp
+	rendering/components/line/normal/annotation/annotation.cpp
+	rendering/components/line/normal/main/plain/plain.cpp
+	rendering/components/line/normal/main/syllable/syllable.cpp
 	rendering/components/line/normal/main/syllable/word.cpp
 	rendering/components/line/normal/main/syllable/animation/emphasize.cpp
 	rendering/components/line/normal/main/syllable/animation/float.cpp
 	rendering/components/line/normal/main/syllable/animation/mask.cpp
-	rendering/components/line/interlude/index.cpp
+	rendering/components/line/interlude/interlude.cpp
 	rendering/core/effect.cpp
 	rendering/core/layout.cpp
 	rendering/core/line.cpp
@@ -46,15 +46,15 @@ target_link_libraries(music_lyric_player_rendering PUBLIC
 # Windows draws through Vulkan and resolves families from DirectWrite, Android draws through EGL, and the web draws through WebGL with no system font stack at all.
 if(EMSCRIPTEN)
 	set(_backend_sources
-		backend/gpu/webgl/index.cpp
+		backend/gpu/webgl/webgl.cpp
 		backend/font/font_web.cpp
 		backend/font/registry.cpp
 	)
 	set(_backend_libraries "")
 elseif(ANDROID)
 	set(_backend_sources
-		backend/gpu/vulkan/index.cpp
-		backend/gpu/gles/index.cpp
+		backend/gpu/vulkan/vulkan.cpp
+		backend/gpu/gles/gles.cpp
 		backend/font/registry.cpp
 	)
 	# libvulkan reached the platform in Android 7.0, so this is what pins the module to android-24.
@@ -63,7 +63,7 @@ else()
 	find_package(Vulkan REQUIRED)
 
 	set(_backend_sources
-		backend/gpu/vulkan/index.cpp
+		backend/gpu/vulkan/vulkan.cpp
 		backend/font/font_win.cpp
 		backend/font/registry.cpp
 	)

@@ -1,5 +1,5 @@
-#ifndef MUSIC_LYRIC_PLAYER_BACKEND_GPU_WEBGL_INDEX_H_
-#define MUSIC_LYRIC_PLAYER_BACKEND_GPU_WEBGL_INDEX_H_
+#ifndef MUSIC_LYRIC_PLAYER_BACKEND_GPU_WEBGL_WEBGL_H_
+#define MUSIC_LYRIC_PLAYER_BACKEND_GPU_WEBGL_WEBGL_H_
 
 #include <memory>
 
@@ -14,4 +14,4 @@ namespace music_lyric_player::backend::gpu::webgl {
 	std::unique_ptr<Surface> createSurface(const NativeWindow& window);
 } // namespace music_lyric_player::backend::gpu::webgl
 
-#endif // MUSIC_LYRIC_PLAYER_BACKEND_GPU_WEBGL_INDEX_H_
+#endif // MUSIC_LYRIC_PLAYER_BACKEND_GPU_WEBGL_WEBGL_H_

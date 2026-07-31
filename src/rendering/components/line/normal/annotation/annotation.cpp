@@ -1,4 +1,4 @@
-#include "rendering/components/line/normal/annotation/index.h"
+#include "rendering/components/line/normal/annotation/annotation.h"
 
 #include <algorithm>
 #include <utility>

@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "rendering/config/index.h"
+#include "rendering/config/config.h"
 
 namespace example {
 	/**

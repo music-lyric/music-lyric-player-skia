@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "music_lyric_model.h"
-#include "playback/config/index.h"
+#include "playback/config/config.h"
 #include "playback/merger.h"
 #include "playback/offset.h"
 #include "utils/clock/clock.h"

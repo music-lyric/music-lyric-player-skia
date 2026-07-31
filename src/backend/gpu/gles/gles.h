@@ -1,5 +1,5 @@
-#ifndef MUSIC_LYRIC_PLAYER_BACKEND_GPU_GLES_INDEX_H_
-#define MUSIC_LYRIC_PLAYER_BACKEND_GPU_GLES_INDEX_H_
+#ifndef MUSIC_LYRIC_PLAYER_BACKEND_GPU_GLES_GLES_H_
+#define MUSIC_LYRIC_PLAYER_BACKEND_GPU_GLES_GLES_H_
 
 #include <memory>
 
@@ -15,4 +15,4 @@ namespace music_lyric_player::backend::gpu::gles {
 	std::unique_ptr<Surface> createSurface(const NativeWindow& window);
 } // namespace music_lyric_player::backend::gpu::gles
 
-#endif // MUSIC_LYRIC_PLAYER_BACKEND_GPU_GLES_INDEX_H_
+#endif // MUSIC_LYRIC_PLAYER_BACKEND_GPU_GLES_GLES_H_

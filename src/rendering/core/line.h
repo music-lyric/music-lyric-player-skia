@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "music_lyric_model.h"
-#include "rendering/components/line/base/index.h"
+#include "rendering/components/line/base/base.h"
 
 namespace music_lyric_player::rendering::common {
 	struct RenderContext;

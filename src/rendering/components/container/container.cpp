@@ -1,4 +1,4 @@
-#include "rendering/components/container/index.h"
+#include "rendering/components/container/container.h"
 
 #include <algorithm>
 #include <utility>

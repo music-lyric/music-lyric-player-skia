@@ -18,7 +18,7 @@
 #include "modules/skunicode/include/SkUnicode_icu.h"
 #include "playback/player.h"
 #include "rendering/common/context.h"
-#include "rendering/components/line/base/index.h"
+#include "rendering/components/line/base/base.h"
 #include "rendering/utils/length.h"
 
 namespace music_lyric_player::rendering {

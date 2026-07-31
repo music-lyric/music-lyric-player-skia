@@ -1,4 +1,4 @@
-#include "rendering/components/line/normal/main/plain/index.h"
+#include "rendering/components/line/normal/main/plain/plain.h"
 
 #include <algorithm>
 #include <cmath>

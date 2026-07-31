@@ -1,5 +1,5 @@
-#ifndef MUSIC_LYRIC_PLAYER_PLAYBACK_CONFIG_INDEX_H_
-#define MUSIC_LYRIC_PLAYER_PLAYBACK_CONFIG_INDEX_H_
+#ifndef MUSIC_LYRIC_PLAYER_PLAYBACK_CONFIG_CONFIG_H_
+#define MUSIC_LYRIC_PLAYER_PLAYBACK_CONFIG_CONFIG_H_
 
 #include "playback/config/config.gen.h"
 #include "utils/config/config.h"
@@ -11,4 +11,4 @@ namespace music_lyric_player::playback::config {
 	using Manager = ::music_lyric_player::utils::config::Manager<Root>;
 } // namespace music_lyric_player::playback::config
 
-#endif // MUSIC_LYRIC_PLAYER_PLAYBACK_CONFIG_INDEX_H_
+#endif // MUSIC_LYRIC_PLAYER_PLAYBACK_CONFIG_CONFIG_H_

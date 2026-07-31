@@ -1,5 +1,5 @@
-#ifndef MUSIC_LYRIC_PLAYER_RENDERING_COMPONENTS_LINE_BASE_INDEX_H_
-#define MUSIC_LYRIC_PLAYER_RENDERING_COMPONENTS_LINE_BASE_INDEX_H_
+#ifndef MUSIC_LYRIC_PLAYER_RENDERING_COMPONENTS_LINE_BASE_BASE_H_
+#define MUSIC_LYRIC_PLAYER_RENDERING_COMPONENTS_LINE_BASE_BASE_H_
 
 #include "include/core/SkColor.h"
 #include "rendering/config/layout/index.gen.h"
@@ -100,4 +100,4 @@ namespace music_lyric_player::rendering::components::line::base {
 	};
 } // namespace music_lyric_player::rendering::components::line::base
 
-#endif // MUSIC_LYRIC_PLAYER_RENDERING_COMPONENTS_LINE_BASE_INDEX_H_
+#endif // MUSIC_LYRIC_PLAYER_RENDERING_COMPONENTS_LINE_BASE_BASE_H_

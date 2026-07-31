@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "include/core/SkColor.h"
-#include "rendering/components/line/normal/main/syllable/animation/index.h"
+#include "rendering/components/line/normal/main/syllable/animation/animation.h"
 #include "rendering/utils/fragment/group.h"
 
 class SkCanvas;

@@ -5,7 +5,7 @@
 #include <memory>
 #include <vector>
 
-#include "rendering/components/line/base/index.h"
+#include "rendering/components/line/base/base.h"
 
 namespace music_lyric_player::rendering::core {
 	/**

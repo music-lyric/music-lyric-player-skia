@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "rendering/components/line/interlude/index.h"
-#include "rendering/components/line/normal/index.h"
+#include "rendering/components/line/interlude/interlude.h"
+#include "rendering/components/line/normal/normal.h"
 
 namespace music_lyric_player::rendering::core {
 	void LineManager::rebuild(const music_lyric_model::parsed::Info& info) {

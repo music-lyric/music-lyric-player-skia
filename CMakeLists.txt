@@ -9,9 +9,17 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Match the MSVC runtime with the prebuilt third-party libraries (/MD for Release, /MDd for Debug).
+# The prebuilt third-party libraries exist only as dynamic release, so every configuration has to link against that same CRT.
+# Debug is dropped rather than kept working: it would pair a debug CRT with release-only prebuilts, and RelWithDebInfo already gives a debuggable build that links.
 if(MSVC)
-	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL" CACHE STRING "" FORCE)
+	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL" CACHE STRING "" FORCE)
+
+	if(CMAKE_CONFIGURATION_TYPES)
+		set(CMAKE_CONFIGURATION_TYPES "Release;RelWithDebInfo;MinSizeRel" CACHE STRING "" FORCE)
+		set(CMAKE_DEFAULT_BUILD_TYPE "Release" CACHE STRING "" FORCE)
+	elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+		message(FATAL_ERROR "[Build] Debug is unsupported: the prebuilt Skia and lyric libraries are release-only; build Release or RelWithDebInfo instead")
+	endif()
 endif()
 
 # Emscripten catches nothing by default, which turns any throw into a module abort rather than an error the caller can see.

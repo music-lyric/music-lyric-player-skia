@@ -1,4 +1,4 @@
-#include "backend/gpu/vulkan.h"
+#include "backend/gpu/vulkan/index.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -45,7 +45,7 @@
 #include "include/gpu/vk/VulkanTypes.h"
 #include "utils/logger/logger.h"
 
-namespace music_lyric_player::backend::gpu {
+namespace music_lyric_player::backend::gpu::vulkan {
 	namespace {
 		constexpr utils::Logger logger{"VulkanSurface"};
 
@@ -701,7 +701,7 @@ namespace music_lyric_player::backend::gpu {
 
 	} // namespace
 
-	std::unique_ptr<Surface> createVulkanSurface(const NativeWindow& window) {
+	std::unique_ptr<Surface> createSurface(const NativeWindow& window) {
 		std::shared_ptr<SharedContext> shared = acquireSharedContext();
 		if (shared == nullptr) {
 			return nullptr;
@@ -713,4 +713,4 @@ namespace music_lyric_player::backend::gpu {
 		}
 		return surface;
 	}
-} // namespace music_lyric_player::backend::gpu
+} // namespace music_lyric_player::backend::gpu::vulkan

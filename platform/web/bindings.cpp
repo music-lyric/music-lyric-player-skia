@@ -12,7 +12,7 @@
 
 #include "backend/font/font.h"
 #include "backend/font/registry.h"
-#include "backend/gpu/webgl.h"
+#include "backend/gpu/webgl/index.h"
 #include "clock.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkData.h"
@@ -255,7 +255,7 @@ namespace music_lyric_player::platform::web {
 					backend::gpu::NativeWindow window;
 					window.selector = selector.c_str();
 
-					std::unique_ptr<backend::gpu::Surface> surface = backend::gpu::createWebglSurface(window);
+					std::unique_ptr<backend::gpu::Surface> surface = backend::gpu::webgl::createSurface(window);
 					if (surface == nullptr) {
 						return nullptr;
 					}

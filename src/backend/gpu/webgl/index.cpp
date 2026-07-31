@@ -1,4 +1,4 @@
-#include "backend/gpu/webgl.h"
+#include "backend/gpu/webgl/index.h"
 
 #include <memory>
 #include <string>
@@ -24,7 +24,7 @@
 #include "include/gpu/ganesh/gl/GrGLTypes.h"
 #include "utils/logger/logger.h"
 
-namespace music_lyric_player::backend::gpu {
+namespace music_lyric_player::backend::gpu::webgl {
 	namespace {
 		constexpr utils::Logger logger{"WebglSurface"};
 
@@ -222,11 +222,11 @@ namespace music_lyric_player::backend::gpu {
 		}
 	} // namespace
 
-	std::unique_ptr<Surface> createWebglSurface(const NativeWindow& window) {
+	std::unique_ptr<Surface> createSurface(const NativeWindow& window) {
 		auto surface = std::make_unique<CanvasSurface>();
 		if (!surface->init(window.selector)) {
 			return nullptr;
 		}
 		return surface;
 	}
-} // namespace music_lyric_player::backend::gpu
+} // namespace music_lyric_player::backend::gpu::webgl

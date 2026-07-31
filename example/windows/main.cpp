@@ -5,7 +5,7 @@
 
 #include "audio.h"
 #include "backend/font/font.h"
-#include "backend/gpu/vulkan.h"
+#include "backend/gpu/vulkan/index.h"
 #include "include/core/SkCanvas.h"
 #include "include/core/SkFontMgr.h"
 #include "include/core/SkRect.h"
@@ -58,7 +58,7 @@ int main() {
 		return 1;
 	}
 
-	auto surface = music_lyric_player::backend::gpu::createVulkanSurface({window.hwnd()});
+	auto surface = music_lyric_player::backend::gpu::vulkan::createSurface({window.hwnd()});
 	if (surface == nullptr) {
 		logger.error("failed to create the backend surface");
 		return 1;

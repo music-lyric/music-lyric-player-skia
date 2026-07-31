@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "backend/font/font.h"
-#include "backend/gpu/vulkan.h"
+#include "backend/gpu/vulkan/index.h"
 #include "include/core/SkFontMgr.h"
 #include "music_lyric_model.h"
 #include "playback/player.h"
@@ -77,7 +77,7 @@ struct music_lyric_player_renderer_handle {
 	float                                                      devicePixelRatio = 1.0f;
 
 	music_lyric_player_renderer_handle(music_lyric_player::playback::Player& player, void* window)
-	    : surface(music_lyric_player::backend::gpu::createVulkanSurface({window})), renderer(player, music_lyric_player::backend::font::createFontMgr(), player.clock()) {}
+	    : surface(music_lyric_player::backend::gpu::vulkan::createSurface({window})), renderer(player, music_lyric_player::backend::font::createFontMgr(), player.clock()) {}
 };
 
 music_lyric_player_handle* music_lyric_player_create(void) {

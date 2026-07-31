@@ -1,4 +1,4 @@
-#include "backend/gpu/gles.h"
+#include "backend/gpu/gles/index.h"
 
 #include <memory>
 #include <utility>
@@ -23,7 +23,7 @@
 #include "include/gpu/ganesh/gl/egl/GrGLMakeEGLInterface.h"
 #include "utils/logger/logger.h"
 
-namespace music_lyric_player::backend::gpu {
+namespace music_lyric_player::backend::gpu::gles {
 	namespace {
 		constexpr utils::Logger logger{"GlesSurface"};
 
@@ -372,7 +372,7 @@ namespace music_lyric_player::backend::gpu {
 		}
 	} // namespace
 
-	std::unique_ptr<Surface> createGlesSurface(const NativeWindow& window) {
+	std::unique_ptr<Surface> createSurface(const NativeWindow& window) {
 		std::shared_ptr<SharedContext> shared = acquireSharedContext();
 		if (shared == nullptr) {
 			return nullptr;
@@ -384,4 +384,4 @@ namespace music_lyric_player::backend::gpu {
 		}
 		return surface;
 	}
-} // namespace music_lyric_player::backend::gpu
+} // namespace music_lyric_player::backend::gpu::gles

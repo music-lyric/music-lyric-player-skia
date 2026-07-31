@@ -56,6 +56,8 @@ elseif(ANDROID)
 		backend/gpu/vulkan/vulkan.cpp
 		backend/gpu/vulkan/platform_android.cpp
 		backend/gpu/gles/gles.cpp
+		backend/font/font_android.cpp
+		backend/font/composite.cpp
 		backend/font/registry.cpp
 	)
 	# libvulkan reached the platform in Android 7.0, so this is what pins the module to android-24.

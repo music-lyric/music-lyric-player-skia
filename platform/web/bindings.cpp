@@ -324,15 +324,15 @@ namespace music_lyric_player::platform::web {
 			}
 
 			/**
-			 * Rebuilds the font manager from the registry; not exposed to JS.
+			 * Takes the font manager the registered set now resolves to; not exposed to JS.
 			 */
 			void refreshFontMgr() {
-				this->renderer.setFontMgr(backend::font::createFontMgr());
+				this->renderer.setFontMgr(backend::font::fontManager());
 			}
 
 		private:
 			Renderer(Player& player, std::unique_ptr<backend::gpu::Surface> surface)
-			    : surface(std::move(surface)), renderer(player.engine(), backend::font::createFontMgr(), player.engine().clock()) {
+			    : surface(std::move(surface)), renderer(player.engine(), backend::font::fontManager(), player.engine().clock()) {
 				liveRenderers().push_back(this);
 			}
 

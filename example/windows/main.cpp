@@ -67,7 +67,7 @@ int main() {
 		return 1;
 	}
 
-	sk_sp<SkFontMgr> fontMgr = music_lyric_player::backend::font::createFontMgr();
+	sk_sp<SkFontMgr> fontMgr = music_lyric_player::backend::font::fontManager();
 
 	// The player follows the audio play head, while the renderer keeps wall time: its transitions must keep easing while playback is paused.
 	example::AudioPlayer                    audio;

@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <cstdio>
 #include <exception>
 #include <memory>
 #include <string_view>
@@ -18,13 +17,16 @@
 #include "rendering/config/index.h"
 #include "rendering/renderer.h"
 #include "utils/config/property.glaze.h"
+#include "utils/logger/logger.h"
 
 namespace {
+	constexpr music_lyric_player::utils::Logger logger{"NativeAbi"};
+
 	/**
-	 * Logs a C-ABI boundary failure to stderr; exceptions must never cross into the caller.
+	 * Logs a C-ABI boundary failure; exceptions must never cross into the caller.
 	 */
 	void reportAbiException(const char* what) noexcept {
-		std::fprintf(stderr, "[music-lyric-player] c-abi call failed: %s\n", what);
+		logger.error("c-abi call failed: %s", what);
 	}
 
 	/**

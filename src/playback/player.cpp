@@ -1,14 +1,16 @@
 #include "playback/player.h"
 
 #include <cmath>
-#include <cstdio>
 #include <string>
 #include <utility>
 
 #include "utils/clock/steady.h"
+#include "utils/logger/logger.h"
 
 namespace music_lyric_player::playback {
 	namespace {
+		constexpr utils::Logger logger{"Player"};
+
 		/**
 		 * Shared stateless real-time clock used when no clock is injected.
 		 */
@@ -102,10 +104,7 @@ namespace music_lyric_player::playback {
 		// Reject parse results whose lyric format version is incompatible, clearing any current lyric.
 		music_lyric_model::parsed::Info target = info;
 		if (!satisfiesCaret(info.version, music_lyric_model::SCHEMA_VERSION)) {
-			std::fprintf(stderr,
-				"[music-lyric-player] ignored lyric with incompatible version \"%s\", expected \"^%s\"\n",
-				info.version.c_str(),
-				music_lyric_model::SCHEMA_VERSION);
+			logger.warn("ignored lyric with incompatible version \"%s\", expected \"^%s\"", info.version.c_str(), music_lyric_model::SCHEMA_VERSION);
 			target = music_lyric_model::parsed::Info{};
 		}
 

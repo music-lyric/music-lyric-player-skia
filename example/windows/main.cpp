@@ -1,4 +1,3 @@
-#include <cstdio>
 #include <exception>
 #include <filesystem>
 #include <string>
@@ -19,9 +18,12 @@
 #include "state.h"
 #include "text.h"
 #include "utils/clock/steady.h"
+#include "utils/logger/logger.h"
 #include "window.h"
 
 namespace {
+	constexpr music_lyric_player::utils::Logger logger{"ExampleApp"};
+
 	// How far the arrow keys move the play head.
 	constexpr double kSeekStepMs = 5000.0;
 
@@ -52,13 +54,13 @@ namespace {
 int main() {
 	example::Window window;
 	if (!window.init(1440, 900, "music-lyric-player - skia")) {
-		std::fprintf(stderr, "[example] failed to initialise the window\n");
+		logger.error("failed to initialise the window");
 		return 1;
 	}
 
 	auto surface = music_lyric_player::backend::gpu::createVulkanSurface({window.hwnd()});
 	if (surface == nullptr) {
-		std::fprintf(stderr, "[example] failed to create the backend surface\n");
+		logger.error("failed to create the backend surface");
 		return 1;
 	}
 
@@ -106,7 +108,7 @@ int main() {
 
 	example::ControlPanel panel;
 	if (!panel.init(window.handle(), window.devicePixelRatio())) {
-		std::fprintf(stderr, "[example] the control panel is unavailable; keyboard controls still work\n");
+		logger.warn("the control panel is unavailable; keyboard controls still work");
 	}
 
 	example::AppState state = example::loadState();
@@ -228,16 +230,14 @@ int main() {
 			try {
 				loadLyric(music_lyric_model::parsed::decodeParsedInfo(*bytes), "restored");
 			} catch (const std::exception& error) {
-				std::fprintf(stderr, "[example] failed to decode the persisted lyric: %s\n", error.what());
+				logger.error("failed to decode the persisted lyric: %s", error.what());
 				state.lyric.hex.clear();
 			}
 		}
 	}
 	updateTitle();
 
-	std::printf(
-		"[example] controls: L = load hex lyric, O = open audio, P = toggle panel, R = restart, Space = pause, Left/Right = seek "
-		"5s.\n");
+	logger.info("controls: L = load hex lyric, O = open audio, P = toggle panel, R = restart, Space = pause, Left/Right = seek 5s.");
 
 	while (!window.shouldClose()) {
 		window.pollEvents();

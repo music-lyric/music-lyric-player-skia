@@ -1,7 +1,6 @@
 #include "backend/gpu/vulkan.h"
 
 #include <algorithm>
-#include <cstdarg>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -9,13 +8,10 @@
 #include <vector>
 
 #if defined(__ANDROID__)
-#include <android/log.h>
 #include <android/native_window.h>
 
 #define VK_USE_PLATFORM_ANDROID_KHR
 #else
-#include <cstdio>
-
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -47,23 +43,15 @@
 #include "include/gpu/vk/VulkanExtensions.h"
 #include "include/gpu/vk/VulkanMutableTextureState.h"
 #include "include/gpu/vk/VulkanTypes.h"
+#include "utils/logger/logger.h"
 
 namespace music_lyric_player::backend::gpu {
 	namespace {
+		constexpr utils::Logger logger{"VulkanSurface"};
+
 #if defined(__ANDROID__)
 		// A window here is an `ANativeWindow*`, which is refcounted and drawn into through the Android surface extension.
 		constexpr const char* kSurfaceExtension = VK_KHR_ANDROID_SURFACE_EXTENSION_NAME;
-
-		/**
-		 * Logs a backend failure to logcat.
-		 * An Android process has its stdout and stderr wired to /dev/null unless the platform is told otherwise, so nothing written there would reach anyone.
-		 */
-		void logError(const char* format, ...) {
-			std::va_list args;
-			va_start(args, format);
-			__android_log_vprint(ANDROID_LOG_ERROR, "music-lyric-player", format, args);
-			va_end(args);
-		}
 
 		/**
 		 * Creates a Vulkan surface for the platform window `handle`, or a null handle on failure.
@@ -75,7 +63,7 @@ namespace music_lyric_player::backend::gpu {
 
 			VkSurfaceKHR surface = VK_NULL_HANDLE;
 			if (vkCreateAndroidSurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) {
-				logError("[backend] vkCreateAndroidSurfaceKHR failed");
+				logger.error("vkCreateAndroidSurfaceKHR failed");
 				return VK_NULL_HANDLE;
 			}
 			return surface;
@@ -109,17 +97,6 @@ namespace music_lyric_player::backend::gpu {
 		constexpr const char* kSurfaceExtension = VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
 
 		/**
-		 * Logs a backend failure to stderr, appending the line break itself.
-		 */
-		void logError(const char* format, ...) {
-			std::va_list args;
-			va_start(args, format);
-			std::vfprintf(stderr, format, args);
-			va_end(args);
-			std::fputc('\n', stderr);
-		}
-
-		/**
 		 * Creates a Vulkan surface for the platform window `handle`, or a null handle on failure.
 		 */
 		VkSurfaceKHR createPlatformSurface(VkInstance instance, void* handle) {
@@ -130,7 +107,7 @@ namespace music_lyric_player::backend::gpu {
 
 			VkSurfaceKHR surface = VK_NULL_HANDLE;
 			if (vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) {
-				logError("[backend] vkCreateWin32SurfaceKHR failed");
+				logger.error("vkCreateWin32SurfaceKHR failed");
 				return VK_NULL_HANDLE;
 			}
 			return surface;
@@ -345,7 +322,7 @@ namespace music_lyric_player::backend::gpu {
 			createInfo.ppEnabledExtensionNames = enabled.data();
 
 			if (vkCreateInstance(&createInfo, nullptr, &this->instance) != VK_SUCCESS) {
-				logError("[backend] vkCreateInstance failed");
+				logger.error("vkCreateInstance failed");
 				return false;
 			}
 			return true;
@@ -357,7 +334,7 @@ namespace music_lyric_player::backend::gpu {
 				VkBool32 supported = VK_FALSE;
 				vkGetPhysicalDeviceSurfaceSupportKHR(this->physicalDevice, this->queueFamilyIndex, surface, &supported);
 				if (supported != VK_TRUE) {
-					logError("[backend] the shared queue family cannot present to this window");
+					logger.error("the shared queue family cannot present to this window");
 					return false;
 				}
 				return true;
@@ -369,7 +346,7 @@ namespace music_lyric_player::backend::gpu {
 			std::uint32_t deviceCount = 0;
 			vkEnumeratePhysicalDevices(this->instance, &deviceCount, nullptr);
 			if (deviceCount == 0) {
-				logError("[backend] no Vulkan physical devices found");
+				logger.error("no Vulkan physical devices found");
 				return false;
 			}
 			std::vector<VkPhysicalDevice> devices(deviceCount);
@@ -392,7 +369,7 @@ namespace music_lyric_player::backend::gpu {
 					}
 				}
 			}
-			logError("[backend] no graphics+present queue family found");
+			logger.error("no graphics+present queue family found");
 			return false;
 		}
 
@@ -426,7 +403,7 @@ namespace music_lyric_player::backend::gpu {
 			createInfo.ppEnabledExtensionNames = enabled.data();
 
 			if (vkCreateDevice(this->physicalDevice, &createInfo, nullptr, &this->device) != VK_SUCCESS) {
-				logError("[backend] vkCreateDevice failed");
+				logger.error("vkCreateDevice failed");
 				return false;
 			}
 			vkGetDeviceQueue(this->device, this->queueFamilyIndex, 0, &this->queue);
@@ -465,7 +442,7 @@ namespace music_lyric_player::backend::gpu {
 
 			this->context = GrDirectContexts::MakeVulkan(backend);
 			if (this->context == nullptr) {
-				logError("[backend] GrDirectContexts::MakeVulkan failed");
+				logger.error("GrDirectContexts::MakeVulkan failed");
 				return false;
 			}
 			return true;
@@ -489,7 +466,7 @@ namespace music_lyric_player::backend::gpu {
 
 		bool SwapchainSurface::init(void* handle) {
 			if (handle == nullptr) {
-				logError("[backend] a native window is required");
+				logger.error("a native window is required");
 				return false;
 			}
 
@@ -511,7 +488,7 @@ namespace music_lyric_player::backend::gpu {
 			std::uint32_t formatCount = 0;
 			vkGetPhysicalDeviceSurfaceFormatsKHR(this->shared->physicalDevice, this->surface, &formatCount, nullptr);
 			if (formatCount == 0) {
-				logError("[backend] no surface formats");
+				logger.error("no surface formats");
 				return false;
 			}
 			std::vector<VkSurfaceFormatKHR> formats(formatCount);
@@ -572,7 +549,7 @@ namespace music_lyric_player::backend::gpu {
 			createInfo.oldSwapchain     = VK_NULL_HANDLE;
 
 			if (vkCreateSwapchainKHR(this->shared->device, &createInfo, nullptr, &this->swapchain) != VK_SUCCESS) {
-				logError("[backend] vkCreateSwapchainKHR failed");
+				logger.error("vkCreateSwapchainKHR failed");
 				return false;
 			}
 
@@ -600,7 +577,7 @@ namespace music_lyric_player::backend::gpu {
 				this->surfaces[i] =
 					SkSurfaces::WrapBackendRenderTarget(this->shared->context.get(), renderTarget, kTopLeft_GrSurfaceOrigin, colorType, nullptr, nullptr);
 				if (this->surfaces[i] == nullptr) {
-					logError("[backend] WrapBackendRenderTarget failed");
+					logger.error("WrapBackendRenderTarget failed");
 					return false;
 				}
 			}

@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <vector>
 
 #include "imgui.h"
@@ -21,9 +20,12 @@
 #include "include/core/SkShader.h"
 #include "include/core/SkTileMode.h"
 #include "include/core/SkVertices.h"
+#include "utils/logger/logger.h"
 
 namespace example {
 	namespace {
+		constexpr music_lyric_player::utils::Logger logger{"ImguiRenderer"};
+
 		/**
 		 * Returns the Skia image an ImGui texture identifier refers to, or null when unset.
 		 */
@@ -48,7 +50,7 @@ namespace example {
 		sk_sp<SkImage> makeAtlasImage(ImTextureData* texture) {
 			if (texture->Format != ImTextureFormat_RGBA32) {
 				// Every draw command would silently skip in this case, so report it rather than render nothing.
-				std::fprintf(stderr, "[example] imgui asked for an unsupported texture format %d\n", static_cast<int>(texture->Format));
+				logger.error("imgui asked for an unsupported texture format %d", static_cast<int>(texture->Format));
 				return nullptr;
 			}
 
@@ -56,7 +58,7 @@ namespace example {
 			const SkPixmap    pixmap(info, texture->GetPixels(), static_cast<std::size_t>(texture->GetPitch()));
 			sk_sp<SkImage>    image = SkImages::RasterFromPixmapCopy(pixmap);
 			if (!image) {
-				std::fprintf(stderr, "[example] failed to copy a %dx%d imgui atlas into a skia image\n", texture->Width, texture->Height);
+				logger.error("failed to copy a %dx%d imgui atlas into a skia image", texture->Width, texture->Height);
 			}
 			return image;
 		}

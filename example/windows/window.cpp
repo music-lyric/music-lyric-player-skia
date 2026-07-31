@@ -1,14 +1,17 @@
 #include "window.h"
 
-#include <cstdio>
 #include <windows.h>
 
 #include <GLFW/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3native.h>
 
+#include "utils/logger/logger.h"
+
 namespace example {
 	namespace {
+		constexpr music_lyric_player::utils::Logger logger{"ExampleWindow"};
+
 		// GLFW is process-wide, so the first window brings it up and the last one tears it down.
 		int liveWindows = 0;
 	} // namespace
@@ -32,7 +35,7 @@ namespace example {
 			SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
 			if (glfwInit() == GLFW_FALSE) {
-				std::fprintf(stderr, "[example] glfwInit failed\n");
+				logger.error("glfwInit failed");
 				return false;
 			}
 		}
@@ -41,7 +44,7 @@ namespace example {
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		this->window = glfwCreateWindow(width, height, title, nullptr, nullptr);
 		if (this->window == nullptr) {
-			std::fprintf(stderr, "[example] glfwCreateWindow failed\n");
+			logger.error("glfwCreateWindow failed");
 			if (liveWindows == 0) {
 				glfwTerminate();
 			}

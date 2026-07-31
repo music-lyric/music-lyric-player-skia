@@ -1,12 +1,10 @@
 #include "backend/gpu/gles.h"
 
-#include <cstdarg>
 #include <memory>
 #include <utility>
 
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
-#include <android/log.h>
 #include <android/native_window.h>
 
 #include "include/core/SkCanvas.h"
@@ -23,9 +21,12 @@
 #include "include/gpu/ganesh/gl/GrGLInterface.h"
 #include "include/gpu/ganesh/gl/GrGLTypes.h"
 #include "include/gpu/ganesh/gl/egl/GrGLMakeEGLInterface.h"
+#include "utils/logger/logger.h"
 
 namespace music_lyric_player::backend::gpu {
 	namespace {
+		constexpr utils::Logger logger{"GlesSurface"};
+
 		// A window surface draws into the default framebuffer, which is the one Skia wraps as the backbuffer.
 		constexpr GrGLuint kDefaultFramebuffer = 0;
 
@@ -34,17 +35,6 @@ namespace music_lyric_player::backend::gpu {
 
 		// The backbuffer is never multisampled: Skia antialiases its own geometry, so MSAA would only cost fill rate.
 		constexpr int kSampleCount = 0;
-
-		/**
-		 * Logs a backend failure to logcat.
-		 * An Android process has its stdout and stderr wired to /dev/null unless the platform is told otherwise, so the `fprintf` the other backends use would drop the message.
-		 */
-		void logError(const char* format, ...) {
-			std::va_list args;
-			va_start(args, format);
-			__android_log_vprint(ANDROID_LOG_ERROR, "music-lyric-player", format, args);
-			va_end(args);
-		}
 
 		/**
 		 * The EGL display, context and Skia context that every GLES surface in the process shares.
@@ -167,11 +157,11 @@ namespace music_lyric_player::backend::gpu {
 		bool SharedContext::init() {
 			this->display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 			if (this->display == EGL_NO_DISPLAY) {
-				logError("[backend] no EGL display");
+				logger.error("no EGL display");
 				return false;
 			}
 			if (eglInitialize(this->display, nullptr, nullptr) != EGL_TRUE) {
-				logError("[backend] eglInitialize failed (0x%x)", eglGetError());
+				logger.error("eglInitialize failed (0x%x)", eglGetError());
 				return false;
 			}
 
@@ -197,7 +187,7 @@ namespace music_lyric_player::backend::gpu {
 
 			EGLint configCount = 0;
 			if (eglChooseConfig(this->display, attributes, &this->config, 1, &configCount) != EGL_TRUE || configCount == 0) {
-				logError("[backend] no EGL config with an 8 bit stencil (0x%x)", eglGetError());
+				logger.error("no EGL config with an 8 bit stencil (0x%x)", eglGetError());
 				return false;
 			}
 
@@ -205,7 +195,7 @@ namespace music_lyric_player::backend::gpu {
 
 			this->context = eglCreateContext(this->display, this->config, EGL_NO_CONTEXT, contextAttributes);
 			if (this->context == EGL_NO_CONTEXT) {
-				logError("[backend] eglCreateContext failed (0x%x)", eglGetError());
+				logger.error("eglCreateContext failed (0x%x)", eglGetError());
 				return false;
 			}
 			return true;
@@ -221,13 +211,13 @@ namespace music_lyric_player::backend::gpu {
 
 			sk_sp<const GrGLInterface> glInterface = GrGLInterfaces::MakeEGL();
 			if (glInterface == nullptr) {
-				logError("[backend] GrGLInterfaces::MakeEGL failed");
+				logger.error("GrGLInterfaces::MakeEGL failed");
 				return false;
 			}
 
 			this->grContext = GrDirectContexts::MakeGL(std::move(glInterface));
 			if (this->grContext == nullptr) {
-				logError("[backend] GrDirectContexts::MakeGL failed");
+				logger.error("GrDirectContexts::MakeGL failed");
 				return false;
 			}
 			return true;
@@ -238,7 +228,7 @@ namespace music_lyric_player::backend::gpu {
 				return true;
 			}
 			if (eglMakeCurrent(this->display, drawSurface, drawSurface, this->context) != EGL_TRUE) {
-				logError("[backend] eglMakeCurrent failed (0x%x)", eglGetError());
+				logger.error("eglMakeCurrent failed (0x%x)", eglGetError());
 				return false;
 			}
 			this->currentDrawSurface = drawSurface;
@@ -281,7 +271,7 @@ namespace music_lyric_player::backend::gpu {
 
 		bool WindowSurface::init(ANativeWindow* window) {
 			if (window == nullptr) {
-				logError("[backend] a native window is required");
+				logger.error("a native window is required");
 				return false;
 			}
 
@@ -291,7 +281,7 @@ namespace music_lyric_player::backend::gpu {
 
 			this->eglSurface = eglCreateWindowSurface(this->shared->display, this->shared->config, window, nullptr);
 			if (this->eglSurface == EGL_NO_SURFACE) {
-				logError("[backend] eglCreateWindowSurface failed (0x%x)", eglGetError());
+				logger.error("eglCreateWindowSurface failed (0x%x)", eglGetError());
 				return false;
 			}
 			return this->shared->completeFor(this->eglSurface);
@@ -305,7 +295,7 @@ namespace music_lyric_player::backend::gpu {
 			EGLint height = 0;
 			if (eglQuerySurface(this->shared->display, this->eglSurface, EGL_WIDTH, &width) != EGL_TRUE ||
 				eglQuerySurface(this->shared->display, this->eglSurface, EGL_HEIGHT, &height) != EGL_TRUE) {
-				logError("[backend] eglQuerySurface failed (0x%x)", eglGetError());
+				logger.error("eglQuerySurface failed (0x%x)", eglGetError());
 				return false;
 			}
 			this->backbufferWidth  = width;
@@ -329,7 +319,7 @@ namespace music_lyric_player::backend::gpu {
 				nullptr,
 				nullptr);
 			if (this->surface == nullptr) {
-				logError("[backend] WrapBackendRenderTarget failed");
+				logger.error("WrapBackendRenderTarget failed");
 				return false;
 			}
 
@@ -349,7 +339,7 @@ namespace music_lyric_player::backend::gpu {
 
 			this->shared->grContext->flushAndSubmit(this->surface.get(), GrSyncCpu::kNo);
 			if (eglSwapBuffers(this->shared->display, this->eglSurface) != EGL_TRUE) {
-				logError("[backend] eglSwapBuffers failed (0x%x)", eglGetError());
+				logger.error("eglSwapBuffers failed (0x%x)", eglGetError());
 			}
 		}
 

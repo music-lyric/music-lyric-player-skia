@@ -15,6 +15,7 @@
 #include "include/core/SkRect.h"
 #include "settings.h"
 #include "theme.h"
+#include "utils/logger/logger.h"
 #include "widgets.h"
 
 #ifndef MUSIC_LYRIC_PLAYER_VERSION
@@ -23,6 +24,8 @@
 
 namespace example {
 	namespace {
+		constexpr music_lyric_player::utils::Logger logger{"ControlPanel"};
+
 		namespace color = theme::color;
 
 		constexpr const char* kTabs[] = {"Audio", "Lyric", "Settings"};
@@ -236,7 +239,7 @@ namespace example {
 
 		// ImGui chains onto the callbacks the window already installed, so the demo's key bindings keep working.
 		if (!ImGui_ImplGlfw_InitForOther(window, true)) {
-			std::fprintf(stderr, "[example] failed to attach imgui to the window\n");
+			logger.error("failed to attach imgui to the window");
 			ImGui::DestroyContext(this->context);
 			this->context = nullptr;
 			return false;

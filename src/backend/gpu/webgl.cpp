@@ -1,6 +1,5 @@
 #include "backend/gpu/webgl.h"
 
-#include <cstdio>
 #include <memory>
 #include <string>
 #include <utility>
@@ -23,9 +22,12 @@
 #include "include/gpu/ganesh/gl/GrGLInterface.h"
 #include "include/gpu/ganesh/gl/GrGLMakeWebGLInterface.h"
 #include "include/gpu/ganesh/gl/GrGLTypes.h"
+#include "utils/logger/logger.h"
 
 namespace music_lyric_player::backend::gpu {
 	namespace {
+		constexpr utils::Logger logger{"WebglSurface"};
+
 		// A canvas draws into the default framebuffer, which is the one Skia wraps as the backbuffer.
 		constexpr GrGLuint kDefaultFramebuffer = 0;
 
@@ -92,7 +94,7 @@ namespace music_lyric_player::backend::gpu {
 
 		bool CanvasSurface::init(const char* selector) {
 			if (selector == nullptr || *selector == '\0') {
-				std::fprintf(stderr, "[backend] a canvas selector is required\n");
+				logger.error("a canvas selector is required");
 				return false;
 			}
 			this->selector = selector;
@@ -112,7 +114,7 @@ namespace music_lyric_player::backend::gpu {
 
 			this->context = emscripten_webgl_create_context(this->selector.c_str(), &attributes);
 			if (this->context <= 0) {
-				std::fprintf(stderr, "[backend] no WebGL 2 context for '%s'\n", this->selector.c_str());
+				logger.error("no WebGL 2 context for '%s'", this->selector.c_str());
 				return false;
 			}
 			if (!makeCurrent()) {
@@ -121,13 +123,13 @@ namespace music_lyric_player::backend::gpu {
 
 			sk_sp<const GrGLInterface> glInterface = GrGLInterfaces::MakeWebGL();
 			if (glInterface == nullptr) {
-				std::fprintf(stderr, "[backend] GrGLInterfaces::MakeWebGL failed\n");
+				logger.error("GrGLInterfaces::MakeWebGL failed");
 				return false;
 			}
 
 			this->grContext = GrDirectContexts::MakeGL(std::move(glInterface));
 			if (this->grContext == nullptr) {
-				std::fprintf(stderr, "[backend] GrDirectContexts::MakeGL failed\n");
+				logger.error("GrDirectContexts::MakeGL failed");
 				return false;
 			}
 			return true;
@@ -138,7 +140,7 @@ namespace music_lyric_player::backend::gpu {
 				return true;
 			}
 			if (emscripten_webgl_make_context_current(this->context) != EMSCRIPTEN_RESULT_SUCCESS) {
-				std::fprintf(stderr, "[backend] emscripten_webgl_make_context_current failed\n");
+				logger.error("emscripten_webgl_make_context_current failed");
 				return false;
 			}
 
@@ -155,7 +157,7 @@ namespace music_lyric_player::backend::gpu {
 			int width  = 0;
 			int height = 0;
 			if (emscripten_get_canvas_element_size(this->selector.c_str(), &width, &height) != EMSCRIPTEN_RESULT_SUCCESS) {
-				std::fprintf(stderr, "[backend] cannot read the size of '%s'\n", this->selector.c_str());
+				logger.error("cannot read the size of '%s'", this->selector.c_str());
 				return false;
 			}
 			this->backbufferWidth  = width;
@@ -175,7 +177,7 @@ namespace music_lyric_player::backend::gpu {
 			this->surface =
 				SkSurfaces::WrapBackendRenderTarget(this->grContext.get(), renderTarget, kBottomLeft_GrSurfaceOrigin, kRGBA_8888_SkColorType, nullptr, nullptr);
 			if (this->surface == nullptr) {
-				std::fprintf(stderr, "[backend] WrapBackendRenderTarget failed\n");
+				logger.error("WrapBackendRenderTarget failed");
 				return false;
 			}
 

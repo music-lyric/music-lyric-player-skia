@@ -17,7 +17,7 @@ namespace music_lyric_player::rendering::common {
 	struct RenderContext {
 		const config::Root&     config;
 		const sk_sp<SkUnicode>& unicode;
-		const sk_sp<SkFontMgr>& fontMgr;
+		const sk_sp<SkFontMgr>& fontManager;
 		SkShaper*               shaper;
 		double                  currentTime;
 	};

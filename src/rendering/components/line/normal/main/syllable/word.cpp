@@ -115,19 +115,19 @@ namespace music_lyric_player::rendering::components::line::normal::main::syllabl
 		this->cells.clear();
 		this->useCells = false;
 
-		if (!context.shaper || !context.fontMgr || this->text.empty()) {
+		if (!context.shaper || !context.fontManager || this->text.empty()) {
 			return;
 		}
 
 		const config::Root& cfg = context.config;
 		const float size = static_cast<float>(std::max(resolveLength(cfg.line.normal.main.syllable.font.size, config::Default.line.normal.main.syllable.font.size), 1.0));
 		// The word floats vertically, so its glyphs keep free sub-pixel placement; the paint path snaps them back onto the grid whenever the word rests.
-		const SkFont font = utils::shaping::buildBodyFont(context.fontMgr, cfg.line.normal.main.syllable.font.family.value(), size, true);
+		const SkFont font = utils::shaping::buildBodyFont(context.fontManager, cfg.line.normal.main.syllable.font.family.value(), size, true);
 
 		const char*       utf8  = this->text.c_str();
 		const std::size_t bytes = this->text.size();
 
-		const utils::shaping::ShapedText shaped = utils::shaping::shapeText(*context.shaper, context.unicode, context.fontMgr, font, utf8, bytes, kUnboundedWidth);
+		const utils::shaping::ShapedText shaped = utils::shaping::shapeText(*context.shaper, context.unicode, context.fontManager, font, utf8, bytes, kUnboundedWidth);
 		// The word is shaped unbounded, so makeTextGroup collapses it to one fragment; ceil/epsilon stay component-local for row packing.
 		this->group = utils::fragment::makeTextGroup(shaped, utf8);
 		if (!this->group) {

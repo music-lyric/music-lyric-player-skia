@@ -72,18 +72,18 @@ namespace music_lyric_player::backend::font {
 
 		// Opening the platform stack walks every installed family, which is far too much work to repeat for each renderer.
 		if (!shared.systemOpened) {
-			shared.system       = createSystemFontMgr();
+			shared.system       = createSystemFontManager();
 			shared.systemOpened = true;
 		}
 
 		// Every registered file goes into a single layer rather than one layer each, because a lookup stops at the first layer carrying the family name.
 		// Split across layers, a family's bold would sit below its regular and never be reached.
 		if (shared.registered == nullptr && !shared.files.empty()) {
-			shared.registered = createDataFontMgr(SkSpan<sk_sp<SkData>>(shared.files));
+			shared.registered = createDataFontManager(SkSpan<sk_sp<SkData>>(shared.files));
 		}
 
 		// The registered layer sits on top, so a font the host supplied shadows the system family of that name while everything it does not carry still resolves.
-		shared.composed = createCompositeFontMgr({shared.registered, shared.system});
+		shared.composed = createCompositeFontManager({shared.registered, shared.system});
 		return shared.composed;
 	}
 } // namespace music_lyric_player::backend::font

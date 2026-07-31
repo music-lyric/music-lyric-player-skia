@@ -34,13 +34,13 @@ namespace music_lyric_player::rendering::components::line::normal::annotation {
 		this->measuredHeight = 0.0f;
 		this->group          = {};
 
-		if (!context.shaper || !context.fontMgr || !context.unicode || this->text.empty()) {
+		if (!context.shaper || !context.fontManager || !context.unicode || this->text.empty()) {
 			return;
 		}
 
 		const float                    blockWidth = std::max(width, 1.0f);
 		utils::layout::ParagraphLayout result =
-			utils::layout::layoutParagraph(*context.shaper, context.unicode, context.fontMgr, font, this->text.c_str(), this->text.size(), blockWidth, align);
+			utils::layout::layoutParagraph(*context.shaper, context.unicode, context.fontManager, font, this->text.c_str(), this->text.size(), blockWidth, align);
 
 		this->group          = std::move(result.group);
 		this->measuredHeight = result.height;

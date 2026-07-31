@@ -326,8 +326,8 @@ namespace music_lyric_player::platform::web {
 			/**
 			 * Takes the font manager the registered set now resolves to; not exposed to JS.
 			 */
-			void refreshFontMgr() {
-				this->renderer.setFontMgr(backend::font::fontManager());
+			void refreshFontManager() {
+				this->renderer.setFontManager(backend::font::fontManager());
 			}
 
 		private:
@@ -358,7 +358,7 @@ namespace music_lyric_player::platform::web {
 
 				// The set a font manager was built from is fixed once it exists, so every live renderer takes a new one.
 				for (Renderer* renderer : liveRenderers()) {
-					renderer->refreshFontMgr();
+					renderer->refreshFontManager();
 				}
 				return true;
 			});

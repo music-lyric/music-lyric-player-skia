@@ -20,12 +20,12 @@ namespace music_lyric_player::backend::font {
 		 * Only the public entry points of the layers are reachable from here, since each manager's `on*` overrides are protected to its own type.
 		 * That costs nothing, as every public one is a thin forward to its override.
 		 */
-		class CompositeFontMgr : public SkFontMgr {
+		class CompositeFontManager : public SkFontMgr {
 		public:
 			/**
 			 * Stacks `layers` top first, holding a reference to each and taking their family counts as fixed.
 			 */
-			explicit CompositeFontMgr(std::vector<sk_sp<SkFontMgr>> layers) : layers(std::move(layers)) {
+			explicit CompositeFontManager(std::vector<sk_sp<SkFontMgr>> layers) : layers(std::move(layers)) {
 				// Each entry is where that layer's families start in the concatenated list, and the closing one is the total.
 				// Counting once is what keeps indexed access from walking a chain of `countFamilies()` calls, and it holds because a font manager never gains or loses a family.
 				this->familyStarts.reserve(this->layers.size() + 1);
@@ -178,7 +178,7 @@ namespace music_lyric_player::backend::font {
 		};
 	} // namespace
 
-	sk_sp<SkFontMgr> createCompositeFontMgr(std::vector<sk_sp<SkFontMgr>> layers) {
+	sk_sp<SkFontMgr> createCompositeFontManager(std::vector<sk_sp<SkFontMgr>> layers) {
 		std::erase(layers, nullptr);
 
 		if (layers.empty()) {
@@ -187,6 +187,6 @@ namespace music_lyric_player::backend::font {
 		if (layers.size() == 1) {
 			return std::move(layers.front());
 		}
-		return sk_make_sp<CompositeFontMgr>(std::move(layers));
+		return sk_make_sp<CompositeFontManager>(std::move(layers));
 	}
 } // namespace music_lyric_player::backend::font

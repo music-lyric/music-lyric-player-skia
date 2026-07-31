@@ -35,7 +35,7 @@ namespace music_lyric_player::rendering {
 		 * Binds to the timing engine, a system font manager and the shared clock.
 		 * The clock is sampled each frame to drive the scroll ease.
 		 */
-		Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const music_lyric_player::utils::Clock& clock);
+		Renderer(playback::Player& player, sk_sp<SkFontMgr> fontManager, const music_lyric_player::utils::Clock& clock);
 
 		/**
 		 * Unsubscribes from the timing engine and releases layout resources.
@@ -55,7 +55,7 @@ namespace music_lyric_player::rendering {
 		 * Swaps in a different font manager and re-wraps every line on the next frame.
 		 * A font manager built from registered data is immutable, so adding a font means building a new one and handing it over here.
 		 */
-		void setFontMgr(sk_sp<SkFontMgr> fontMgr);
+		void setFontManager(sk_sp<SkFontMgr> fontManager);
 
 		/**
 		 * Paints the current frame onto `canvas`; a no-op when the viewport is empty.
@@ -88,7 +88,7 @@ namespace music_lyric_player::rendering {
 		void rebuildLines(const music_lyric_model::parsed::Info& info);
 
 		playback::Player&                       player;
-		sk_sp<SkFontMgr>                        fontMgr;
+		sk_sp<SkFontMgr>                        fontManager;
 		const music_lyric_player::utils::Clock& clock;
 		sk_sp<SkUnicode>                        unicode;
 		std::unique_ptr<SkShaper>               shaper;

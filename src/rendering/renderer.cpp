@@ -28,15 +28,15 @@ namespace music_lyric_player::rendering {
 		constexpr float kBlurEpsilon  = 0.3f;
 	} // namespace
 
-	Renderer::Renderer(playback::Player& player, sk_sp<SkFontMgr> fontMgr, const music_lyric_player::utils::Clock& clock)
-	    : player(player), fontMgr(std::move(fontMgr)), clock(clock) {
+	Renderer::Renderer(playback::Player& player, sk_sp<SkFontMgr> fontManager, const music_lyric_player::utils::Clock& clock)
+	    : player(player), fontManager(std::move(fontManager)), clock(clock) {
 		// Unicode backend drives the shaper's word / grapheme / line-break boundaries.
 		this->unicode = SkUnicodes::ICU::Make();
 
 		// The shaper-driven wrapper re-shapes at each candidate break, so it measures wrapped widths exactly.
 		// The default shape-then-wrap mis-breaks CJK, RTL and mixed-script lines and lets them overflow the block; this one wraps them correctly.
 		// It shares the ICU backend for BiDi / script so minority scripts survive, and the self-laid-out timed words pass an unbounded width so it never breaks them.
-		this->shaper = SkShapers::HB::ShaperDrivenWrapper(this->unicode, this->fontMgr);
+		this->shaper = SkShapers::HB::ShaperDrivenWrapper(this->unicode, this->fontManager);
 
 		this->lyricListener  = this->player.onLyricUpdate.add([this](const music_lyric_model::parsed::Info& info) { handleLyricUpdate(info); });
 		this->linesListener  = this->player.onLinesUpdate.add([this](const std::vector<int>&, int firstIndex, bool) { handleLinesUpdate(firstIndex); });
@@ -84,13 +84,13 @@ namespace music_lyric_player::rendering {
 		this->dpr       = dpr;
 	}
 
-	void Renderer::setFontMgr(sk_sp<SkFontMgr> fontMgr) {
-		if (fontMgr == this->fontMgr) {
+	void Renderer::setFontManager(sk_sp<SkFontMgr> fontManager) {
+		if (fontManager == this->fontManager) {
 			return;
 		}
-		this->fontMgr = std::move(fontMgr);
+		this->fontManager = std::move(fontManager);
 		// The shaper binds the font manager it was built with, so it has to be rebuilt before anything reshapes.
-		this->shaper = SkShapers::HB::ShaperDrivenWrapper(this->unicode, this->fontMgr);
+		this->shaper = SkShapers::HB::ShaperDrivenWrapper(this->unicode, this->fontManager);
 		this->lines.invalidateLayout();
 	}
 
@@ -119,7 +119,7 @@ namespace music_lyric_player::rendering {
 			return;
 		}
 		const config::Root&         cfg = this->config.current();
-		const common::RenderContext context{cfg, this->unicode, this->fontMgr, this->shaper.get(), this->player.currentTime()};
+		const common::RenderContext context{cfg, this->unicode, this->fontManager, this->shaper.get(), this->player.currentTime()};
 
 		// Background always fills, even before a lyric loads.
 		this->container.paintBackground(canvas, context);

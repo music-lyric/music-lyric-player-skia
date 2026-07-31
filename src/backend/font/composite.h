@@ -15,7 +15,7 @@ namespace music_lyric_player::backend::font {
 	 * A single layer is handed back as it stands rather than wrapped, and an empty font manager comes back when no layer is left.
 	 * Every layer has to be immutable, as Skia's own managers are, since the family counts are read once when the composite is built.
 	 */
-	sk_sp<SkFontMgr> createCompositeFontMgr(std::vector<sk_sp<SkFontMgr>> layers);
+	sk_sp<SkFontMgr> createCompositeFontManager(std::vector<sk_sp<SkFontMgr>> layers);
 } // namespace music_lyric_player::backend::font
 
 #endif // MUSIC_LYRIC_PLAYER_BACKEND_FONT_COMPOSITE_H_

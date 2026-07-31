@@ -59,7 +59,7 @@ namespace music_lyric_player::rendering::utils::layout {
 	 */
 	inline ParagraphLayout layoutParagraph(SkShaper& shaper,
 		const sk_sp<SkUnicode>&                  unicode,
-		const sk_sp<SkFontMgr>&                  fontMgr,
+		const sk_sp<SkFontMgr>&                  fontManager,
 		const SkFont&                            font,
 		const char*                              utf8,
 		std::size_t                              bytes,
@@ -67,7 +67,7 @@ namespace music_lyric_player::rendering::utils::layout {
 		config::layout::Align                    align) {
 		ParagraphLayout result;
 
-		const shaping::ShapedText shaped = shaping::shapeText(shaper, unicode, fontMgr, font, utf8, bytes, width);
+		const shaping::ShapedText shaped = shaping::shapeText(shaper, unicode, fontManager, font, utf8, bytes, width);
 
 		// One fragment per wrapped line; the alignment offset is baked into origin.x so paint stays a single group call.
 		result.group.fragments.reserve(shaped.lines.size());

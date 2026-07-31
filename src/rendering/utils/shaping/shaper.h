@@ -106,8 +106,8 @@ namespace music_lyric_player::rendering::utils::shaping {
 	 * Returns an empty result when the run iterators cannot be built, matching the callers' pre-shaping bail.
 	 */
 	inline ShapedText
-	shapeText(SkShaper& shaper, const sk_sp<SkUnicode>& unicode, const sk_sp<SkFontMgr>& fontMgr, const SkFont& font, const char* utf8, std::size_t bytes, float width) {
-		ShapingIterators iterators = makeShapingIterators(unicode, fontMgr, font, utf8, bytes);
+	shapeText(SkShaper& shaper, const sk_sp<SkUnicode>& unicode, const sk_sp<SkFontMgr>& fontManager, const SkFont& font, const char* utf8, std::size_t bytes, float width) {
+		ShapingIterators iterators = makeShapingIterators(unicode, fontManager, font, utf8, bytes);
 		if (!iterators) {
 			return {};
 		}

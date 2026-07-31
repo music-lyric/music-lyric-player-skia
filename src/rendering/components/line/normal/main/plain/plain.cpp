@@ -24,18 +24,18 @@ namespace music_lyric_player::rendering::components::line::normal::main::plain {
 		this->measuredHeight = 0.0f;
 		this->group          = {};
 
-		if (!context.shaper || !context.fontMgr || !context.unicode || this->text.empty()) {
+		if (!context.shaper || !context.fontManager || !context.unicode || this->text.empty()) {
 			return;
 		}
 
 		const config::Root& cfg = context.config;
 		const float size = static_cast<float>(std::max(resolveLength(cfg.line.normal.main.syllable.font.size, config::Default.line.normal.main.syllable.font.size), 1.0));
 		// Plain lines never move on their own, so their glyphs stay on the pixel grid.
-		const SkFont font = utils::shaping::buildBodyFont(context.fontMgr, cfg.line.normal.main.syllable.font.family.value(), size, false);
+		const SkFont font = utils::shaping::buildBodyFont(context.fontManager, cfg.line.normal.main.syllable.font.family.value(), size, false);
 
 		utils::layout::ParagraphLayout result = utils::layout::layoutParagraph(*context.shaper,
 			context.unicode,
-			context.fontMgr,
+			context.fontManager,
 			font,
 			this->text.c_str(),
 			this->text.size(),

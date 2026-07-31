@@ -11,7 +11,7 @@ namespace music_lyric_player::backend::font {
 		constexpr utils::Logger logger{"AndroidFont"};
 	} // namespace
 
-	sk_sp<SkFontMgr> createSystemFontMgr() {
+	sk_sp<SkFontMgr> createSystemFontManager() {
 		// Files are left uncached so a family is mapped the first time something asks for it, rather than the whole system font set being read before the first frame.
 		sk_sp<SkFontMgr> system = SkFontMgr_New_AndroidNDK(false, SkFontScanner_Make_FreeType());
 		if (system != nullptr) {
@@ -27,7 +27,7 @@ namespace music_lyric_player::backend::font {
 		return system;
 	}
 
-	sk_sp<SkFontMgr> createDataFontMgr(SkSpan<sk_sp<SkData>> files) {
+	sk_sp<SkFontMgr> createDataFontManager(SkSpan<sk_sp<SkData>> files) {
 		return SkFontMgr_New_Custom_Data(files);
 	}
 } // namespace music_lyric_player::backend::font

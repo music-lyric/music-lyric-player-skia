@@ -18,19 +18,19 @@ namespace music_lyric_player::rendering::utils::shaping {
 	 * Normal hinting grid-fits the outlines the way DirectWrite does natively without touching metrics, so the layout is identical either way.
 	 * Per-glyph fallback keeps the same flags, so minority-script glyphs render like the primary ones.
 	 */
-	inline SkFont buildBodyFont(const sk_sp<SkFontMgr>& fontMgr, const std::string& family, float size, bool subpixel) {
+	inline SkFont buildBodyFont(const sk_sp<SkFontMgr>& fontManager, const std::string& family, float size, bool subpixel) {
 		sk_sp<SkTypeface> typeface;
 		if (!family.empty()) {
-			typeface = fontMgr->matchFamilyStyle(family.c_str(), SkFontStyle::Normal());
+			typeface = fontManager->matchFamilyStyle(family.c_str(), SkFontStyle::Normal());
 		}
 		if (!typeface) {
-			typeface = fontMgr->matchFamilyStyle(nullptr, SkFontStyle::Normal());
+			typeface = fontManager->matchFamilyStyle(nullptr, SkFontStyle::Normal());
 		}
 		// A font manager built from registered data has no platform default, so the null family above resolves to nothing.
 		// The first family it holds stands in for one.
 		// A system font stack resolves the null family itself and never reaches here.
-		if (!typeface && fontMgr->countFamilies() > 0) {
-			const sk_sp<SkFontStyleSet> fallback = fontMgr->createStyleSet(0);
+		if (!typeface && fontManager->countFamilies() > 0) {
+			const sk_sp<SkFontStyleSet> fallback = fontManager->createStyleSet(0);
 			if (fallback != nullptr) {
 				typeface = fallback->matchStyle(SkFontStyle::Normal());
 			}

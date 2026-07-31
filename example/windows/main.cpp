@@ -67,14 +67,14 @@ int main() {
 		return 1;
 	}
 
-	sk_sp<SkFontMgr> fontMgr = music_lyric_player::backend::font::fontManager();
+	sk_sp<SkFontMgr> fontManager = music_lyric_player::backend::font::fontManager();
 
 	// The player follows the audio play head, while the renderer keeps wall time: its transitions must keep easing while playback is paused.
 	example::AudioPlayer                    audio;
 	example::PlaybackClock                  playbackClock(audio);
 	music_lyric_player::utils::SteadyClock  renderClock;
 	music_lyric_player::playback::Player    player(playbackClock);
-	music_lyric_player::rendering::Renderer renderer(player, fontMgr, renderClock);
+	music_lyric_player::rendering::Renderer renderer(player, fontManager, renderClock);
 
 	// DirectWrite cannot resolve a generic "sans-serif" family, so pick a concrete system family covering CJK and latin.
 	// Colours follow the web playground: a white lyric area, left-aligned, with the web default line styling.

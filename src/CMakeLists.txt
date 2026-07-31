@@ -59,7 +59,9 @@ elseif(ANDROID)
 		backend/font/registry.cpp
 	)
 	# libvulkan reached the platform in Android 7.0, so this is what pins the module to android-24.
-	set(_backend_libraries vulkan)
+	# EGL stands the GLES context up, and GLESv2 resolves the entry points Skia calls straight rather than through the interface it loads at runtime.
+	# libandroid carries ANativeWindow, and liblog is where the logger has to write because an Android process has no usable stderr.
+	set(_backend_libraries vulkan EGL GLESv2 android log)
 else()
 	find_package(Vulkan REQUIRED)
 

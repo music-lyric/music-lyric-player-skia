@@ -42,6 +42,7 @@ if(EMSCRIPTEN)
 elseif(ANDROID)
 	add_library(music_lyric_player_android SHARED
 		android/src/main/cpp/jni.cpp
+		android/src/main/cpp/surface.cpp
 	)
 	add_library(music_lyric_player::android ALIAS music_lyric_player_android)
 

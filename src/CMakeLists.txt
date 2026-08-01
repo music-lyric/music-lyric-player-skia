@@ -83,6 +83,12 @@ add_library(music_lyric_player::backend ALIAS music_lyric_player_backend)
 
 target_compile_features(music_lyric_player_backend PUBLIC cxx_std_20)
 
+# Skia is built without RTTI, so a class deriving from one of its polymorphic types, as the composite font manager does, finds no type info to refer to.
+# MSVC is exempt because it emits each type descriptor into the translation unit that needs one rather than taking it from wherever the base was compiled.
+if(NOT MSVC)
+	target_compile_options(music_lyric_player_backend PRIVATE -fno-rtti)
+endif()
+
 target_include_directories(music_lyric_player_backend PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
 
 target_link_libraries(music_lyric_player_backend PUBLIC

@@ -41,8 +41,8 @@ endif()
 set(_triple "${_platform}-${_arch}-${_cfg}")
 
 set(_build_dir "${_repo_root}/out/app/build/${_triple}")
-set(_dll "${_build_dir}/music_lyric_player_native.dll")
-set(_lib "${_build_dir}/music_lyric_player_native.lib")
+set(_dll "${_build_dir}/music_lyric_player.dll")
+set(_lib "${_build_dir}/music_lyric_player.lib")
 set(_include_src "${_repo_root}/include")
 
 set(_dist_dir "${_repo_root}/out/app/dist")

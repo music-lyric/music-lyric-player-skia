@@ -98,6 +98,7 @@ else()
 	# Non-MSVC toolchains need these presets to hide unmarked symbols, which MSVC already does by default.
 	# They pair with the visibility("default") branch in export.h so the narrow ABI holds on every platform.
 	set_target_properties(music_lyric_player_native PROPERTIES
+		OUTPUT_NAME music_lyric_player
 		C_VISIBILITY_PRESET hidden
 		CXX_VISIBILITY_PRESET hidden
 		VISIBILITY_INLINES_HIDDEN ON

@@ -9,7 +9,7 @@ if(EMSCRIPTEN)
 		MUSIC_LYRIC_PLAYER_VERSION="${MUSIC_LYRIC_PLAYER_VERSION}")
 
 	set_target_properties(music_lyric_player_web PROPERTIES
-		OUTPUT_NAME music_lyric_player
+		OUTPUT_NAME music-lyric-player
 		SUFFIX ".mjs"
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/out/app/build/${SKIA_PLATFORM}-${SKIA_ARCH}-$<LOWER_CASE:$<CONFIG>>")
 
@@ -29,7 +29,7 @@ if(EMSCRIPTEN)
 		-sSTACK_SIZE=1048576
 		# Emits the TypeScript definitions of the embind surface next to the module, which is what the npm package ships as its types.
 		# The flag and its file name travel together through SHELL: so option de-duplication cannot split the pair.
-		"SHELL:--emit-tsd music_lyric_player.d.ts"
+		"SHELL:--emit-tsd music-lyric-player.d.ts"
 		"$<$<CONFIG:Release>:-O3;-sASSERTIONS=0>")
 
 	# Every dependency stays PRIVATE, exactly as for the embedder, so only the embind surface is reachable from JS.
@@ -52,7 +52,7 @@ elseif(ANDROID)
 		MUSIC_LYRIC_PLAYER_VERSION="${MUSIC_LYRIC_PLAYER_VERSION}")
 
 	set_target_properties(music_lyric_player_android PROPERTIES
-		OUTPUT_NAME music_lyric_player
+		OUTPUT_NAME music-lyric-player
 		C_VISIBILITY_PRESET hidden
 		CXX_VISIBILITY_PRESET hidden
 		VISIBILITY_INLINES_HIDDEN ON
@@ -98,7 +98,7 @@ else()
 	# Non-MSVC toolchains need these presets to hide unmarked symbols, which MSVC already does by default.
 	# They pair with the visibility("default") branch in export.h so the narrow ABI holds on every platform.
 	set_target_properties(music_lyric_player_embedder PROPERTIES
-		OUTPUT_NAME music_lyric_player
+		OUTPUT_NAME music-lyric-player
 		C_VISIBILITY_PRESET hidden
 		CXX_VISIBILITY_PRESET hidden
 		VISIBILITY_INLINES_HIDDEN ON

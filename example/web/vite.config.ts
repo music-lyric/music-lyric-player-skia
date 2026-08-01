@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
 	optimizeDeps: {
-		// The emscripten glue finds its wasm through `new URL('music_lyric_player.wasm', import.meta.url)`, which only resolves while the module is served from the directory that holds it.
+		// The emscripten glue finds its wasm through `new URL('music-lyric-player.wasm', import.meta.url)`, which only resolves while the module is served from the directory that holds it.
 		// Pre-bundling would rewrite the module into `.vite/deps`, where the wasm is not, and the load would 404.
 		exclude: ['music-lyric-player-skia']
 	},

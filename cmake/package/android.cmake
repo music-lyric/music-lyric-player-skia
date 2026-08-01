@@ -66,7 +66,7 @@ file(REMOVE_RECURSE "${_jni_libs}")
 
 foreach(_arch IN LISTS _arches)
 	set(_triple "${_platform}-${_arch}-${_cfg}")
-	set(_library "${_repo_root}/out/app/build/${_triple}/libmusic_lyric_player.so")
+	set(_library "${_repo_root}/out/app/build/${_triple}/libmusic-lyric-player.so")
 
 	# Build the library the same way the project does, unless it is already built.
 	# The build script owns how the module is configured, so packaging and `make android-build` cannot drift apart.

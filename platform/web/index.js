@@ -1,1 +1,1 @@
-export { default as createMusicLyricPlayerModule } from './dist/music_lyric_player.mjs'
+export { default as createMusicLyricPlayerModule } from './dist/music-lyric-player.mjs'

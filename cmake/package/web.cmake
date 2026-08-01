@@ -56,7 +56,7 @@ if(NOT PACKAGE_SKIP_BUILD)
 endif()
 
 # The glue, the module, and the embind declarations all have to exist before anything is copied.
-foreach(_artifact "music_lyric_player.mjs" "music_lyric_player.wasm" "music_lyric_player.d.ts")
+foreach(_artifact "music-lyric-player.mjs" "music-lyric-player.wasm" "music-lyric-player.d.ts")
 	if(NOT EXISTS "${_build_dir}/${_artifact}")
 		message(FATAL_ERROR "[Package] Missing build artifact: ${_build_dir}/${_artifact}")
 	endif()

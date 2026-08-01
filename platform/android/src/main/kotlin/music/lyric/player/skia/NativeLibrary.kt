@@ -5,7 +5,7 @@ package music.lyric.player.skia
  */
 object NativeLibrary {
     init {
-        System.loadLibrary("music_lyric_player")
+        System.loadLibrary("music-lyric-player")
     }
 
     /**

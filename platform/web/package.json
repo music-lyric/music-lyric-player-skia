@@ -27,7 +27,7 @@
       "types": "./index.d.ts",
       "import": "./index.js"
     },
-    "./music_lyric_player.wasm": "./dist/music_lyric_player.wasm",
+    "./music-lyric-player.wasm": "./dist/music-lyric-player.wasm",
     "./package.json": "./package.json"
   },
   "files": [

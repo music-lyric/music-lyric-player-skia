@@ -186,6 +186,28 @@ def validate_structure(schema):
             if not isinstance(root, str) or not root.isidentifier():
                 raise SchemaError("'typescript.root' must be an identifier (the name of the root interface)")
 
+    kotlin = schema.get("kotlin", {})
+    if not isinstance(kotlin, dict):
+        raise SchemaError("'kotlin' must be an object with 'enable', 'out', 'package' and 'root'")
+    if kotlin:
+        unknown = set(kotlin) - {"enable", "out", "package", "root"}
+        if unknown:
+            raise SchemaError(f"'kotlin' has unknown keys {sorted(unknown)}")
+        if not isinstance(kotlin.get("enable"), bool):
+            raise SchemaError("'kotlin.enable' must be a boolean (whether to emit Kotlin at all)")
+        if kotlin["enable"]:
+            out = kotlin.get("out")
+            if not isinstance(out, str) or not out:
+                raise SchemaError("'kotlin.out' must be a non-empty string (the source file to emit)")
+            if "/" in out or "\\" in out:
+                raise SchemaError("'kotlin.out' must be a bare file name; the directory it lands in follows the package")
+            package = kotlin.get("package")
+            if not isinstance(package, str) or not all(part.isidentifier() for part in package.split(".")):
+                raise SchemaError("'kotlin.package' must be a dotted package name (the package the types declare)")
+            root = kotlin.get("root")
+            if not isinstance(root, str) or not root.isidentifier():
+                raise SchemaError("'kotlin.root' must be an identifier (the name of the root data class)")
+
     imports = schema.get("imports", [])
     if not isinstance(imports, list):
         raise SchemaError("'imports' must be an array")

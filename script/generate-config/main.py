@@ -1,7 +1,7 @@
 """
 Generate C++ config headers from JSON schema.
 
-Reads each `*.schema.json` (all of them under the project when no path is given) and writes its `file` header alongside: one config struct per node, plus a Glaze enum-name meta header for `defaultInstance` roots and the TypeScript declarations a `typescript` block asks for.
+Reads each `*.schema.json` (all of them under the project when no path is given) and writes its `file` header alongside: one config struct per node, plus a Glaze enum-name meta header for `defaultInstance` roots and the TypeScript declarations a `typescript` block asks for and the Kotlin types a `kotlin` block asks for.
 The schema shape is documented in the `*.schema.json` files themselves.
 
 Usage: `python script/generate-config/main.py [<schema.json> ...]`.
@@ -15,6 +15,7 @@ from schema import load_module
 from emit import render
 from glaze import glaze_file_name, render_glaze
 from typescript import OUT_DIR as TYPESCRIPT_OUT_DIR, render_typescript
+from kotlin import OUT_DIR as KOTLIN_OUT_DIR, render_kotlin
 
 
 def scan_schemas(root):
@@ -61,6 +62,16 @@ def generate_one(schema_path):
             with open(typescript_path, "w", encoding="utf-8") as handle:
                 handle.write(typescript)
             print(f"generated {typescript_path} from {schema_path}")
+
+    # A schema opts into Kotlin through its `kotlin` block, which lands in the Gradle module's source set under the package it declares.
+    if module.kotlin.enable:
+        kotlin = render_kotlin(module, schema_name)
+        if kotlin is not None:
+            kotlin_path = os.path.join(KOTLIN_OUT_DIR, *module.kotlin.package.split("."), module.kotlin.out)
+            os.makedirs(os.path.dirname(kotlin_path), exist_ok=True)
+            with open(kotlin_path, "w", encoding="utf-8") as handle:
+                handle.write(kotlin)
+            print(f"generated {kotlin_path} from {schema_path}")
     return 0
 
 

@@ -8,6 +8,12 @@
     "out": "playback.gen.d.ts",
     "root": "PlaybackConfig"
   },
+  "kotlin": {
+    "enable": true,
+    "out": "PlaybackConfig.gen.kt",
+    "package": "music.lyric.player.skia.config",
+    "root": "PlaybackConfig"
+  },
   "items": [
     {
       "name": "OffsetConfig",

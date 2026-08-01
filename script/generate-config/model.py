@@ -37,6 +37,16 @@ class TypeScript:
         self.root = options.get("root", "")
 
 
+class Kotlin:
+    """A schema's Kotlin options: whether to emit, the file to write, the package it declares and what to call the root data class."""
+
+    def __init__(self, options):
+        self.enable = options.get("enable", False)
+        self.out = options.get("out", "")
+        self.package = options.get("package", "")
+        self.root = options.get("root", "")
+
+
 class Module:
     """A loaded schema plus its resolved imports."""
 
@@ -47,6 +57,7 @@ class Module:
         self.inline = schema.get("inline", False)
         self.default_instance = schema.get("defaultInstance", False)
         self.typescript = TypeScript(schema.get("typescript", {}))
+        self.kotlin = Kotlin(schema.get("kotlin", {}))
         self.items = schema["items"]
         self.by_name = {c["name"]: c for c in schema["items"]}
         self.imports = {}  # alias -> Module

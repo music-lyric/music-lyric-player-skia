@@ -7,6 +7,12 @@
     "out": "rendering.gen.d.ts",
     "root": "RenderingConfig"
   },
+  "kotlin": {
+    "enable": true,
+    "out": "RenderingConfig.gen.kt",
+    "package": "music.lyric.player.skia.config",
+    "root": "RenderingConfig"
+  },
   "root": {
     "comment": "Renderer configuration.",
     "modules": [

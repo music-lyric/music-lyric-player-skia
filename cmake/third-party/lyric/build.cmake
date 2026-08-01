@@ -148,10 +148,15 @@ else()
 endif()
 
 if(_platform STREQUAL "android")
+	# The Android library exports nothing but its JNI entry points, and a version script is what normally enforces that.
+	# ThinLTO defeats it for the emulated-TLS control variables of a thread_local: the backend synthesises them during per-module codegen, which happens after the linker has matched the version script, so they reach .dynsym with whatever visibility the original variable had.
+	# Building the dependency hidden is what settles it at the source, since those variables inherit the visibility of the thread_local they stand for.
 	list(APPEND _configure_cmd
 		"-DANDROID_ABI=${_arch}"
 		"-DANDROID_PLATFORM=android-21"
-		"-DANDROID_STL=c++_static")
+		"-DANDROID_STL=c++_static"
+		"-DCMAKE_C_FLAGS=-fvisibility=hidden"
+		"-DCMAKE_CXX_FLAGS=-fvisibility=hidden -fvisibility-inlines-hidden")
 endif()
 
 if(_platform STREQUAL "web")

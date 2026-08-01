@@ -294,7 +294,15 @@ namespace music_lyric_player::backend::gpu::vulkan {
 			// pEnabledFeatures must stay null while pNext carries features2.
 			this->deviceFeatures2       = VkPhysicalDeviceFeatures2{};
 			this->deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-			vkGetPhysicalDeviceFeatures2(this->physicalDevice, &this->deviceFeatures2);
+
+			// Android's stub library only exports the Vulkan 1.1 entry points from API 28, while this module targets 24, so they are asked of the loader instead.
+			// An implementation without 1.1 would already have refused the instance above, so anything reaching here carries this one.
+			const auto getFeatures2 = reinterpret_cast<PFN_vkGetPhysicalDeviceFeatures2>(vkGetInstanceProcAddr(this->instance, "vkGetPhysicalDeviceFeatures2"));
+			if (getFeatures2 == nullptr) {
+				logger.error("vkGetPhysicalDeviceFeatures2 is missing from a Vulkan 1.1 instance");
+				return false;
+			}
+			getFeatures2(this->physicalDevice, &this->deviceFeatures2);
 
 			VkDeviceCreateInfo createInfo{};
 			createInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;

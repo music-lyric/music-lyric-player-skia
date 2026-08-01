@@ -6,6 +6,7 @@ import android.os.Looper
 import android.view.Choreographer
 import android.view.Surface
 import java.util.concurrent.CountDownLatch
+import music.lyric.player.skia.config.RenderingConfig
 
 /**
  * The render thread and everything bound to it: the GPU surface, the lyric renderer drawing into it, and the frame loop driving both.
@@ -125,6 +126,14 @@ class LyricRenderer(private val player: LyricPlayer) : AutoCloseable {
                 nativeSetDevicePixelRatio(handle, devicePixelRatio)
             }
         }
+    }
+
+    /**
+     * Merges a partial config over the current one.
+     * A field left null keeps its current value, which is what makes [RenderingConfig] a patch rather than a whole config.
+     */
+    fun updateConfig(config: RenderingConfig) {
+        this.updateConfig(config.toJson().toString())
     }
 
     /**

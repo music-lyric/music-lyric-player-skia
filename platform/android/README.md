@@ -68,7 +68,18 @@ A renderer borrows the player it draws from, so release the renderer first. A re
 
 ## Config
 
-`renderer.updateConfig(json)` merges a partial config over the current one. Keys the JSON leaves out keep their value, so it doubles as a sparse patch.
+`renderer.updateConfig(config)` merges a partial config over the current one. A field left null keeps its value, so it doubles as a sparse patch.
+
+```kotlin
+renderer.updateConfig(
+    RenderingConfig(
+        layout = LayoutConfig(align = LayoutAlign.Center),
+        line = LineConfig(normal = LineNormalConfig(base = LineNormalBase(font = CommonFontConfig(size = "48px")))),
+    ),
+)
+```
+
+`RenderingConfig` and everything under it live in `music.lyric.player.skia.config` and are generated from the same schema the renderer itself reads, so the two cannot drift apart. `renderer.updateConfig(json)` takes the same patch as a JSON string, which is the way out when a config arrives from somewhere that has no Kotlin types.
 
 ## License
 

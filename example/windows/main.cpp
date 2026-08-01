@@ -20,6 +20,10 @@
 #include "utils/logger/logger.h"
 #include "window.h"
 
+#ifndef MUSIC_LYRIC_PLAYER_VERSION
+#define MUSIC_LYRIC_PLAYER_VERSION "dev"
+#endif
+
 namespace {
 	constexpr music_lyric_player::utils::Logger logger{"ExampleApp"};
 
@@ -62,6 +66,10 @@ int main() {
 		logger.error("failed to create the backend surface");
 		return 1;
 	}
+
+	// Naming the build and what it draws with up front, since that is what a report about this demo has to identify before anything else.
+	logger.info("version %s", MUSIC_LYRIC_PLAYER_VERSION);
+	logger.info("drawing through Vulkan at %dx%d physical pixels, device pixel ratio %.2f", surface->width(), surface->height(), window.devicePixelRatio());
 
 	sk_sp<SkFontMgr> fontManager = music_lyric_player::backend::font::fontManager();
 
@@ -210,7 +218,9 @@ int main() {
 		const std::wstring path = example::utf8ToWide(state.audio.path);
 		if (audio.load(path)) {
 			trackLabel = audioLabel(path);
+			logger.info("restored the track \"%s\"", trackLabel.c_str());
 		} else {
+			logger.warn("the track kept from the previous run no longer opens: %s", state.audio.path.c_str());
 			state.audio.path.clear();
 		}
 	}
@@ -220,6 +230,7 @@ int main() {
 		if (const auto bytes = example::decodeHex(state.lyric.hex)) {
 			try {
 				loadLyric(music_lyric_model::parsed::decodeParsedInfo(*bytes), "restored");
+				logger.info("restored a lyric of %zu lines", player.currentInfo().lines.size());
 			} catch (const std::exception& error) {
 				logger.error("failed to decode the persisted lyric: %s", error.what());
 				state.lyric.hex.clear();

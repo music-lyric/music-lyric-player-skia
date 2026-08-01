@@ -1,10 +1,21 @@
 {
-	"git.detectSubmodules": false,
-	"git.ignoreSubmodules": true,
-	"search.exclude": {
-		"**/third-party": true
-	},
-	"files.watcherExclude": {
-		"**/third-party/**": true
-	}
+  "search.exclude": {
+    "**/third-party": true
+  },
+  "files.watcherExclude": {
+    "**/third-party/**": true
+  },
+
+  "git.detectSubmodules": false,
+  "git.ignoreSubmodules": true,
+
+  "cmake.useCMakePresets": "always",
+  "cmake.enableAutomaticKitScan": false,
+  "cmake.useVsDeveloperEnvironment": "always",
+  "cmake.debugConfig": {
+    "console": "integratedTerminal",
+    "stopAtEntry": false
+  },
+
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

@@ -24,5 +24,21 @@
         }
       }
     }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-example-release",
+      "displayName": "Windows Example",
+      "description": "Shipping Build Without Debug Info",
+      "configurePreset": "windows-example",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-example-release-debug",
+      "displayName": "Windows Example With Debug",
+      "description": "Optimised Build Carrying A PDB, As Debug Is Unsupported By The Release Only Prebuilts",
+      "configurePreset": "windows-example",
+      "configuration": "RelWithDebInfo"
+    }
   ]
 }

@@ -1,0 +1,36 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Windows Example",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "preLaunchTask": "example-windows-build-release",
+      "program": "${workspaceFolder}/out/example/build/windows-x64-release/music_lyric_player_example_windows.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}/out/example/build/windows-x64-release",
+      "stopAtEntry": false,
+      "console": "internalConsole"
+    },
+    {
+      "name": "Windows Example With Debug",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "preLaunchTask": "example-windows-build-release-debug",
+      "program": "${workspaceFolder}/out/example/build/windows-x64-relwithdebinfo/music_lyric_player_example_windows.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}/out/example/build/windows-x64-relwithdebinfo",
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "enableDebugHeap": true,
+      "logging": {
+        "engineLogging": true,
+        "threadExit": true
+      },
+      "symbolOptions": {
+        "searchMicrosoftSymbolServer": true,
+        "cachePath": "%TEMP%\\SymbolCache"
+      }
+    }
+  ]
+}

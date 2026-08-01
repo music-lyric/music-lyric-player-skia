@@ -1,0 +1,40 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "cmake",
+      "label": "example-windows-build-release",
+      "detail": "Shipping build; it carries no debug info, so breakpoints will not bind.",
+      "command": "build",
+      "preset": "windows-example-release",
+      "targets": ["music_lyric_player_example_windows"],
+      "group": "build",
+      "problemMatcher": ["$msCompile"],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "clear": true,
+        "showReuseMessage": false
+      }
+    },
+    {
+      "type": "cmake",
+      "label": "example-windows-build-release-debug",
+      "detail": "Optimised build that still carries a PDB; this is the configuration to debug.",
+      "command": "build",
+      "preset": "windows-example-release-debug",
+      "targets": ["music_lyric_player_example_windows"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$msCompile"],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared",
+        "clear": true,
+        "showReuseMessage": false
+      }
+    }
+  ]
+}

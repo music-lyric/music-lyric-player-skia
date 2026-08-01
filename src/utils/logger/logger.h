@@ -150,6 +150,9 @@ namespace music_lyric_player::utils {
 			std::fprintf(stream, "[%s] [%s] [%s:%s] ", timestamp, resolveLevel(level), kProject, this->tag);
 			std::vfprintf(stream, format, args);
 			std::fputc('\n', stream);
+
+			// A redirected stdout is block buffered rather than line buffered, so without this a line waits for the buffer to fill or the process to exit, and a crash takes it with it.
+			std::fflush(stream);
 #endif
 		}
 

@@ -60,12 +60,18 @@ elseif(ANDROID)
 
 	# The aar ships into arbitrary apps, so nothing beyond the JNI entry points may stay visible.
 	# --exclude-libs localises what the static archives bring in, and the version script whitelists the rest, so a host app linking its own Skia cannot collide.
-	# A version script cannot reach the __start_ and __stop_ pair the linker synthesises for protobuf's own section, which is what the last option hides instead.
+	# A version script cannot reach the __start_ and __stop_ pair the linker synthesises for protobuf's own section, which is what the next option hides instead.
+	# Identical code folding stays on the safe setting, which folds only what the address-significance tables mark as never compared by address.
+	# The relative relocations of a library this size cost half a megabyte in their plain form, and the packed format bionic has read since Android 6.0 brings that down to tens of kilobytes.
+	# The NDK compiles every configuration with -g and leaves the stripping to whoever packages the result, which is us: a release link keeps the debug info out of the artifact altogether, and a debug build is where a symbolised library comes from.
 	# The NDK toolchain already passes -ffunction-sections, -fdata-sections and --gc-sections.
 	target_link_options(music_lyric_player_android PRIVATE
 		-Wl,--exclude-libs,ALL
 		"-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/android/exports.map"
-		-Wl,-z,start-stop-visibility=hidden)
+		-Wl,-z,start-stop-visibility=hidden
+		-Wl,--icf=safe
+		-Wl,--pack-dyn-relocs=android
+		"$<$<CONFIG:Release>:-Wl,-s>")
 
 	target_link_libraries(music_lyric_player_android PRIVATE
 		music_lyric_player::backend

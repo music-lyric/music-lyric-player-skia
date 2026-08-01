@@ -1,4 +1,4 @@
-.PHONY: format config-generate clean third-party-build windows-build web-build android-build example-windows-build example-web-dev package-windows package-web change-log-build release
+.PHONY: format config-generate clean third-party-build windows-build web-build android-build example-windows-build example-web-dev package-windows package-web package-android change-log-build release
 
 # Format Code.
 format:
@@ -52,4 +52,8 @@ package-windows:
 # Build and package the Web wasm distribution zip.
 package-web:
 	cmake -P cmake/package/web.cmake
+
+# Build and package the Android aar.
+package-android:
+	cmake -DPACKAGE_ABIS="$(PACKAGE_ABIS)" -P cmake/package/android.cmake
 

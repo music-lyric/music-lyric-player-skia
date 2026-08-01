@@ -65,7 +65,11 @@ elseif(ANDROID)
 	# The relative relocations of a library this size cost half a megabyte in their plain form, and the packed format bionic has read since Android 6.0 brings that down to tens of kilobytes.
 	# The NDK compiles every configuration with -g and leaves the stripping to whoever packages the result, which is us: a release link keeps the debug info out of the artifact altogether, and a debug build is where a symbolised library comes from.
 	# The NDK toolchain already passes -ffunction-sections, -fdata-sections and --gc-sections.
+	# Bionic only gained __tls_get_addr in API 29, so the toolchain compiles thread-local access as emulated TLS below that, whose helper compiler-rt links in statically.
+	# The lyric model is a bitcode archive, though, and the LTO backend does its codegen at link time, where that default is not applied: the option below is what carries it across, and without it the x86_64 link fails on an undefined __tls_get_addr.
+	# Arm64 links either way only because lld relaxes the general-dynamic sequence to initial-exec for the non-preemptible symbols a version script leaves hidden, which x86_64 never does for a shared object.
 	target_link_options(music_lyric_player_android PRIVATE
+		-Wl,-plugin-opt=-emulated-tls
 		-Wl,--exclude-libs,ALL
 		"-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/android/exports.map"
 		-Wl,-z,start-stop-visibility=hidden

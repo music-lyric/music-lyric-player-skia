@@ -76,3 +76,16 @@ function(android_resolve_toolchain dir out_file)
 
 	set(${out_file} "${_file}" PARENT_SCOPE)
 endfunction()
+
+# Resolve one of the LLVM binutils the NDK ships, which sit under a host-specific prebuilt directory and never on PATH.
+function(android_resolve_llvm_tool dir name out_file)
+	file(GLOB _candidates
+		"${dir}/toolchains/llvm/prebuilt/*/bin/${name}"
+		"${dir}/toolchains/llvm/prebuilt/*/bin/${name}.exe")
+	if(NOT _candidates)
+		message(FATAL_ERROR "[Android] NDK is missing ${name}: ${dir}/toolchains/llvm/prebuilt")
+	endif()
+
+	list(GET _candidates 0 _file)
+	set(${out_file} "${_file}" PARENT_SCOPE)
+endfunction()

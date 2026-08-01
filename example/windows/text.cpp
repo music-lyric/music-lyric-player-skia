@@ -4,6 +4,10 @@
 #include <windows.h>
 
 namespace example {
+	void useUtf8Console() {
+		SetConsoleOutputCP(CP_UTF8);
+	}
+
 	std::wstring utf8ToWide(const std::string& input) {
 		if (input.empty()) {
 			return {};

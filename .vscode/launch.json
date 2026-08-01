@@ -10,7 +10,7 @@
       "args": [],
       "cwd": "${workspaceFolder}/out/example/build/windows-x64-release",
       "stopAtEntry": false,
-      "console": "internalConsole"
+      "console": "integratedTerminal"
     },
     {
       "name": "Windows Example With Debug",
@@ -21,7 +21,7 @@
       "args": [],
       "cwd": "${workspaceFolder}/out/example/build/windows-x64-relwithdebinfo",
       "stopAtEntry": false,
-      "console": "internalConsole",
+      "console": "integratedTerminal",
       "enableDebugHeap": true,
       "logging": {
         "engineLogging": true,

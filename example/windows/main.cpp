@@ -55,6 +55,9 @@ namespace {
 } // namespace
 
 int main() {
+	// Every log line below carries UTF-8, which the console mangles until it is told what it is being handed.
+	example::useUtf8Console();
+
 	example::Window window;
 	if (!window.init(1440, 900, "Music Lyric Player")) {
 		logger.error("failed to initialise the window");

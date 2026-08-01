@@ -5,6 +5,12 @@
 
 namespace example {
 	/**
+	 * Declares this process's console output as UTF-8, which is the encoding the logger and every path string here already carry.
+	 * A console decodes what it is handed with its own output code page, and the system default turns each UTF-8 sequence into mojibake; without a console attached this does nothing.
+	 */
+	void useUtf8Console();
+
+	/**
 	 * Converts a UTF-8 string to UTF-16 for the Win32 wide-character APIs.
 	 */
 	std::wstring utf8ToWide(const std::string& input);

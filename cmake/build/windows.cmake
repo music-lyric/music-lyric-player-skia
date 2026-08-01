@@ -29,9 +29,9 @@ if(NOT _configure_rc EQUAL 0)
 	message(FATAL_ERROR "[Build] Configure failed (rc=${_configure_rc})")
 endif()
 
-message(STATUS "[Build] Building music_lyric_player_native...")
+message(STATUS "[Build] Building music_lyric_player_embedder...")
 execute_process(
-	COMMAND "${CMAKE_COMMAND}" --build "${_cache_dir}" --config "${BUILD_CONFIG}" --target music_lyric_player_native
+	COMMAND "${CMAKE_COMMAND}" --build "${_cache_dir}" --config "${BUILD_CONFIG}" --target music_lyric_player_embedder
 	WORKING_DIRECTORY "${_repo_root}"
 	RESULT_VARIABLE _build_rc)
 if(NOT _build_rc EQUAL 0)

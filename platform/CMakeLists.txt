@@ -32,7 +32,7 @@ if(EMSCRIPTEN)
 		"SHELL:--emit-tsd music_lyric_player.d.ts"
 		"$<$<CONFIG:Release>:-O3;-sASSERTIONS=0>")
 
-	# Every dependency stays PRIVATE, exactly as on native, so only the embind surface is reachable from JS.
+	# Every dependency stays PRIVATE, exactly as for the embedder, so only the embind surface is reachable from JS.
 	target_link_libraries(music_lyric_player_web PRIVATE
 		music_lyric_player::backend
 		music_lyric_player::rendering
@@ -84,20 +84,20 @@ elseif(ANDROID)
 		music_lyric::model
 		glaze::glaze)
 else()
-	add_library(music_lyric_player_native SHARED
-		native/abi.cpp
+	add_library(music_lyric_player_embedder SHARED
+		embedder/abi.cpp
 	)
-	add_library(music_lyric_player::native ALIAS music_lyric_player_native)
+	add_library(music_lyric_player::embedder ALIAS music_lyric_player_embedder)
 
-	target_compile_features(music_lyric_player_native PUBLIC cxx_std_20)
+	target_compile_features(music_lyric_player_embedder PUBLIC cxx_std_20)
 
 	# Building the shared library exports the public C ABI as dllexport through MUSIC_LYRIC_PLAYER_API.
 	# Every other symbol, from Skia and ICU to protobuf and the C++ runtime, stays hidden inside the DLL.
-	target_compile_definitions(music_lyric_player_native PRIVATE MUSIC_LYRIC_PLAYER_BUILDING)
+	target_compile_definitions(music_lyric_player_embedder PRIVATE MUSIC_LYRIC_PLAYER_BUILDING)
 
 	# Non-MSVC toolchains need these presets to hide unmarked symbols, which MSVC already does by default.
 	# They pair with the visibility("default") branch in export.h so the narrow ABI holds on every platform.
-	set_target_properties(music_lyric_player_native PROPERTIES
+	set_target_properties(music_lyric_player_embedder PROPERTIES
 		OUTPUT_NAME music_lyric_player
 		C_VISIBILITY_PRESET hidden
 		CXX_VISIBILITY_PRESET hidden
@@ -106,9 +106,9 @@ else()
 		LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/out/app/build/${SKIA_PLATFORM}-${SKIA_ARCH}-$<LOWER_CASE:$<CONFIG>>"
 		ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/out/app/build/${SKIA_PLATFORM}-${SKIA_ARCH}-$<LOWER_CASE:$<CONFIG>>")
 
-	target_include_directories(music_lyric_player_native PUBLIC "${CMAKE_SOURCE_DIR}/include")
+	target_include_directories(music_lyric_player_embedder PUBLIC "${CMAKE_SOURCE_DIR}/include")
 
-	target_link_libraries(music_lyric_player_native PRIVATE
+	target_link_libraries(music_lyric_player_embedder PRIVATE
 		music_lyric_player::backend
 		music_lyric_player::rendering
 		music_lyric_player::playback
@@ -116,6 +116,6 @@ else()
 		glaze::glaze)
 
 	if(WIN32)
-		target_link_libraries(music_lyric_player_native PRIVATE music_lyric_player::icu)
+		target_link_libraries(music_lyric_player_embedder PRIVATE music_lyric_player::icu)
 	endif()
 endif()

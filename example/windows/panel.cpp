@@ -258,18 +258,6 @@ namespace example {
 		return this->ready ? static_cast<int>(theme::metrics().controlsHeight) : 0;
 	}
 
-	bool ControlPanel::visible() const {
-		return this->ready && this->shown;
-	}
-
-	void ControlPanel::setVisible(bool visible) {
-		this->shown = visible;
-	}
-
-	bool ControlPanel::capturesKeyboard() const {
-		return this->ready && ImGui::GetIO().WantCaptureKeyboard;
-	}
-
 	PanelActions ControlPanel::render(SkCanvas* canvas, const PanelState& state, int width, int height) {
 		PanelActions actions;
 		if (!this->ready) {

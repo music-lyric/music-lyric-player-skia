@@ -1,24 +1,9 @@
 #ifndef MUSIC_LYRIC_PLAYER_EXAMPLE_WINDOW_H_
 #define MUSIC_LYRIC_PLAYER_EXAMPLE_WINDOW_H_
 
-#include <vector>
-
 struct GLFWwindow;
 
 namespace example {
-	/**
-	 * A navigation intent decoded from a key press, used to drive the demo's test-case switching.
-	 */
-	enum class InputAction {
-		Restart,
-		TogglePause,
-		TogglePanel,
-		LoadHex,
-		LoadAudio,
-		SeekBackward,
-		SeekForward,
-	};
-
 	/**
 	 * A thin GLFW window shell that owns no GPU state.
 	 * It exposes the native `HWND` so the backend surface can build and drive its own Vulkan swapchain, and reports resize events so the caller can rebuild that swapchain on the next frame.
@@ -67,17 +52,9 @@ namespace example {
 		 */
 		float devicePixelRatio() const;
 
-		/**
-		 * Returns the navigation actions queued from key presses since the last call, clearing the queue.
-		 */
-		std::vector<InputAction> drainActions();
-
-		void setTitle(const char* title);
-
 	private:
-		GLFWwindow*              window  = nullptr;
-		bool                     resized = false;
-		std::vector<InputAction> actions;
+		GLFWwindow* window  = nullptr;
+		bool        resized = false;
 	};
 } // namespace example
 

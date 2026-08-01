@@ -104,21 +104,6 @@ namespace example {
 		 */
 		int controlsHeight() const;
 
-		/**
-		 * Reports whether the sidebar is currently shown.
-		 */
-		bool visible() const;
-
-		/**
-		 * Shows or hides the sidebar; the lyrics take its width back while it is hidden.
-		 */
-		void setVisible(bool visible);
-
-		/**
-		 * Reports whether ImGui consumed the keyboard on the frame just built, so the host can skip its shortcuts.
-		 */
-		bool capturesKeyboard() const;
-
 	private:
 		ImGuiContext* context = nullptr;
 		bool          ready   = false;

@@ -60,42 +60,6 @@ namespace example {
 			}
 		});
 
-		// An input backend attached later chains onto this callback, so both it and the demo bindings see the key.
-		glfwSetKeyCallback(this->window, [](GLFWwindow* window, int key, int, int action, int) {
-			if (action != GLFW_PRESS && action != GLFW_REPEAT) {
-				return;
-			}
-			auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
-			if (self == nullptr) {
-				return;
-			}
-			switch (key) {
-			case GLFW_KEY_R:
-				self->actions.push_back(InputAction::Restart);
-				break;
-			case GLFW_KEY_L:
-				self->actions.push_back(InputAction::LoadHex);
-				break;
-			case GLFW_KEY_O:
-				self->actions.push_back(InputAction::LoadAudio);
-				break;
-			case GLFW_KEY_P:
-				self->actions.push_back(InputAction::TogglePanel);
-				break;
-			case GLFW_KEY_LEFT:
-				self->actions.push_back(InputAction::SeekBackward);
-				break;
-			case GLFW_KEY_RIGHT:
-				self->actions.push_back(InputAction::SeekForward);
-				break;
-			case GLFW_KEY_SPACE:
-				self->actions.push_back(InputAction::TogglePause);
-				break;
-			default:
-				break;
-			}
-		});
-
 		return true;
 	}
 
@@ -139,17 +103,5 @@ namespace example {
 		float scaleY = 1.0f;
 		glfwGetWindowContentScale(this->window, &scaleX, &scaleY);
 		return scaleX > 0.0f ? scaleX : 1.0f;
-	}
-
-	std::vector<InputAction> Window::drainActions() {
-		std::vector<InputAction> drained;
-		drained.swap(this->actions);
-		return drained;
-	}
-
-	void Window::setTitle(const char* title) {
-		if (this->window != nullptr) {
-			glfwSetWindowTitle(this->window, title);
-		}
 	}
 } // namespace example

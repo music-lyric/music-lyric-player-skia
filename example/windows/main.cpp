@@ -1,7 +1,6 @@
 #include <exception>
 #include <filesystem>
 #include <string>
-#include <vector>
 
 #include "audio.h"
 #include "backend/font/font.h"
@@ -23,9 +22,6 @@
 
 namespace {
 	constexpr music_lyric_player::utils::Logger logger{"ExampleApp"};
-
-	// How far the arrow keys move the play head.
-	constexpr double kSeekStepMs = 5000.0;
 
 	// How fast the frame-timing readout eases toward its latest sample: low enough that the digits settle, high enough that a stall still shows up.
 	constexpr double kTimingSmoothing = 0.1;
@@ -56,7 +52,7 @@ namespace {
 
 int main() {
 	example::Window window;
-	if (!window.init(1440, 900, "music-lyric-player - skia")) {
+	if (!window.init(1440, 900, "Music Lyric Player")) {
 		logger.error("failed to initialise the window");
 		return 1;
 	}
@@ -111,7 +107,7 @@ int main() {
 
 	example::ControlPanel panel;
 	if (!panel.init(window.handle(), window.devicePixelRatio())) {
-		logger.warn("the control panel is unavailable; keyboard controls still work");
+		logger.warn("the control panel is unavailable, which leaves the demo with no controls at all");
 	}
 
 	example::AppState state = example::loadState();
@@ -127,12 +123,6 @@ int main() {
 	const auto persist = [&]() {
 		state.audio.volume = audio.volume();
 		example::saveState(state);
-	};
-
-	const auto updateTitle = [&]() {
-		const std::string lyricPart = lyricLabel.empty() ? "[press L to load a hex lyric]" : "[" + lyricLabel + "]";
-		const std::string trackPart = trackLabel.empty() ? "[press O to open audio]" : "[" + trackLabel + "]";
-		window.setTitle(("music-lyric-player - skia  " + lyricPart + "  " + trackPart).c_str());
 	};
 
 	// Moves the track and the lyric timeline together, preserving the paused state.
@@ -152,13 +142,12 @@ int main() {
 		}
 	};
 
-	// Loads a parsed lyric, restarts both timelines from the top and reflects the source in the title bar.
+	// Loads a parsed lyric, restarts both timelines from the top and records where it came from for the sidebar.
 	const auto loadLyric = [&](const music_lyric_model::parsed::Info& info, const std::string& source) {
 		paused = false;
 		player.updateLyric(info);
 		lyricLabel = source;
 		seekTo(0.0);
-		updateTitle();
 	};
 
 	const auto togglePause = [&]() {
@@ -191,7 +180,6 @@ int main() {
 		trackLabel       = audioLabel(*picked);
 		paused           = false;
 		seekTo(0.0);
-		updateTitle();
 		persist();
 	};
 
@@ -238,9 +226,6 @@ int main() {
 			}
 		}
 	}
-	updateTitle();
-
-	logger.info("controls: L = load hex lyric, O = open audio, P = toggle panel, R = restart, Space = pause, Left/Right = seek 5s.");
 
 	// Frame timing for the bar's readout: the loop's rate, plus the three spans the host can time from outside the surface.
 	// Raw numbers change far too fast to read, so what the panel shows is eased toward each new sample.
@@ -253,39 +238,6 @@ int main() {
 
 	while (!window.shouldClose()) {
 		window.pollEvents();
-
-		// ImGui chains onto the same key callback, so the shortcuts stay quiet while a panel field holds the keyboard.
-		std::vector<example::InputAction> inputs = window.drainActions();
-		if (panel.capturesKeyboard()) {
-			inputs.clear();
-		}
-
-		for (example::InputAction action : inputs) {
-			switch (action) {
-			case example::InputAction::Restart:
-				paused = false;
-				seekTo(0.0);
-				break;
-			case example::InputAction::TogglePause:
-				togglePause();
-				break;
-			case example::InputAction::TogglePanel:
-				panel.setVisible(!panel.visible());
-				break;
-			case example::InputAction::SeekBackward:
-				seekTo(player.currentTime() - kSeekStepMs);
-				break;
-			case example::InputAction::SeekForward:
-				seekTo(player.currentTime() + kSeekStepMs);
-				break;
-			case example::InputAction::LoadAudio:
-				openAudio();
-				break;
-			case example::InputAction::LoadHex:
-				loadLyricHex();
-				break;
-			}
-		}
 
 		if (window.pollResized()) {
 			int frameWidth  = 0;

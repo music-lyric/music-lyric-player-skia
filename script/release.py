@@ -15,13 +15,15 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VERSION_FILE = os.path.join(REPO_ROOT, "VERSION.txt")
 CHANGE_LOG_FILE = os.path.join(REPO_ROOT, "CHANGELOG.md")
 WEB_PACKAGE_FILE = os.path.join(REPO_ROOT, "platform", "web", "package.json")
+ANDROID_PROPERTIES_FILE = os.path.join(REPO_ROOT, "platform", "android", "gradle.properties")
 CHANGE_LOG_BUILDER = os.path.join(REPO_ROOT, "script", "change-log", "build.py")
 
 VERSION_REGEXP = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
+ANDROID_VERSION_REGEXP = re.compile(r"^VERSION_NAME=.*$", re.MULTILINE)
 PARTS = ("major", "minor", "patch")
 
 # Files the release rewrites, listed for the dry run and staged together in the release commit.
-RELEASE_FILES = (VERSION_FILE, CHANGE_LOG_FILE, WEB_PACKAGE_FILE)
+RELEASE_FILES = (VERSION_FILE, CHANGE_LOG_FILE, WEB_PACKAGE_FILE, ANDROID_PROPERTIES_FILE)
 
 
 def repo_path(path):
@@ -135,6 +137,22 @@ def write_web_package_version(version):
         handle.write(f"{serialized}\n")
 
 
+def write_android_properties_version(version):
+    """
+    Rewrite VERSION_NAME in the android Gradle properties so the published aar tracks VERSION.txt.
+    Rewriting the single line rather than the file keeps the remaining properties and their comments in place.
+    """
+    if not os.path.exists(ANDROID_PROPERTIES_FILE):
+        raise SystemExit(f"{repo_path(ANDROID_PROPERTIES_FILE)} not found.")
+    with open(ANDROID_PROPERTIES_FILE, encoding="utf-8") as handle:
+        content = handle.read()
+    updated, replaced = ANDROID_VERSION_REGEXP.subn(f"VERSION_NAME={version}", content)
+    if replaced != 1:
+        raise SystemExit(f"expected one VERSION_NAME in {repo_path(ANDROID_PROPERTIES_FILE)}, found {replaced}.")
+    with open(ANDROID_PROPERTIES_FILE, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(updated)
+
+
 def build_change_log():
     subprocess.run([sys.executable, CHANGE_LOG_BUILDER], cwd=REPO_ROOT, check=True)
 
@@ -176,6 +194,7 @@ def main():
 
     write_version(target)
     write_web_package_version(target)
+    write_android_properties_version(target)
     build_change_log()
 
     run_git(["add", *(repo_path(file) for file in RELEASE_FILES)], capture=False)

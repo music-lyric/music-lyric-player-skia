@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The library adds nothing to the app it ships into: no permission, no component, no resource. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" />

@@ -3,7 +3,7 @@ plugins {
     id("com.vanniktech.maven.publish") version "0.37.0"
 }
 
-val libraryVersion: String = providers.gradleProperty("VERSION_NAME").get()
+val packageVersion: String = providers.gradleProperty("VERSION_NAME").get()
 
 android {
     namespace = "music.lyric.player.skia"
@@ -35,7 +35,7 @@ dependencies {
 }
 
 mavenPublishing {
-    coordinates("io.github.music-lyric.player", "skia", libraryVersion)
+    coordinates("io.github.music-lyric", "player-skia", packageVersion)
     publishToMavenCentral()
     signAllPublications()
 

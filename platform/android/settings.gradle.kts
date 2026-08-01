@@ -14,5 +14,4 @@ dependencyResolutionManagement {
     }
 }
 
-// The aar and the Maven artifact id are both named after this.
-rootProject.name = "skia"
+rootProject.name = "music-lyric-player-skia"

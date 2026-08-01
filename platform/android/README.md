@@ -8,7 +8,7 @@ The library draws into a `Surface` through Vulkan, falling back to GLES on devic
 
 ```kotlin
 dependencies {
-    implementation("io.github.music-lyric.player:skia:0.3.0")
+    implementation("io.github.music-lyric:player-skia:0.3.0")
 }
 ```
 

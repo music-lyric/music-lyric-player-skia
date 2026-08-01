@@ -60,10 +60,12 @@ elseif(ANDROID)
 
 	# The aar ships into arbitrary apps, so nothing beyond the JNI entry points may stay visible.
 	# --exclude-libs localises what the static archives bring in, and the version script whitelists the rest, so a host app linking its own Skia cannot collide.
+	# A version script cannot reach the __start_ and __stop_ pair the linker synthesises for protobuf's own section, which is what the last option hides instead.
 	# The NDK toolchain already passes -ffunction-sections, -fdata-sections and --gc-sections.
 	target_link_options(music_lyric_player_android PRIVATE
 		-Wl,--exclude-libs,ALL
-		"-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/android/exports.map")
+		"-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/android/exports.map"
+		-Wl,-z,start-stop-visibility=hidden)
 
 	target_link_libraries(music_lyric_player_android PRIVATE
 		music_lyric_player::backend

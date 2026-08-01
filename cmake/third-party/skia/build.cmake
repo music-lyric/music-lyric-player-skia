@@ -149,41 +149,40 @@ else()
 	message(STATUS "[Skia] Sync deps skipped (SKIA_BUILD_SYNC_DEPS=OFF)")
 endif()
 
-# Ninja shells out through cmd.exe on Windows, which reads the angle brackets in a few upstream defines as redirection and kills the compile before it starts.
-if(CMAKE_HOST_WIN32)
-	file(GLOB _patches "${CMAKE_CURRENT_LIST_DIR}/patch/*.patch")
-	list(SORT _patches)
+# Each patch covers something gn exposes no argument for: the ICU data profile Skia hardcodes per platform, and a pair of upstream defines whose angle brackets cmd.exe reads as redirection when ninja shells out on Windows.
+# Both apply on every host, because both describe the build rather than the machine running it: the freetype one only drops defines that the include order already resolves to the same headers.
+file(GLOB _patches "${CMAKE_CURRENT_LIST_DIR}/patch/*.patch")
+list(SORT _patches)
 
-	if(_patches)
-		find_program(GIT NAMES git)
-		if(NOT GIT)
-			message(FATAL_ERROR "[Skia] Git not found")
-		endif()
+if(_patches)
+	find_program(GIT NAMES git)
+	if(NOT GIT)
+		message(FATAL_ERROR "[Skia] Git not found")
+	endif()
+endif()
+
+foreach(_patch IN LISTS _patches)
+	get_filename_component(_patch_name "${_patch}" NAME)
+
+	# A patch that reverses cleanly is already in the tree, so applying it again would fail.
+	execute_process(
+		COMMAND "${GIT}" apply --check --reverse "${_patch}"
+		WORKING_DIRECTORY "${SKIA_SRC}"
+		RESULT_VARIABLE _patch_rc
+		OUTPUT_QUIET ERROR_QUIET)
+	if(_patch_rc EQUAL 0)
+		continue()
 	endif()
 
-	foreach(_patch IN LISTS _patches)
-		get_filename_component(_patch_name "${_patch}" NAME)
-
-		# A patch that reverses cleanly is already in the tree, so applying it again would fail.
-		execute_process(
-			COMMAND "${GIT}" apply --check --reverse "${_patch}"
-			WORKING_DIRECTORY "${SKIA_SRC}"
-			RESULT_VARIABLE _patch_rc
-			OUTPUT_QUIET ERROR_QUIET)
-		if(_patch_rc EQUAL 0)
-			continue()
-		endif()
-
-		execute_process(
-			COMMAND "${GIT}" apply "${_patch}"
-			WORKING_DIRECTORY "${SKIA_SRC}"
-			RESULT_VARIABLE _patch_rc)
-		if(NOT _patch_rc EQUAL 0)
-			message(FATAL_ERROR "[Skia] Patch failed (rc=${_patch_rc}): ${_patch_name}")
-		endif()
-		message(STATUS "[Skia] Patch applied: ${_patch_name}")
-	endforeach()
-endif()
+	execute_process(
+		COMMAND "${GIT}" apply "${_patch}"
+		WORKING_DIRECTORY "${SKIA_SRC}"
+		RESULT_VARIABLE _patch_rc)
+	if(NOT _patch_rc EQUAL 0)
+		message(FATAL_ERROR "[Skia] Patch failed (rc=${_patch_rc}): ${_patch_name}")
+	endif()
+	message(STATUS "[Skia] Patch applied: ${_patch_name}")
+endforeach()
 
 if(NOT EXISTS "${_gn_bundled}")
 	message(STATUS "[Skia] Fetch gn...")

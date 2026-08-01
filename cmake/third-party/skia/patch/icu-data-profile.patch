@@ -1,0 +1,18 @@
+diff --git a/third_party/icu/BUILD.gn b/third_party/icu/BUILD.gn
+index 5f128708f7..bcc0621f40 100644
+--- a/third_party/icu/BUILD.gn
++++ b/third_party/icu/BUILD.gn
+@@ -19,12 +19,10 @@ if (skia_use_system_icu) {
+     data_assembly = "$target_gen_dir/icudtl_dat.S"
+   }
+   data_dir = "../externals/icu/"
+-  if (target_cpu == "wasm") {
++  if (target_cpu == "wasm" || is_android) {
+     # Use a super super super stripped down version for wasm,
+     # which is the same thing flutter is using.
+     data_dir += "flutter"
+-  } else if (is_android) {
+-    data_dir += "android"
+   } else if (is_ios) {
+     data_dir += "ios"
+   } else {

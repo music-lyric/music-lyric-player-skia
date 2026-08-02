@@ -1,0 +1,12 @@
+# Build
+build
+
+# Gradle
+.gradle
+local.properties
+
+# Kotlin
+.kotlin
+
+# Ide
+.idea

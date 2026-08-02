@@ -1,4 +1,4 @@
-.PHONY: format config-generate clean third-party-build windows-build web-build android-build example-windows-build example-web-dev package-windows package-web package-android change-log-build release
+.PHONY: format config-generate clean third-party-build windows-build web-build android-build example-windows-build example-web-dev example-android-dev package-windows package-web package-android change-log-build release
 
 # Format Code.
 format:
@@ -44,6 +44,10 @@ example-windows-build:
 # Serve the web example with hot reload.
 example-web-dev:
 	cd example/web && npm install && npm run dev
+
+# Build the Android example.
+example-android-dev:
+	cd example/android && ./gradlew assembleDebug && ./gradlew installDebug
 
 # Build and package the Windows native distribution zip.
 package-windows:

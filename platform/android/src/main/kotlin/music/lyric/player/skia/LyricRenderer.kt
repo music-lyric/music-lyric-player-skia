@@ -3,6 +3,7 @@ package music.lyric.player.skia
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
+import android.os.Process
 import android.view.Choreographer
 import android.view.Surface
 import java.util.concurrent.CountDownLatch
@@ -19,7 +20,9 @@ import music.lyric.player.skia.config.RenderingConfig
  * A renderer borrows the player it draws from, so release the renderer first and the player after.
  */
 class LyricRenderer(private val player: LyricPlayer) : AutoCloseable {
-    private val thread = HandlerThread(THREAD_NAME).apply { start() }
+    // The thread runs at the priority the platform gives its own renderer, since a frame missed here is a frame missed on screen.
+    // It matters most where there is least to go around: a throttled or power saving device is exactly where a thread of ordinary priority starts losing its slice.
+    private val thread = HandlerThread(THREAD_NAME, Process.THREAD_PRIORITY_DISPLAY).apply { start() }
 
     private val handler = Handler(this.thread.looper)
 
